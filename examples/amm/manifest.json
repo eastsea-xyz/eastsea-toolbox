@@ -1,0 +1,53 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Harbor Swap",
+  "subtitle": "Constant-product AMM",
+  "description": "Example 4 — Uniswap-V2-style AMM: factory, pairs, LP tokens, TWAP, router swaps up to 4 hops. Fee-on-transfer safe by balance-delta accounting.",
+  "long_description": "Three-layer constant-product AMM. The factory holds the brake (new pairs, deposits and swaps stop under brake 1; removals stay open). Pairs enforce the k invariant themselves with fee-adjusted balance checks, measure every inflow by actual balance delta so fee-on-transfer tokens never strand funds, and maintain cumulative TWAP prices. The router is stateless: optimal-ratio liquidity provisioning, deadline-enforced swaps, and an observed-input variant for fee-on-transfer paths. Swap traffic costs ~32 state units per trade - no new slots.",
+  "localized": {
+    "ko": {
+      "name": "하버 스왑",
+      "subtitle": "상수곱 AMM",
+      "description": "예제 4 — 팩토리·페어·LP·TWAP·라우터 스왑. 잔액 차이 정산으로 fee-on-transfer 안전."
+    }
+  },
+  "locales": ["en", "ko"],
+  "category": "defi-trading",
+  "tags": ["amm", "swap", "liquidity", "twap", "erc20"],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "AmmFactory",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "AmmRouter",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": ["accounts", "send", "approve-tokens"],
+  "payees": [],
+  "age_rating": "4+",
+  "commerce": "none",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/amm",
+  "x-toolbox-tests": "contracts/test/amm/",
+  "x-toolbox-legal": "defi-trading is a restricted category in the app registry - review docs/legal-notes.md before publishing"
+}
