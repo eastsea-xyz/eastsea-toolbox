@@ -1,0 +1,47 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "GAMBLING ADJACENT — paid-entry winner-take-all draws are lottery/gaming-regulated and illegal without license in many jurisdictions. Do not submit to the public registry until legal review is complete (docs/legal-notes.md).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Tidal Draw",
+  "subtitle": "Commit-reveal raffle",
+  "description": "Example 14 — ticket-pool raffle where the host commits the seed before entries open; the winner index mixes revealed seed and prevrandao.",
+  "long_description": "A paid-entry raffle with no single point of randomness manipulation. Before entries open, the operator commits keccak256 of a secret seed; that hash is immutable at deploy. After the entry deadline, anyone reveals the seed — the winner index is drawn from hash(seed mixed with block.prevrandao), so neither the operator (who cannot choose prevrandao) nor the block proposer (who does not know the seed) can steer the outcome alone. If the operator withholds the seed, a permissionless fallback draw runs on prevrandao alone once the reveal window closes, so the prize always reaches a participant. The contract is single-use: one draw, one deployment — no redraw key exists. State is one slot per ticket and one packed slot for the final draw record.",
+  "localized": {
+    "ko": {
+      "name": "타이달 드로우",
+      "subtitle": "커밋-리빌 래플",
+      "description": "예제 14 — 참가 모집 전 시드를 커밋하는 참가비 풀 래플. 우승 인덱스는 리빌 시드와 prevrandao 혼합."
+    }
+  },
+  "locales": ["en", "ko"],
+  "category": "games",
+  "tags": ["raffle", "commit-reveal", "randomness", "prize-pool", "lottery"],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "CommitRevealRaffle",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": ["accounts", "send"],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "none",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/raffle",
+  "x-toolbox-tests": "contracts/test/raffle/"
+}
