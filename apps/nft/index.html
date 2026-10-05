@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Island Folk Studio — EastSea Toolbox</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:#08131d;color:#d7e7ee;font:15px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
+main{max-width:760px;margin:0 auto;padding:0 16px 64px}
+header{max-width:760px;margin:0 auto;padding:36px 16px 8px}
+.brand{color:#4dd6c1;font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+h1{margin:.15em 0 .1em;font-size:26px}
+h2{margin:0 0 12px;font-size:15px;color:#9fc4d4;font-weight:600;letter-spacing:.04em}
+.sub{margin:0 0 4px;color:#8aa7b6}
+.card{background:#0d1f2e;border:1px solid #1b3648;border-radius:12px;padding:18px;margin:16px 0}
+button{background:#123243;color:#d7f3ec;border:1px solid #2b5a70;border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer}
+button:hover{background:#174060}
+button:disabled{opacity:.45;cursor:default}
+input,textarea{width:100%;background:#081722;border:1px solid #24455a;border-radius:8px;color:#d7e7ee;padding:8px 10px;font:inherit;margin:3px 0 10px}
+textarea{min-height:56px;resize:vertical}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>*{flex:1;min-width:140px}
+.hint{color:#6d8aa0;font-size:12.5px;margin:2px 0 10px}
+.ok{color:#5fe6c2}.warn{color:#ffb86b}.err{color:#ff7b72}.dim{color:#6d8aa0}
+.txhash{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;word-break:break-all}
+.wallets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.wallets button{display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:#4dd6c1;display:inline-block}
+.log{border-left:2px solid #1b3648;padding:4px 0 4px 10px;margin:8px 0;font-size:13px}
+.log b{color:#4dd6c1}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;word-break:break-all}
+footer{max-width:760px;margin:0 auto;padding:0 16px 48px;color:#4d6a7d;font-size:12.5px}
+a{color:#4dd6c1}
+.actions form{border-top:1px solid #14293a;padding-top:12px;margin-top:12px}
+.actions form:first-child{border-top:0;padding-top:0}
+label{display:block;font-size:13px;color:#9fc4d4;margin-top:4px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">EastSea Toolbox · 예제 2</div>
+  <h1>Island Folk Studio</h1>
+  <p class="sub">Onchain NFTs and editions</p>
+</header>
+<main>
+  <section class="card">
+    <h2>1 · 지갑 연결</h2>
+    <div class="wallets" id="wallets"><span class="dim">지갑을 찾는 중…</span></div>
+    <p id="acct" class="dim">지갑을 선택하세요 (EIP-6963 자동 감지 · 폴백 window.aether).</p>
+    <p id="chain" class="dim"></p>
+    <button id="fixchain" class="hidden">EastSea 체인으로 전환</button>
+  </section>
+  <section class="card">
+    <h2>2 · 컨트랙트 주소</h2>
+    <input id="contract" placeholder="0x…" autocomplete="off" spellcheck="false">
+    <p class="hint">Island Folk Studio 배포 주소. 링크로 전달할 수 있습니다: <span class="mono">apps/nft/?contract=0x…</span></p>
+  </section>
+  <section class="card" id="views-card">
+    <h2>3 · 조회 (eth_call · 무료)</h2>
+    <div id="views"></div>
+  </section>
+  <section class="card">
+    <h2 id="views-card-toggle">4 · 실행 (트랜잭션 · 상태 비용 발생)</h2>
+    <div class="actions" id="actions"></div>
+  </section>
+  <section class="card">
+    <h2>5 · 최근 이벤트</h2>
+    <button id="load-logs">최근 5,000블록 로그 불러오기</button>
+    <p class="hint">EditionCreated, Minted</p>
+    <div id="logs"></div>
+  </section>
+</main>
+<footer>예제 문서: <a href="../../examples/nft/README.md">examples/nft/</a> · 가스·상태 비용: <a href="../../examples/nft/GAS.md">GAS.md</a> · 보안: <a href="../../examples/nft/SECURITY.md">SECURITY.md</a><br>
+정적 페이지 — 빌드도 서버도 없습니다. 지갑 연결은 EIP-6963 탐지 후 window.aether 폴백, 체인 검증 chainId 0x1e64 (EastSea).</footer>
+<script>
+const APP = {
+  "slug": "nft",
+  "num": "2",
+  "name": "Island Folk Studio",
+  "sub": "Onchain NFTs and editions",
+  "views": [
+    {
+      "f": "editionOf",
+      "sig": "editionOf(uint256)",
+      "sel": "0x4be185f0",
+      "label": "에디션 조회",
+      "args": [
+        {
+          "n": "editionId",
+          "t": "uint",
+          "p": "1"
+        }
+      ],
+      "decode": "raw"
+    },
+    {
+      "f": "withdrawable",
+      "sig": "withdrawable(uint256)",
+      "sel": "0xf11988e0",
+      "label": "인출 가능 정산액",
+      "args": [
+        {
+          "n": "editionId",
+          "t": "uint",
+          "p": "1"
+        }
+      ],
+      "decode": "uint-ether"
+    }
+  ],
+  "actions": [
+    {
+      "f": "createEdition",
+      "sig": "createEdition(string,uint256,uint256,uint256,uint16)",
+      "sel": "0xbfa27adc",
+      "label": "에디션 생성 (크리에이터)",
+      "args": [
+        {
+          "n": "name_",
+          "t": "string",
+          "p": "Reef Poster #1"
+        },
+        {
+          "n": "cap",
+          "t": "uint",
+          "p": "100"
+        },
+        {
+          "n": "maxPerWallet",
+          "t": "uint",
+          "p": "2"
+        },
+        {
+          "n": "price",
+          "t": "ether",
+          "p": "0.01"
+        },
+        {
+          "n": "feeBps",
+          "t": "uint",
+          "p": "500"
+        }
+      ]
+    },
+    {
+      "f": "mint",
+      "sig": "mint(uint256)",
+      "sel": "0xa0712d68",
+      "label": "민트 (price를 msg.value로)",
+      "args": [
+        {
+          "n": "editionId",
+          "t": "uint",
+          "p": "1"
+        }
+      ],
+      "value": "ether"
+    },
+    {
+      "f": "withdraw",
+      "sig": "withdraw(uint256)",
+      "sel": "0x2e1a7d4d",
+      "label": "크리에이터 인출",
+      "args": [
+        {
+          "n": "editionId",
+          "t": "uint",
+          "p": "1"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "topic": "0x23e3ab16b57cfad3270187f8f51d19f69419e3ab3d5dfdbb181fa94ba1d1ee76",
+      "label": "EditionCreated"
+    },
+    {
+      "topic": "0xc9d0543a84d3510329c0783b91576878ceb484e8699944cb5610c3436b3b8e39",
+      "label": "Minted"
+    }
+  ]
+};
+
+'use strict';
+// ---------------------------------------------------------------- wallet discovery (EIP-6963 + legacy fallbacks)
+const discovered = [];
+let provider = null, account = null, chainOk = false;
+const CHAIN_ID = '0x1e64'; // EastSea
+window.addEventListener('eip6963:announceProvider', (e) => {
+  if (!discovered.some((d) => d.info.uuid === e.detail.info.uuid)) { discovered.push(e.detail); renderWallets(); }
+});
+window.dispatchEvent(new Event('eip6963:requestProvider'));
+setTimeout(() => { // give announcers a beat, then fall back to injected providers
+  if (!discovered.length) {
+    const p = window.aether || window.ethereum;
+    if (p) discovered.push({ info: { uuid: 'injected', name: window.aether ? 'Aether (window.aether)' : 'Injected wallet (window.ethereum)' }, provider: p });
+    renderWallets();
+  }
+}, 150);
+
+function renderWallets() {
+  const el = document.getElementById('wallets');
+  if (!discovered.length) { el.textContent = '지갑을 찾지 못했습니다 — EastSea 지갑(aether)이 설치된 브라우저에서 여세요.'; return; }
+  el.textContent = '';
+  discovered.forEach((d) => {
+    const b = document.createElement('button');
+    b.innerHTML = '<span class="dot"></span>' + d.info.name;
+    b.onclick = () => connect(d);
+    el.appendChild(b);
+  });
+}
+
+async function connect(d) {
+  provider = d.provider;
+  try {
+    const accts = await provider.request({ method: 'eth_requestAccounts' });
+    account = accts[0];
+    document.getElementById('acct').innerHTML = '연결됨: <span class="mono">' + account + '</span>';
+    await checkChain();
+  } catch (err) { note('acct', '연결 실패: ' + (err.message || err), 'err'); }
+}
+
+async function checkChain() {
+  const el = document.getElementById('chain'); const fix = document.getElementById('fixchain');
+  try {
+    const id = await provider.request({ method: 'eth_chainId' });
+    chainOk = (id === CHAIN_ID);
+    el.className = chainOk ? 'ok' : 'warn';
+    el.textContent = chainOk ? '체인: EastSea (' + id + ')' : '체인이 EastSea가 아닙니다 (현재 ' + id + ', 필요 ' + CHAIN_ID + ')';
+    fix.classList.toggle('hidden', chainOk);
+  } catch (err) { el.textContent = '체인 조회 실패: ' + (err.message || err); el.className = 'err'; }
+}
+
+document.getElementById('fixchain').onclick = async () => {
+  try {
+    await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_ID }] });
+    await checkChain();
+  } catch (err) { note('chain', '전환 실패: ' + (err.message || err), 'err'); }
+};
+
+function note(id, msg, cls) { const el = document.getElementById(id); el.textContent = msg; el.className = cls || 'dim'; }
+
+// ---------------------------------------------------------------- ABI encoding (types used by the toolbox examples only)
+const strip = (s) => String(s).replace(/^0x/, '').toLowerCase();
+function need64(h, what) { h = strip(h); if (!/^[0-9a-f]+$/.test(h) || h.length !== 64) throw new Error(what + ': 0x로 시작하는 64자리 hex가 필요합니다'); return h; }
+function pad32hex(h, what) { h = strip(h); if (!/^[0-9a-f]*$/.test(h) || h.length > 64) throw new Error(what + ': 올바른 hex가 아닙니다'); return h.padStart(64, '0'); }
+function padAddr(a, what) { a = strip(a); if (!/^[0-9a-f]{40}$/.test(a)) throw new Error(what + ': 0x로 시작하는 40자리 주소가 필요합니다'); return a.padStart(64, '0'); }
+function toWei(s, what) { // decimal AETH string -> wei bigint hex word
+  s = String(s).trim();
+  if (!/^\d*(\.\d*)?$/.test(s) || s === '' || s === '.') throw new Error(what + ': 숫자를 입력하세요 (예: 0.2)');
+  const [i, f = ''] = s.split('.');
+  const frac = (f + '0'.repeat(18)).slice(0, 18);
+  return (BigInt(i || '0') * 10n ** 18n + BigInt(frac || '0')).toString(16).padStart(64, '0');
+}
+function toUint(s, what) {
+  s = String(s).trim();
+  if (s.startsWith('0x')) { if (!/^[0-9a-f]+$/.test(s.slice(2))) throw new Error(what + ': 올바른 hex가 아닙니다'); return s.slice(2).padStart(64, '0'); }
+  if (!/^\d+$/.test(s)) throw new Error(what + ': 10진 양의 정수를 입력하세요');
+  return BigInt(s).toString(16).padStart(64, '0');
+}
+const utf8hex = (str) => Array.from(new TextEncoder().encode(str)).map((b) => b.toString(16).padStart(2, '0')).join('');
+const hexToUtf8 = (h) => new TextDecoder().decode((h.match(/.{1,2}/g) || []).map((x) => parseInt(x, 16)));
+
+// one tail blob (length word + data right-padded to a 32-byte boundary) for bytes / string
+function tailOfBytes(dataHex) {
+  const h = strip(dataHex);
+  const byteLen = Math.ceil(h.length / 2);
+  const paddedLen = Math.ceil(byteLen / 32) * 32; // ABI: every tail blob occupies whole 32B words
+  return byteLen.toString(16).padStart(64, '0') + h.padEnd(paddedLen * 2, '0');
+}
+
+function argWord(spec, raw) { // static head word, or null for dynamic types
+  const t = spec.t;
+  if (t === 'address') return padAddr(raw, spec.n);
+  if (t === 'bytes32') return need64(raw, spec.n);
+  if (t === 'uint') return toUint(raw, spec.n);
+  if (t === 'ether') return toWei(raw, spec.n);
+  return null; // string | bytes | bytes32[] | bytes[]
+}
+
+function argTail(spec, raw) {
+  const t = spec.t;
+  if (t === 'string') return tailOfBytes(utf8hex(String(raw)));
+  if (t === 'bytes') { const h = strip(raw); if (!/^[0-9a-f]*$/.test(h)) throw new Error(spec.n + ': 올바른 hex가 아닙니다'); return tailOfBytes(h); }
+  const items = String(raw).split(/[\s,]+/).filter((x) => x !== '');
+  if (t === 'bytes32[]') return items.length.toString(16).padStart(64, '0') + items.map((x) => need64(x, spec.n)).join('');
+  if (t === 'bytes[]') { // length + per-elem offsets (relative to array payload start, after the length word) + elem blobs
+    const blobs = items.map((x) => { const h = strip(x); if (!/^[0-9a-f]*$/.test(h)) throw new Error(spec.n + ': 올바른 hex가 아닙니다'); return tailOfBytes(h); });
+    const offBase = items.length * 32; // offsets section size
+    let off = 0; const offs = [];
+    blobs.forEach((b) => { offs.push((offBase + off).toString(16).padStart(64, '0')); off += b.length / 2; });
+    return items.length.toString(16).padStart(64, '0') + offs.join('') + blobs.join('');
+  }
+  throw new Error('지원하지 않는 타입: ' + t);
+}
+
+function encodeCall(selector, specs, values) {
+  const heads = specs.map((s, i) => argWord(s, values[i]));
+  const headLen = specs.length * 32;
+  let tail = '';
+  const offs = [];
+  specs.forEach((s, i) => {
+    if (heads[i] === null) { offs.push((headLen + tail.length / 2).toString(16).padStart(64, '0')); tail += argTail(s, values[i]); }
+  });
+  return '0x' + strip(selector) + heads.map((h, i) => h === null ? offs.shift() : h).join('') + tail;
+}
+
+// ---------------------------------------------------------------- decoding (eth_call results)
+const rstrip = (r) => strip(r || '');
+function decAt(hex, i) { return BigInt('0x' + hex.slice(i * 64, (i + 1) * 64)); }
+function fmtResult(hex, kind) {
+  const h = rstrip(hex);
+  if (h === '') return '(빈 응답)';
+  try {
+    if (kind === 'uint') return decAt(h, 0).toString() + ' (wei)';
+    if (kind === 'uint-ether') { const v = decAt(h, 0); const e = v / 10n ** 18n; const f = (v % 10n ** 18n).toString().padStart(18, '0').replace(/0+$/, ''); return e.toString() + (f ? '.' + f : '') + ' AETH'; }
+    if (kind === 'bool') return decAt(h, 0) !== 0n ? 'true' : 'false';
+    if (kind === 'address') return '0x' + h.slice(24, 64);
+    if (kind === 'bytes32') return '0x' + h.slice(0, 64);
+    if (kind === 'string') { const off = Number(decAt(h, 0) / 32n); const len = Number(decAt(h, off)); return hexToUtf8(h.slice((off + 1) * 64, (off + 1) * 64 + len * 2)); }
+  } catch (e) { /* fall through to raw */ }
+  const words = []; for (let i = 0; i < h.length; i += 64) words.push('0x' + h.slice(i, i + 64));
+  return words.join('<br>');
+}
+
+// ---------------------------------------------------------------- RPC plumbing
+async function call(to, data) { return provider.request({ method: 'eth_call', params: [{ from: account, to, data }, 'latest'] }); }
+async function sendTx(to, data, valueHex) {
+  const params = { from: account, to, data };
+  if (valueHex) params.value = '0x' + BigInt(valueHex).toString(16);
+  const hash = await provider.request({ method: 'eth_sendTransaction', params: [params] });
+  return hash;
+}
+
+// ---------------------------------------------------------------- contract address
+const addrInput = document.getElementById('contract');
+const qaddr = new URLSearchParams(location.search).get('contract');
+if (qaddr) addrInput.value = qaddr;
+function contractAddr() { const a = addrInput.value.trim(); if (!/^0x[0-9a-fA-F]{40}$/.test(a)) throw new Error('컨트랙트 주소를 입력하세요 (0x…40자리) — apps/' + APP.slug + '/?contract=0x… 링크로도 전달할 수 있습니다'); return a; }
+
+// ---------------------------------------------------------------- views
+function fieldInput(id, spec) {
+  const el = document.createElement('input');
+  el.id = id; el.placeholder = spec.p || ''; el.autocomplete = 'off'; el.spellcheck = false;
+  return el;
+}
+
+function buildForm(container, def, isWrite) {
+  const form = document.createElement('form');
+  const title = document.createElement('label'); title.innerHTML = '<b>' + def.label + '</b> <span class="mono dim">' + def.sig + '</span>'; form.appendChild(title);
+  const specs = []; const inputs = [];
+  def.args.forEach((spec, i) => {
+    const id = def.f + '_' + i;
+    const lab = document.createElement('label'); lab.textContent = spec.n + (spec.t === 'ether' ? ' (AETH)' : '') + ' — ' + spec.t; form.appendChild(lab);
+    const inp = fieldInput(id, spec); form.appendChild(inp);
+    specs.push(spec); inputs.push(inp);
+  });
+  let valueInput = null;
+  if (isWrite && def.value === 'ether') {
+    const lab = document.createElement('label'); lab.textContent = 'msg.value (AETH) — 함께 송금할 금액'; form.appendChild(lab);
+    valueInput = document.createElement('input'); valueInput.placeholder = '0.0'; form.appendChild(valueInput);
+  }
+  const btn = document.createElement('button'); btn.textContent = isWrite ? '트랜잭션 전송' : '조회 (eth_call)'; btn.type = 'submit'; form.appendChild(btn);
+  const out = document.createElement('p'); out.className = 'dim'; form.appendChild(out);
+  form.onsubmit = async (ev) => {
+    ev.preventDefault();
+    out.className = 'dim'; out.textContent = '…';
+    try {
+      const to = contractAddr();
+      const values = inputs.map((inp) => inp.value.trim());
+      const data = encodeCall(def.sel, specs, values);
+      if (isWrite) {
+        if (!account) throw new Error('먼저 지갑을 연결하세요');
+        const vhex = valueInput && valueInput.value.trim() !== '' ? '0x' + toWei(valueInput.value, 'msg.value').replace(/^0+/, '') || '0x0' : null;
+        const hash = await sendTx(to, data, vhex);
+        out.className = 'ok txhash'; out.textContent = '전송됨: ' + hash;
+      } else {
+        if (!provider) throw new Error('먼저 지갑을 연결하세요 (조회에도 RPC가 필요합니다)');
+        const res = await call(to, data);
+        out.className = 'mono'; out.innerHTML = fmtResult(res, def.decode);
+      }
+    } catch (err) { out.className = 'err'; out.textContent = (err && err.message) ? err.message : String(err); }
+  };
+  container.appendChild(form);
+}
+
+if (APP.views.length) { const c = document.getElementById('views'); APP.views.forEach((v) => buildForm(c, v, false)); }
+else { document.getElementById('views-card').classList.add('hidden'); }
+{ const c = document.getElementById('actions'); APP.actions.forEach((a) => buildForm(c, a, true)); }
+
+// ---------------------------------------------------------------- events
+document.getElementById('load-logs').onclick = async () => {
+  const out = document.getElementById('logs'); out.textContent = '…';
+  try {
+    const to = contractAddr();
+    if (!provider) throw new Error('먼저 지갑을 연결하세요');
+    const head = await provider.request({ method: 'eth_blockNumber' });
+    const from = '0x' + (BigInt(head) - 5000n).toString(16); // ~83min of 1s blocks
+    const topics = [APP.events.map((e) => e.topic)];
+    const logs = await provider.request({ method: 'eth_getLogs', params: [{ address: to, topics, fromBlock: from, toBlock: 'latest' }] });
+    out.textContent = '';
+    if (!logs.length) { out.innerHTML = '<p class="dim">최근 5,000블록에 이벤트가 없습니다.</p>'; return; }
+    logs.slice(-25).reverse().forEach((lg) => {
+      const ev = APP.events.find((e) => e.topic === lg.topics[0]) || { label: lg.topics[0] };
+      const div = document.createElement('div'); div.className = 'log';
+      let html = '<b>' + ev.label + '</b> <span class="dim">block ' + parseInt(lg.blockNumber, 16) + '</span><br>';
+      lg.topics.slice(1).forEach((t, i) => {
+        const h = strip(t); let shown = t;
+        if (/^0{24}[0-9a-f]{40}$/.test(h)) shown = '0x' + h.slice(24); // indexed address
+        else if (/^[0-9a-f]{64}$/.test(h) && !/^0{48}/.test(h)) { try { shown = BigInt('0x' + h).toString(); } catch (e) {} }
+        html += '<span class="mono">topic' + (i + 1) + ': ' + shown + '</span><br>';
+      });
+      const d = strip(lg.data);
+      if (d.length > 64) { const words = []; for (let i = 0; i < d.length; i += 64) words.push('0x' + d.slice(i, i + 64)); html += '<span class="mono dim">data: ' + words.join(' · ') + '</span><br>'; }
+      div.innerHTML = html; out.appendChild(div);
+    });
+  } catch (err) { out.innerHTML = '<p class="err">' + ((err && err.message) || err) + '</p>'; }
+};
+
+</script>
+</body>
+</html>
