@@ -1,0 +1,58 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  foundry:
+    name: forge fmt + test (fuzz 1000)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Check formatting
+        run: cd contracts && forge fmt --check
+
+      - name: Compile
+        run: cd contracts && forge build
+
+      - name: Test (CI profile - fuzz 1000 runs)
+        run: cd contracts && FOUNDRY_PROFILE=ci forge test
+        env:
+          FOUNDRY_FUZZ_RUNS: 1000
+
+  manifests:
+    name: app manifests (eastsea-app/1)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install jsonschema
+        run: pip install jsonschema
+
+      - name: Validate all example manifests
+        run: python3 templates/publish/validate-manifests.py
+
+  frontends:
+    name: static front-ends
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Every example has a frontend with syntax-valid inline JS
+        run: python3 scripts/check-apps.py
