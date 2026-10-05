@@ -5,3 +5,6 @@ broadcast/
 .DS_Store
 node_modules/
 reports/
+docs/.pdca-snapshots/
+docs/.pdca-status.json
+docs/.bkit-memory.json
