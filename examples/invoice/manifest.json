@@ -1,0 +1,47 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "PAYMENTS TOOLING — operating an invoicing/payment-collection tool can carry merchant obligations (invoicing, tax, consumer protection) that vary by jurisdiction. The contract takes no cut and holds no funds (settlement is immediate). No yield or price promises, no referral-coin structures. Do not submit to the public registry until legal review is complete (docs/legal-notes.md).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Tide Ledger",
+  "subtitle": "Numbered invoice book",
+  "description": "Example 16 — a payee issues numbered fixed-amount invoices; customers settle the exact amount for immediate payout, and settled slots are deleted, not flagged.",
+  "long_description": "A one-directional invoice ledger for freelancers and small shops. The payee issues numbered invoices with a fixed amount and a payment deadline; a customer settles by sending exactly that amount and the payment forwards to the payee in the same call. The book never holds funds and takes no cut. Settling deletes the invoice slot rather than marking it paid, so double-payment is impossible by construction — the question cannot even be asked — and completed invoices leave no permanent per-invoice state. Proof of payment lives in the Settled event log and a single monotonic totalSettled scalar that doubles as an on-chain track record. The payee can void a mistaken invoice (the slot is refunded), and expired unpaid invoices can be purged by anyone to keep the ledger lean. An emergency brake can halt new issuance without ever blocking settlement.",
+  "localized": {
+    "ko": {
+      "name": "타이드 레저",
+      "subtitle": "번호 인보이스 장부",
+      "description": "예제 16 — 번호 청구서를 발행하고 고객이 정확한 금액을 결제하면 즉시 정산된다. 결제된 슬롯은 표시되지 않고 삭제된다."
+    }
+  },
+  "locales": ["en", "ko"],
+  "category": "payments",
+  "tags": ["invoice", "billing", "payments", "ledger", "freelance"],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "InvoiceBook",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": ["accounts", "send"],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "digital",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/invoice",
+  "x-toolbox-tests": "contracts/test/invoice/"
+}
