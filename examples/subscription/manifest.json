@@ -1,0 +1,47 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "CUSTODY ADJACENT — prepaid balances held on-chain may trigger e-money or payment-services regulation depending on jurisdiction. Do not submit to the public registry until legal review is complete (docs/legal-notes.md).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Tide Pass",
+  "subtitle": "Prepaid time subscription",
+  "description": "Example 10 — users buy time at a fixed per-second rate, cancel for a pro-rata refund, and lapsed revenue settles permissionlessly. No operator keys.",
+  "long_description": "Prepaid pass-style subscriptions. Users send value and receive exactly value/rate seconds; renewals stack onto the existing expiry so no residual time is lost. Cancelling refunds the remaining seconds at the same rate — the buy and refund arithmetic are symmetric, so dust stays inside the contract and conservation holds exactly. The design problem solved here is liability accounting without iteration: a single global refund-reserve scalar upper-bounds what all active subscribers could claim, making operator revenue claimable as balance minus reserve in constant time. Revenue claims and lapsed-subscription settlement are permissionless — the payee never needs to act on-chain, and refunds stay open even under the emergency brake.",
+  "localized": {
+    "ko": {
+      "name": "타이드 패스",
+      "subtitle": "선불 시간 구독",
+      "description": "예제 10 — 초당 요율로 시간을 사고, 취소하면 남은 초만큼 비례 환불받는다. 수익 정산은 키 없이 누구나 트리거한다."
+    }
+  },
+  "locales": ["en", "ko"],
+  "category": "payments",
+  "tags": ["subscription", "prepaid", "time-based", "pass", "keeper"],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "SubscriptionManager",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": ["accounts", "send"],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "digital",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/subscription",
+  "x-toolbox-tests": "contracts/test/subscription/"
+}
