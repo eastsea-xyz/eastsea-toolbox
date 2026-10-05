@@ -1,0 +1,47 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "RESTRICTED ADJACENT — staking rewards may qualify as securities-like incentives in some jurisdictions. Do not submit to the public registry until legal review is complete (docs/legal-notes.md). No yield promises, no referral rewards.",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Driftwood Staking",
+  "subtitle": "Staking rewards pool",
+  "description": "Example 6 — linear staking rewards from a sponsor-funded pool. Fixes the Synthetix full-unstake reward-loss trap; skipped emission is recovered, never lost.",
+  "long_description": "Stake an ERC-20 and earn a separate reward token in proportion to your share and time. Sponsors fund the pool with fundRewards(amount, duration); emission is linear and existing underwriter balances are always preserved (no rate dilution). Every state-changing entry is nonReentrant with checks-effects-interactions; stake inflow is measured by actual delivery (fee-on-transfer safe). Unstake and claim remain open under the emergency brake, so funds never get trapped.",
+  "localized": {
+    "ko": {
+      "name": "드리프트우드 스테이킹",
+      "subtitle": "시간 비례 스테이킹 보상",
+      "description": "예제 6 — 후원자가 정한 기간 동안 선형 방출되는 스테이킹 보상 분배기. userOwed 이월으로 전액 인출 시 보상 소실 함정을 제거하고, 잔액 기반 회계로 스테이커 부재 구간의 방출도 소실 없이 회수한다."
+    }
+  },
+  "locales": ["en", "ko"],
+  "category": "defi-trading",
+  "tags": ["staking", "rewards", "distribution", "synthetix-style", "no-yield-promises"],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "RewardDistributor",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": ["accounts", "send", "approve-tokens"],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "none",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/rewards",
+  "x-toolbox-tests": "contracts/test/rewards/"
+}
