@@ -1,0 +1,46 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh). Category token-issuance is restricted: hidden from ranked/featured lists and iOS.",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Island Coin",
+  "subtitle": "Fixed-supply community token",
+  "description": "Example 1 — a fixed-supply ERC-20 with EIP-2612 permit. No mint entry point exists after launch.",
+  "long_description": "A community point / game currency base shape. The whole supply is minted once to the recipient at deployment; no mint path exists afterwards, so inflation risk is removed by construction. Includes EIP-2612 permit so users can approve with a signature instead of a transaction. Copy contracts/src/token/FixedSupplyToken.sol, deploy with your name/symbol/supply/recipient, and fill this manifest with real addresses before publishing.",
+  "localized": {
+    "ko": {
+      "name": "아일랜드 코인",
+      "subtitle": "고정 공급 커뮤니티 토큰",
+      "description": "예제 1 — 출시 후 mint 경로가 없는 고정 공급 ERC-20 (EIP-2612 permit 포함)."
+    }
+  },
+  "locales": ["en", "ko"],
+  "category": "token-issuance",
+  "tags": ["erc20", "permit", "fixed-supply"],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "IslandCoin token",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "none"
+    }
+  ],
+  "connect": [],
+  "permissions": ["accounts", "send", "sign-typed", "approve-tokens"],
+  "payees": [],
+  "age_rating": "4+",
+  "commerce": "none",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/token",
+  "x-toolbox-tests": "contracts/test/token/FixedSupplyToken.t.sol"
+}
