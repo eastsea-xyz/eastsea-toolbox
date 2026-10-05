@@ -1,0 +1,47 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "FUNDRAISING ADJACENT — collecting money from the public for a beneficiary may trigger charity solicitation, crowdfunding, or securities rules depending on jurisdiction and reward structure. Do not submit to the public registry until legal review is complete (docs/legal-notes.md).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Lighthouse Fund",
+  "subtitle": "All-or-nothing crowdfund",
+  "description": "Example 12 — fixed goal and deadline: permissionless one-shot payout on success, self-claim refunds that erase contributor state on failure.",
+  "long_description": "A single-purpose crowdfunding contract with no middle outcome. Contributors send native funds until the goal scalar is reached or the deadline passes. If the goal is met — even before the deadline — anyone may trigger the single payout to the fixed beneficiary; overfunding in the final contribution is accepted in full as a donation. If the deadline passes below the goal, every contributor self-claims an exact refund, and each refund deletes that contributor's slot: a failed campaign converges to zero permanent state, while a successful one keeps contributor slots as proof-of-origin treasury accounting. Goal, deadline, and beneficiary are immutable at deploy time — no key can change the rules of a running campaign.",
+  "localized": {
+    "ko": {
+      "name": "라이트하우스 펀드",
+      "subtitle": "올오어낫싱 크라우드펀드",
+      "description": "예제 12 — 고정 목표·마감: 성공 시 1회 인도, 실패 시 전액 환불과 기여 슬롯 소거."
+    }
+  },
+  "locales": ["en", "ko"],
+  "category": "payments",
+  "tags": ["crowdfunding", "fundraiser", "all-or-nothing", "refund", "campaign"],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "AllOrNothingCrowdfund",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": ["accounts", "send"],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "none",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/crowdfund",
+  "x-toolbox-tests": "contracts/test/crowdfund/"
+}
