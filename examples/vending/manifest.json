@@ -1,0 +1,47 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "AI SERVICES TOOLING — selling AI-generated work can carry consumer-protection, copyright, and liability obligations that vary by jurisdiction. The contract holds no earnings and takes no cut; settlement is registration-only with a full-refund deadline. No yield or price promises, no referral-coin structures. Do not submit to the public registry until legal review is complete (docs/legal-notes.md).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Kelp Kiosk",
+  "subtitle": "Prepaid agent orders",
+  "description": "Example 17 — fixed-price prepaid orders for agent work: register a result hash before the deadline for instant settlement, or the buyer refunds in full.",
+  "long_description": "The vending-machine contract for the agent economy. A buyer orders by committing a spec hash with the exact fixed price; the agent registers a result hash before the deadline and is settled instantly — no approval step, because a chain cannot judge quality. Honesty is anchored by the deadline instead: if nothing is delivered in time, the buyer refunds the full amount in one call, so funds can never wait on a vanished counterparty. Specs and results exist only as hashes in the event log; the single per-order slot (buyer, due) is deleted on both settlement and refund, so completed orders do not exist and the machine's permanent state never grows with sales. Prices, deadline, and agent are immutable — a new price is a new deployment, and the address itself is the price tag. Works identically whether the buyer is a person, a delegated 7702 account, or another agent.",
+  "localized": {
+    "ko": {
+      "name": "켈프 키오스크",
+      "subtitle": "선불 에이전트 주문",
+      "description": "예제 17 — 정가 선결제로 작업을 주문한다. 기한 내 결과 해시 등록으로 즉시 정산, 미달성 시 전액 환불."
+    }
+  },
+  "locales": ["en", "ko"],
+  "category": "tools",
+  "tags": ["ai-agents", "prepaid", "orders", "settlement", "refund"],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "AgentVending",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": ["accounts", "send"],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "digital",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/vending",
+  "x-toolbox-tests": "contracts/test/vending/"
+}
