@@ -1,0 +1,47 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "GOVERNANCE ADJACENT — voting tokens and an on-chain treasury may be characterized as investment contracts or trigger treasury accounting rules depending on jurisdiction. Do not submit to the public registry until legal review is complete (docs/legal-notes.md).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Coral Senate",
+  "subtitle": "Token-weighted DAO",
+  "description": "Example 11 — hash-committed proposals, off-chain weighted vote signatures (zero state per vote), quorum-checked execution behind a timelock window.",
+  "long_description": "Minimal governance for a token-weighted community. Proposals commit only the keccak256 hash of the action they intend to execute — full calldata lives off-chain, and execution re-derives and matches the hash. Voting happens off-chain entirely: holders sign the proposal hash and a relayer submits the sorted bundle; recovered addresses are strictly ascending so duplicates and invalid signatures are rejected in one rule. Vote weight is balanceOf at execution time — a documented trade-off that avoids per-account checkpoint state. After the voting period a timelock window gives dissenters time to exit before anyone may execute. Proposals cost two state slots, each vote costs zero, and executions reuse the existing packed slot: participating at scale costs the state of the proposals alone.",
+  "localized": {
+    "ko": {
+      "name": "코랄 센에이트",
+      "subtitle": "토큰 가중 DAO",
+      "description": "예제 11 — 해시로 커밋한 제안, 오프체인 가중 서명 투표(표당 상태 0), 타임락 창구 뒤의 쿼럼 실행."
+    }
+  },
+  "locales": ["en", "ko"],
+  "category": "tools",
+  "tags": ["dao", "governance", "voting", "timelock", "off-chain-signatures"],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "SimpleDAO",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": ["accounts", "send"],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "none",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/dao",
+  "x-toolbox-tests": "contracts/test/dao/"
+}
