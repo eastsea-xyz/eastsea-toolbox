@@ -41,11 +41,26 @@ library StateMeter {
         internal
         returns (Result memory r)
     {
+        return r = _measure(from, tracked, target, data, 0);
+    }
+
+    /// @dev payable 호출 계량 (msg.value 지정).
+    function measureCallValue(address from, address[] memory tracked, address target, bytes memory data, uint256 value)
+        internal
+        returns (Result memory r)
+    {
+        return r = _measure(from, tracked, target, data, value);
+    }
+
+    function _measure(address from, address[] memory tracked, address target, bytes memory data, uint256 value)
+        private
+        returns (Result memory r)
+    {
         vm.startStateDiffRecording();
         vm.recordLogs();
         uint256 g0 = gasleft();
         vm.prank(from);
-        (bool ok, bytes memory ret) = target.call(data);
+        (bool ok, bytes memory ret) = target.call{value: value}(data);
         uint256 g1 = gasleft();
         VmSafe.AccountAccess[] memory diff = vm.stopAndReturnStateDiff();
         VmSafe.Log[] memory logs = vm.getRecordedLogs();

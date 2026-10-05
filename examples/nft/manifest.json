@@ -1,0 +1,52 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Island Folk Studio",
+  "subtitle": "Onchain NFTs and editions",
+  "description": "Example 2 — onchain-metadata ERC-721 plus finite-edition ERC-1155 sales. No IPFS, no external image gateways.",
+  "long_description": "Two contracts, one pattern: keep the art on the chain. OnchainNFT packs four traits into a single storage slot per token and assembles JSON+SVG data URIs in view calls, so metadata never rots. Editions1155 lets a creator open a finite edition (cap, per-wallet limit, price, royalty bps); buyers pay the exact price and the creator withdraws proceeds — guarded by reentrancy protection, a solvency invariant, and an entry-only brake that never blocks withdrawals.",
+  "localized": {
+    "ko": {
+      "name": "아일랜드 포크 스튜디오",
+      "subtitle": "온체인 NFT와 에디션",
+      "description": "예제 2 — 온체인 메타데이터 ERC-721 + 유한 에디션 ERC-1155 판매. IPFS·외부 게이트웨이 없음."
+    }
+  },
+  "locales": ["en", "ko"],
+  "category": "nft-media",
+  "tags": ["erc721", "erc1155", "onchain", "editions"],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "OnchainNFT 721",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "Editions1155 sales",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": ["accounts", "send", "approve-tokens"],
+  "payees": [],
+  "age_rating": "4+",
+  "commerce": "digital",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/nft",
+  "x-toolbox-tests": "contracts/test/nft/"
+}
