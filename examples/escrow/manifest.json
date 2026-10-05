@@ -1,0 +1,47 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "CUSTODY ADJACENT — holding third-party funds in escrow may trigger custody or e-money registration requirements depending on jurisdiction. Do not submit to the public registry until legal review is complete (docs/legal-notes.md).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Sea Chest",
+  "subtitle": "Milestone escrow",
+  "description": "Example 9 — buyer escrows native coin, approves milestones to release seller funds, refunds the rest anytime. Approvals are irreversible; exits cost 5 state units.",
+  "long_description": "Two-sided escrow for milestone work. The buyer deposits once at deal creation; each approveMilestone moves the specified amount into the seller's withdrawable balance. Unapproved remainder is refundable by the buyer at any moment — even under the emergency brake, since refunds and withdrawals are exits. Milestone amounts are specified at approval time instead of a stored array: the chain proves how much was released, the off-chain agreement holds the schedule. Irreversible approvals are what make the accounting race-free.",
+  "localized": {
+    "ko": {
+      "name": "시 체스트",
+      "subtitle": "마일스톤 에스크로",
+      "description": "예제 9 — 구매자가 예치하고 마일스톤 승인으로 판매자에게 인출권을 넘긴다. 미승인 잔여는 언제든 회수 가능하다."
+    }
+  },
+  "locales": ["en", "ko"],
+  "category": "payments",
+  "tags": ["escrow", "milestones", "freelance", "native-coin", "pull-payments"],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "MilestoneEscrow",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": ["accounts", "send"],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "p2p",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/escrow",
+  "x-toolbox-tests": "contracts/test/escrow/"
+}
