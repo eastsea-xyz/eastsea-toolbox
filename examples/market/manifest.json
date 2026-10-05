@@ -1,0 +1,46 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Harbor Market",
+  "subtitle": "Fixed-price NFT marketplace",
+  "description": "Example 3 — escrow listings, EIP-2981 royalty split, pull payments. The F-01 reentrancy playbook.",
+  "long_description": "Sellers escrow an NFT with a fixed price. Buyers pay the exact amount and receive the NFT immediately; proceeds are never pushed - they accrue as credits for the seller and the royalty receiver, who each withdraw on their own. Settlement is finalized before the NFT transfer, every entry point is reentrancy-guarded, and cancel/withdraw stay open even under a full brake. Royalty is honored via EIP-2981 when the collection supports it (code-length checked first) and clamped at 100%.",
+  "localized": {
+    "ko": {
+      "name": "하버 마켓",
+      "subtitle": "고정가 NFT 마켓플레이스",
+      "description": "예제 3 — 에스크로 리스팅, EIP-2981 로열티 분할, pull payments."
+    }
+  },
+  "locales": ["en", "ko"],
+  "category": "nft-media",
+  "tags": ["marketplace", "erc721", "royalty", "pull-payments"],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "FixedPriceMarket",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": ["accounts", "send", "approve-tokens"],
+  "payees": [],
+  "age_rating": "4+",
+  "commerce": "p2p",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/market",
+  "x-toolbox-tests": "contracts/test/market/FixedPriceMarket.t.sol"
+}
