@@ -1,0 +1,47 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "AIRDROP ADJACENT — free distributions can still trigger marketing, tax, and securities scrutiny depending on selection criteria and prior trading. No referral-coin structures. Do not submit to the public registry until legal review is complete (docs/legal-notes.md).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Pearl Drop",
+  "subtitle": "Merkle airdrop",
+  "description": "Example 13 — a 32-byte Merkle root commits the whole recipient list; claimants prove membership and are paid once before the deadline.",
+  "long_description": "Distribution without a distribution list on chain. The deployer commits an arbitrary-size recipient list as a single Merkle root at deploy time; each recipient later proves membership with a logarithmic-size proof and is paid their exact committed amount, once. Leaves bind address and amount together, so a stolen proof is useless to anyone else. The claim window closes at an immutable deadline, after which a permissionless sweep returns the entire unclaimed remainder to the fixed distributor — a typo'd root or an abandoned drop can never strand funds. State cost per claim is one slot paid by the claimant, not the deployer: the deployer's entire commitment is 32 bytes.",
+  "localized": {
+    "ko": {
+      "name": "펄 드롭",
+      "subtitle": "머클 에어드랍",
+      "description": "예제 13 — 32바이트 머클 루트가 명단 전체를 커밋하고, 수령인이 증명으로 마감 전 1회 청구한다."
+    }
+  },
+  "locales": ["en", "ko"],
+  "category": "payments",
+  "tags": ["airdrop", "merkle", "distribution", "claims", "proof"],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "MerkleAirdrop",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": ["accounts", "send"],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "none",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/airdrop",
+  "x-toolbox-tests": "contracts/test/airdrop/"
+}
