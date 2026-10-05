@@ -1,0 +1,46 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "CUSTODY ADJACENT — a multisig controlling pooled funds may trigger custody or business-registration requirements depending on assets and jurisdiction. Do not submit to the public registry until legal review is complete (docs/legal-notes.md).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Tidal Council",
+  "subtitle": "Threshold multisig",
+  "description": "Example 8 — K-of-N multisig with off-chain signature collection. One execute leaves a single state slot; domain separation blocks replay across chains and instances.",
+  "long_description": "A minimal threshold wallet. Owners collect signatures off-chain (personal_sign over a domain-separated hash) and anyone relays the bundled execute transaction. Strictly ascending owner signatures reject duplicates, invalid sigs and unsorted bundles in one comparison; replay is blocked three ways — executed-hash ledger, chainId in the domain, and contract address in the domain. Static owner set: no upgrade or owner-change surface to attack. Failed target calls revert the whole execution with the return data.",
+  "localized": {
+    "ko": {
+      "name": "타이달 카운슬",
+      "subtitle": "임계치 멀티시그",
+      "description": "예제 8 — 서명을 오프체인에서 수집하는 K-of-N 멀티시그. 실행 트랜잭션 하나가 체인에 남기는 상태는 슬롯 1개뿐이다."
+    }
+  },
+  "locales": ["en", "ko"],
+  "category": "tools",
+  "tags": ["multisig", "threshold", "signatures", "wallet", "governance-lite"],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "SimpleMultisig",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox"
+    }
+  ],
+  "connect": [],
+  "permissions": ["accounts", "send"],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "none",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/multisig",
+  "x-toolbox-tests": "contracts/test/multisig/"
+}
