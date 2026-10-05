@@ -1,0 +1,53 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "PROMOTION ADJACENT — gated giveaways can still trigger marketing, tax, and securities scrutiny depending on selection criteria. Eligibility is delegated to the public name service: the app charges nothing and receives nothing (registration fees are burned by the system contract). No referral-coin structures. Do not submit to the public registry until legal review is complete (docs/legal-notes.md).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Reef Drop",
+  "subtitle": "Name-gated drop",
+  "description": "Example 15 — a fixed-amount drop whose eligibility is fully delegated to the .aeth name service: only accounts with an honest primary name can claim.",
+  "long_description": "A giveaway with no on-chain list. The deployer commits to nothing but a fixed amount, a deadline, and the system name service; eligibility is simply reverseOf(claimant) returning a live primary name. The name service's honesty condition does the real work — expired names, names whose address record moved, and stale reverse claims all answer the empty string, so the drop never needs its own expiry or identity logic. Names are never stored in contract state: eligibility is a view call at claim time and the claimed name rides in the event log only, leaving one bit of permanent state per claimant. Anyone may fund the pool; after the immutable deadline a permissionless sweep returns the entire remainder to the fixed distributor, so nothing can be stranded.",
+  "localized": {
+    "ko": {
+      "name": "리프 드롭",
+      "subtitle": "이름 자격 드롭",
+      "description": "예제 15 — 자격 판정을 .aeth 이름 서비스에 위임한 고정액 드롭. 정직한 primary name을 가진 계정만 청구한다."
+    }
+  },
+  "locales": ["en", "ko"],
+  "category": "names",
+  "tags": ["name-service", "eligibility", "drop", "claims", "identity"],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "NameGatedDrop",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "EastSeaNames (system)",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": ["accounts", "send"],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "none",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/names",
+  "x-toolbox-tests": "contracts/test/names/"
+}
