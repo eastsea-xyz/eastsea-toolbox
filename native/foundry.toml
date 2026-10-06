@@ -20,8 +20,8 @@ solc_version = "0.8.31"
 evm_version = "osaka"
 optimizer = true
 optimizer_runs = 200
-# Foundry lifts EIP-170 for test deployments by default; EastSea does not.
-code_size_limit = 24576
+# Foundry lifts EIP-170 for test deployments; test contracts need that. Each
+# item instead asserts its deployed runtime stays within EastSea's 24,576 B.
 fs_permissions = [{ access = "read", path = "./claims/test/fixtures" }]
 
 [profile.default.fuzz]
@@ -34,3 +34,8 @@ fail_on_revert = false
 
 [profile.ci.fuzz]
 runs = 1000
+
+[lint]
+# `1 << n` is the intended order in bitmap code; tests use deliberate casts.
+exclude_lints = ["incorrect-shift"]
+ignore = ["*/test/*.sol", "common/test/*.sol"]
