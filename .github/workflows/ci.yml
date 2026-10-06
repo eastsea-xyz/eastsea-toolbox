@@ -28,6 +28,9 @@ jobs:
         env:
           FOUNDRY_FUZZ_RUNS: 1000
 
+      - name: Native templates (fmt + test, fuzz 1000)
+        run: cd native && forge fmt --check && FOUNDRY_PROFILE=ci forge test
+
   manifests:
     name: app manifests (eastsea-app/1)
     runs-on: ubuntu-latest

@@ -4,7 +4,7 @@ People wanted to exchange assets, get liquidity without selling, pay collaborato
 
 Founder direction, 2026-10-06: **“그 계약들이 뭘 해결하려고 했는지에 보다 집중해줘.”** Start with the person and the problem, then select the layer. A new mechanism is useful only if it improves the completed user task.
 
-These are **design documents only**. No native contracts, measured performance results, deployments, or superiority claims are supplied. The original-compatibility track remains a separate control: an original running unchanged does not prove this native design is good. [Source boundary](PRIMITIVES.md#source-boundary).
+These began as **design documents only**. Lane B0–B2 now have unaudited Foundry implementations in [claims](claims/README.md), [streams](streams/README.md) and [escrow](escrow/README.md), with shared pieces in [common](common/README.md); build them with `cd native && forge test`. They are provided AS IS for testing and benchmarking. No measured EastSea performance results, deployments or superiority claims are supplied: each item's GAS.md is a placeholder until the executor recorder runs. The original-compatibility track remains a separate control: an original running unchanged does not prove this native design is good. [Source boundary](PRIMITIVES.md#source-boundary).
 
 ## What EastSea changes
 
