@@ -64,7 +64,9 @@ library StateMeter {
         uint256 g1 = gasleft();
         VmSafe.AccountAccess[] memory diff = vm.stopAndReturnStateDiff();
         VmSafe.Log[] memory logs = vm.getRecordedLogs();
-        if (!ok) assembly { revert(add(ret, 32), mload(ret)) }
+        if (!ok) {
+            assembly { revert(add(ret, 32), mload(ret)) }
+        }
         r.gasUsed = g0 - g1;
         _foldDiff(r, diff, tracked);
         r.logBytes = _logBytes(logs);
