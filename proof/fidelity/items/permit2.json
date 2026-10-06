@@ -1,0 +1,15 @@
+{
+  "catalog": "E7",
+  "name": "Permit2",
+  "licence": "MIT",
+  "folder": "originals/mit",
+  "repo": "https://github.com/Uniswap/permit2",
+  "commit": "cc306b601f172c51bc04334a109e98340456620b",
+  "entry": "src/Permit2.sol",
+  "contract": "Permit2",
+  "submodules": true,
+  "remappings": ["solmate/=lib/solmate/src/"],
+  "compiler": { "solc": "0.8.17", "optimizer": true, "runs": 1000000, "viaIR": true, "bytecodeHash": "none" },
+  "settingsSource": "upstream foundry.toml; commit = upstream tag named after the mainnet address",
+  "mainnet": { "chainId": 1, "address": "0x000000000022D473030F116dDEE9F6B43aC78BA3" }
+}

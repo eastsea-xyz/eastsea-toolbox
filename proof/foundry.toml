@@ -1,0 +1,28 @@
+# EastSea proof bench — hazard probes H1-H11 (H12-H14 are not EVM-observable;
+# see probes/README.md).
+#
+# EastSea executes with revm at the Osaka spec today (clone-catalog B4), so the
+# probes compile and run against `evm_version = "osaka"`: PUSH0, TSTORE/TLOAD,
+# MCOPY, CLZ (0x1e), BLOBHASH, BLS12-381, P256VERIFY (0x100) are all live.
+#
+# The probe contracts under probes/src/ are standalone (no forge-std, no
+# cheatcodes): each exposes `run()` which reverts on mismatch. The same files
+# are compiled by the EastSea executor harness later; only probes/test/ uses
+# cheatcodes, to stage state (vm.etch, vm.prank).
+
+[profile.default]
+src = "probes/src"
+test = "probes/test"
+out = "out"
+cache_path = "cache"
+solc_version = "0.8.31"
+evm_version = "osaka"
+optimizer = true
+optimizer_runs = 200
+# 5159: selfdestruct deprecation (H10 probes it on purpose).
+ignored_error_codes = [5159]
+# Foundry lifts EIP-170 for test deployments by default; EastSea does not.
+code_size_limit = 24576
+
+[profile.ci]
+fuzz = { runs = 1000 }

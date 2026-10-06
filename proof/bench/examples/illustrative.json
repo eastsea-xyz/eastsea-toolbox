@@ -1,0 +1,63 @@
+{
+  "schema": "eastsea-proof-bench/1",
+  "item": {
+    "id": "E4",
+    "name": "Uniswap V2 core",
+    "track": "originals",
+    "folder": "originals/gpl/uniswap-v2-core",
+    "licence": "GPL-3.0",
+    "upstream": { "repo": "https://github.com/Uniswap/v2-core", "commit": "27f6354bae6685612c182c3bc7577e61bc8717e3" }
+  },
+  "environment": {
+    "kind": "executor-harness",
+    "date": "2026-10-06",
+    "toolbox_commit": "0000000",
+    "eastsea_commit": "0000000",
+    "evm_spec": "osaka",
+    "state_floor_wei_per_unit": "1000000000000",
+    "limits": {
+      "block_exec_gas": 30000000,
+      "block_prove_gas": 200000000,
+      "tx_gas_cap": 16777216,
+      "state_burst_units": 100000,
+      "state_refill_units_per_block": 32,
+      "new_slots_per_block": 512,
+      "payload_bytes_per_block": 2097152
+    },
+    "notes": "ILLUSTRATIVE SHAPE ONLY. The numbers in this file are not measurements."
+  },
+  "fidelity": { "verdict": "MATCH", "detail": "byte-identical (Factory)" },
+  "hazards": [
+    { "id": "H3", "result": "expected-fail", "blocker": "B1", "note": "LP permit() is ecrecover-only" },
+    { "id": "H9", "result": "pass" },
+    { "id": "H14", "result": "pass" }
+  ],
+  "actions": [
+    {
+      "contract": "UniswapV2Pair",
+      "action": "swap",
+      "scenario": "recipient already holds token1",
+      "outcome": "ok",
+      "exec_gas": 0,
+      "prove_gas": 0,
+      "state_units": 0,
+      "new_slots": 0,
+      "persisted_bytes": 0,
+      "fee_at_floor_wei": "0",
+      "ethereum_gas": null,
+      "actions_per_block": null,
+      "binding_limit": null,
+      "sustained_per_day": null,
+      "latency_ms": null,
+      "user_signatures": 1,
+      "log": "proof/logs/E4/swap.jsonl"
+    }
+  ],
+  "verdict": {
+    "runs_on_eastsea": "with_changes",
+    "summary": "Illustrative: core runs unmodified; LP permit needs an on-chain approve instead.",
+    "changes": ["LP permit() replaced by approve + action batched in one execute(Call[])"],
+    "blockers": ["B1"]
+  },
+  "logs": []
+}

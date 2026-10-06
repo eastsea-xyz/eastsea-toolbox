@@ -1,0 +1,13 @@
+{
+  "catalog": "E4",
+  "name": "Uniswap V2 Factory (embeds the Pair creation code)",
+  "licence": "GPL-3.0",
+  "folder": "originals/gpl",
+  "repo": "https://github.com/Uniswap/v2-core",
+  "commit": "27f6354bae6685612c182c3bc7577e61bc8717e3",
+  "entry": "contracts/UniswapV2Factory.sol",
+  "contract": "UniswapV2Factory",
+  "compiler": { "solc": "0.5.16", "optimizer": true, "runs": 999999, "evmVersion": "istanbul" },
+  "settingsSource": "upstream .waffle.json (istanbul, optimizer 999999)",
+  "mainnet": { "chainId": 1, "address": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f" }
+}

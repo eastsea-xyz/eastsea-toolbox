@@ -1,0 +1,13 @@
+{
+  "catalog": "E1",
+  "name": "Multicall3",
+  "licence": "MIT",
+  "folder": "originals/mit",
+  "repo": "https://github.com/mds1/multicall",
+  "commit": "ebd8b64457454fc10037b3a3ea858f9c08dad4d3",
+  "entry": "src/Multicall3.sol",
+  "contract": "Multicall3",
+  "compiler": { "solc": "0.8.12", "optimizer": true, "runs": 10000000 },
+  "settingsSource": "upstream foundry.toml (solc 0.8.12, optimizer_runs 10_000_000)",
+  "mainnet": { "chainId": 1, "address": "0xcA11bde05977b3631167028862bE2a173976CA11" }
+}

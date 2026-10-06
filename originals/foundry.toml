@@ -1,0 +1,66 @@
+# originals/ — one profile per compiler setting the clone catalog lists.
+# Lanes pick sources with `--contracts` / `--match-path`; the default `src`
+# is empty on purpose so no profile compiles mixed solc versions by accident.
+# Exact per-contract settings live in proof/fidelity/items/*.json.
+# out/ and cache/ stay inside this folder and are gitignored.
+
+[profile.default]
+src = "src"
+test = "test"
+out = "out"
+cache_path = "cache"
+libs = ["mit", "gpl", "agpl", "busl"]
+auto_detect_solc = true
+optimizer = true
+optimizer_runs = 200
+evm_version = "cancun"
+
+# E3 WETH9 (Etherscan: v0.4.19, optimizer off)
+[profile.solc-0_4_19]
+solc_version = "0.4.19"
+optimizer = false
+evm_version = "byzantium"
+
+# E4 Uniswap V2 core (.waffle.json: istanbul, 999999)
+[profile.solc-0_5_16]
+solc_version = "0.5.16"
+optimizer = true
+optimizer_runs = 999999
+evm_version = "istanbul"
+
+# E4 Uniswap V2 Router02
+[profile.solc-0_6_6]
+solc_version = "0.6.6"
+optimizer = true
+optimizer_runs = 999999
+evm_version = "istanbul"
+
+# E16 Liquity V1 (runs confirmed by its fidelity manifest)
+[profile.solc-0_6_11]
+solc_version = "0.6.11"
+optimizer = true
+optimizer_runs = 100
+evm_version = "istanbul"
+
+# E25 Maker DSS (stretch)
+[profile.solc-0_6_12]
+solc_version = "0.6.12"
+optimizer = true
+optimizer_runs = 200
+evm_version = "istanbul"
+
+# E5 Uniswap V3 (core 800 runs; periphery per item), E8 Safe 1.x
+[profile.solc-0_7_6]
+solc_version = "0.7.6"
+optimizer = true
+optimizer_runs = 800
+evm_version = "istanbul"
+
+# Everything on solc 0.8.x: version from each file's pragma.
+[profile.solc-0_8]
+auto_detect_solc = true
+optimizer = true
+optimizer_runs = 200
+evm_version = "cancun"
+
+# Vyper (E17 Yearn V3, vyper 0.3.7): built by proof/fidelity.py, not Foundry.
