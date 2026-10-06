@@ -71,6 +71,9 @@ apps/<slug>/        정적 프론트엔드 — 단일 index.html, 빌드·서버
 apps/index.html     앱 카탈로그
 templates/publish/  배포 도구 — 스키마 사본, manifest 검증기, bundle-hash
 docs/               paid-state-design · safety-checklist · legal-notes
+originals/          다른 체인의 원본 계약 (라이선스별 mit/ gpl/ agpl/ busl/, 수정 없음)
+clones/             솔라나·무라이선스 원본의 클린룸 재구현 (MIT)
+proof/              증명 벤치 — 위험 프로브, 충실도 검사, 벤치 스키마, REPORT.md
 ```
 
 ### 프론트엔드
@@ -103,6 +106,43 @@ https://<host>/apps/vending/?contract=0x1234…
   ≈5u). 문자열은 로그에, 완결은 delete, 통계는 이벤트 스캔 —
   `docs/paid-state-design.md`
 - **수익·가격 약속 없음, 코인 추천 리워드 없음** — 전 예제 공통.
+
+## 다른 체인의 킬러 계약이 EastSea에서 돈다는 증명 (proof/)
+
+이더리움·솔라나에서 가장 많이 쓰이는 계약들이 EastSea에서도 정상적으로 동작하는지 테스트하고, 그 결과를 코드와 함께 공개한다. 계약 목록과 순서는 clone catalog를 따른다. 증명은 두 갈래로 나뉜다.
+
+- **원본 (`originals/`)**: 업스트림 소스를 한 줄도 고치지 않고 정확한 커밋에 고정한 것이다(git submodule). 원본을 원래 컴파일러 설정으로 다시 빌드한 바이트코드가 이더리움 메인넷 `eth_getCode`와 같으면, 이더리움에서 도는 바로 그 코드가 EastSea에서 테스트되었다는 뜻이 된다. 이것이 EVM 호환성의 가장 강한 증거다.
+- **클린룸 재구현 (`clones/`, MIT)**: 다음 두 경우에 해당하는 계약은 **같은 사용자 동작**을 Solidity로 다시 만든다. 공개 명세만 보고 작성하며, 원본 소스는 읽지 않는다.
+  - 솔라나 프로그램: EVM에서 돌 수 없다.
+  - 라이선스가 없거나 독점 라이선스인 원본: Curve, Orca, Metaplex 등.
+
+EastSea 구조에 맞춰 더 낫게 다시 설계한 것은 `native/` 트랙에 따로 둔다. 원본과 1:1로 벤치마크하며, 증명용 원본과는 섞지 않는다.
+
+**라이선스는 폴더로 분리한다.** 툴박스 루트는 MIT 그대로 둔다.
+
+| 폴더 | 라이선스 | 규칙 |
+|---|---|---|
+| `originals/mit/` | MIT · BSD-3 · Apache-2.0 · Unlicense | 원본 저작권 고지 유지 |
+| `originals/gpl/` | GPL-2.0+ · GPL-3.0 · LGPL-3.0 | 이 폴더의 우리 테스트도 GPL-3.0-or-later |
+| `originals/agpl/` | AGPL-3.0 | MIT 예제로 가져오지 않는다(Solmate 포함) |
+| `originals/busl/` | BUSL-1.1 (유효 기간 중) | 서브모듈만 둔다. 테스트·테스트넷 전용이며 메인넷 배포는 하지 않는다 |
+
+**방법.** 항목마다 다음 네 가지를 수행한다. 테스트 결과에 따라 판정은 **된다 / 바꾸면 된다(무엇을) / 안 된다(왜)** 중 하나로 내린다.
+
+1. **충실도(fidelity)**: `proof/fidelity.py`로 원본을 다시 빌드해 메인넷 바이트코드와 비교한다. 메타데이터와 immutable 값은 가린다.
+   - Multicall3, WETH9, Uniswap V2 Factory, Permit2: 4개 모두 일치한다. V2 Factory는 바이트 단위로 완전히 같다.
+2. **동작**: 사용자 시나리오를 Foundry와 EastSea executor harness에서 각각 실행한다.
+3. **위험 프로브 H1–H14**: `proof/probes/`. EastSea의 EVM 프로필(Osaka 옵코드·프리컴파일 가스, prevrandao 0, 약 1초 블록, 7702 위임 계정, 정식 주소 부재)을 고정하는 독립 계약들이다. 계약 하나가 기대와 다르면 `run()`이 revert한다.
+4. **벤치마크**: `proof/bench/schema.json` 형식으로 기록한다. 기록 항목은 exec·prove 가스, 상태 units, 새 슬롯, 영구 바이트, 바닥 가격 수수료, 블록당 처리량과 그 처리량을 묶는 한도, 일일 지속량, 실측 지연이다.
+
+결과는 `proof/REPORT.md`에 항목당 한 줄로 모은다. **결과는 중립적인 측정치일 뿐 추천이 아니다.** 방법, 고정 커밋, 원시 로그, 실패를 모두 똑같이 드러내 공개한다. 원본 코드는 **있는 그대로(AS IS)** 테스트·벤치마크용으로만 둔다. 우리는 이 코드를 배포·운영하지 않고 프런트엔드도 운영하지 않는다. 배포나 사용의 책임은 배포자·사용자에게 있다. 프로토콜 이름은 원본을 식별하려고 쓸 뿐이며, 원 저자의 보증을 뜻하지 않는다.
+
+```bash
+make proof                          # 프로브 + 충실도 검사(오프라인, 캐시 사용)
+cd proof && forge test              # H1–H11 프로브만
+python3 proof/fidelity.py --fetch   # 새 항목: 소스와 메인넷 코드를 처음 받을 때
+python3 proof/bench/validate.py     # 벤치 기록 스키마 검증
+```
 
 ## CI
 

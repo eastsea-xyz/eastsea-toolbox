@@ -1,4 +1,4 @@
-.PHONY: help test test-deep fmt fmt-check manifests bundle apps build clean
+.PHONY: help test test-deep fmt fmt-check manifests bundle apps build clean proof
 
 help:
 	@echo "test       forge test (default fuzz runs)"
@@ -8,6 +8,7 @@ help:
 	@echo "manifests  validate examples/*/manifest.json against eastsea-app/1"
 	@echo "apps       regenerate static front-ends under apps/"
 	@echo "bundle     print canonical bundle hash for an example (make bundle SLUG=vending)"
+	@echo "proof      H1-H11 hazard probes + offline fidelity check (proof/)"
 
 test:
 	cd contracts && forge test
@@ -30,6 +31,11 @@ bundle:
 
 apps:
 	python3 scripts/gen-apps.py
+
+proof:
+	cd proof && forge test
+	python3 proof/fidelity.py
+	python3 proof/bench/validate.py
 
 build: test manifests fmt-check
 
