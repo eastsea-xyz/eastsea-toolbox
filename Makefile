@@ -1,4 +1,4 @@
-.PHONY: help test test-deep fmt fmt-check manifests bundle apps build clean proof
+.PHONY: help test test-deep fmt fmt-check manifests bundle apps build clean proof native native-fmt-check
 
 help:
 	@echo "test       forge test (default fuzz runs)"
@@ -9,6 +9,7 @@ help:
 	@echo "apps       regenerate static front-ends under apps/"
 	@echo "bundle     print canonical bundle hash for an example (make bundle SLUG=vending)"
 	@echo "proof      H1-H11 hazard probes + offline fidelity check (proof/)"
+	@echo "native     EastSea-native templates: forge test + fmt check (native/)"
 
 test:
 	cd contracts && forge test
@@ -38,6 +39,10 @@ proof:
 	python3 proof/bench/validate.py
 
 build: test manifests fmt-check
+
+native:
+	cd native && forge test
+	cd native && forge fmt --check
 
 clean:
 	cd contracts && forge clean

@@ -1,0 +1,36 @@
+# native/ — EastSea-native templates (Lane B: claims, streams, escrow).
+#
+# Separate from contracts/ (the published examples) and from originals/
+# (unchanged upstream code). EastSea executes revm at the Osaka spec
+# (proof/foundry.toml), so the native templates compile for osaka and use
+# transient storage for their reentrancy locks.
+#
+# Each item keeps its own src/ and test/ folders: native/<item>/{src,test}.
+# out/ and cache/ stay inside native/ and are gitignored by the root rule.
+
+[profile.default]
+src = "."
+test = "."
+script = "script"
+out = "out"
+cache_path = "cache"
+libs = ["../contracts/lib"]
+remappings = ["forge-std/=../contracts/lib/forge-std/src/"]
+solc_version = "0.8.31"
+evm_version = "osaka"
+optimizer = true
+optimizer_runs = 200
+# Foundry lifts EIP-170 for test deployments by default; EastSea does not.
+code_size_limit = 24576
+fs_permissions = [{ access = "read", path = "./claims/test/fixtures" }]
+
+[profile.default.fuzz]
+runs = 512
+
+[profile.default.invariant]
+runs = 128
+depth = 64
+fail_on_revert = false
+
+[profile.ci.fuzz]
+runs = 1000
