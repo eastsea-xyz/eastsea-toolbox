@@ -90,4 +90,5 @@ brake가 장기화되면 신규 매출은 멈추지만 기존 구독은 시간�
 | 키퍼가 settle을 악용? | 불가 — settle은 reserve를 줄일 뿐 인도 대상은 payee로 고정. 사용자 몫을 건드리지 않는다 |
 | uint88 contributed 한도 | 납입 누적 ~3.09e26 wei(약 3억 ETH) — 초과 시 revert만 나고 자금 손실 없음. 사실상 도달 불가 |
 | uint64 만료 시각 | 서기 2554년 — 사실상 무제한 |
+| 경계 초과 납입 강제 | subscribe가 캐스트 전에 uint64 기간·uint88 원금의 잔여 범위를 검사 — 초과분은 `AmountTooLarge`로 거부되어 잘린 기간·인도 불가 원금이 남지 않는다 (SubscriptionBounds.t.sol) |
 | payee 개인키 분실 | payee는 수신 전용 — claim은 **누구나** 호출 가능하므로 payee가 행동 못 해도 수익 인도는 가능. 단 수취 주소 변경은 불가(immutable) |
