@@ -36,6 +36,7 @@ fail_on_revert = false
 runs = 1000
 
 [lint]
-# `1 << n` is the intended order in bitmap code; tests use deliberate casts.
-exclude_lints = ["incorrect-shift"]
+# `1 << n` is the intended order in bitmap code; vesting and escrow deadlines
+# are wall-clock by design (see each SECURITY.md); tests use deliberate casts.
+exclude_lints = ["incorrect-shift", "block-timestamp"]
 ignore = ["*/test/*.sol", "common/test/*.sol"]
