@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/eastsea/eastsea-toolbox/proof/bench/schema.json",
+  "title": "eastsea-proof-bench/1",
+  "description": "One benchmark record per item (original, clone or native design) and environment. Neutral measurements: failures are recorded as prominently as passes. See proof/bench/README.md for field definitions and derivation formulas.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "item", "environment", "actions", "verdict"],
+  "properties": {
+    "schema": { "const": "eastsea-proof-bench/1" },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "track", "folder"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^(E|S|N)[0-9]+[a-z]?$", "description": "Catalog id: E = Ethereum original, S = Solana behaviour, N = native design" },
+        "name": { "type": "string", "minLength": 1 },
+        "track": { "enum": ["originals", "clones", "native"] },
+        "folder": { "type": "string", "description": "Repo path of the code under test, e.g. originals/gpl/uniswap-v2-core" },
+        "licence": { "type": "string", "description": "SPDX identifier of the code under test" },
+        "upstream": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["repo", "commit"],
+          "properties": {
+            "repo": { "type": "string" },
+            "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+          }
+        },
+        "compares_with": { "type": "string", "description": "native track only: catalog id of the original this design is benchmarked against" }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "date", "toolbox_commit"],
+      "properties": {
+        "kind": { "enum": ["foundry", "executor-harness", "devnet", "testnet"] },
+        "date": { "type": "string", "format": "date" },
+        "toolbox_commit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
+        "eastsea_commit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$", "description": "aether-node commit of the executor or node; required except for kind = foundry" },
+        "evm_spec": { "type": "string", "examples": ["osaka"] },
+        "state_floor_wei_per_unit": { "$ref": "#/$defs/uintString" },
+        "limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Limits in force for the run; actions_per_block is computed against these.",
+          "properties": {
+            "block_exec_gas": { "type": "integer", "minimum": 1 },
+            "block_prove_gas": { "type": "integer", "minimum": 1 },
+            "tx_gas_cap": { "type": "integer", "minimum": 1 },
+            "state_burst_units": { "type": "integer", "minimum": 1 },
+            "state_refill_units_per_block": { "type": "integer", "minimum": 1 },
+            "new_slots_per_block": { "type": "integer", "minimum": 1 },
+            "payload_bytes_per_block": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "notes": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "not": { "const": "foundry" } } } },
+          "then": { "required": ["eastsea_commit", "limits", "state_floor_wei_per_unit"] }
+        }
+      ]
+    },
+    "fidelity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict"],
+      "properties": {
+        "verdict": { "enum": ["MATCH", "MATCH (modulo metadata)", "MATCH (modulo immutables)", "MISMATCH", "NOT_COMPARABLE"] },
+        "detail": { "type": "string" }
+      }
+    },
+    "hazards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "result"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^H(1[0-4]|[1-9])$" },
+          "result": { "enum": ["pass", "fail", "expected-fail", "n/a"], "description": "expected-fail = fails today for a known, documented blocker (e.g. B1/B2)" },
+          "blocker": { "type": "string", "pattern": "^B[0-9]+$" },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/action" }
+    },
+    "verdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runs_on_eastsea", "summary"],
+      "properties": {
+        "runs_on_eastsea": { "enum": ["yes", "with_changes", "no"] },
+        "summary": { "type": "string", "minLength": 1, "description": "One line: what ran, and what did not" },
+        "changes": { "type": "array", "items": { "type": "string" }, "description": "with_changes: each change (deploy parameter, on-chain path instead of off-chain signature, ...)" },
+        "why_not": { "type": "string", "description": "no: the reason" },
+        "blockers": { "type": "array", "items": { "type": "string", "pattern": "^B[0-9]+$" } }
+      },
+      "allOf": [
+        { "if": { "properties": { "runs_on_eastsea": { "const": "with_changes" } } }, "then": { "required": ["changes"] } },
+        { "if": { "properties": { "runs_on_eastsea": { "const": "no" } } }, "then": { "required": ["why_not"] } }
+      ]
+    },
+    "logs": { "type": "array", "items": { "type": "string" }, "description": "Paths or URLs of raw logs for this record" }
+  },
+  "$defs": {
+    "uintString": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$", "description": "Unsigned integer as a decimal string (wei values exceed 2^53)" },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract", "action", "outcome", "exec_gas", "state_units", "new_slots", "persisted_bytes"],
+      "properties": {
+        "contract": { "type": "string" },
+        "action": { "type": "string", "description": "deploy, or the user action (swap, addLiquidity, safeTransferFrom, ...)" },
+        "scenario": { "type": "string", "description": "What makes this case distinct, e.g. 'first receive by a new holder', 'crosses 3 initialised ticks'" },
+        "outcome": { "enum": ["ok", "reverted", "rejected"], "description": "rejected = refused before execution (budget, signature, size)" },
+        "exec_gas": { "type": "integer", "minimum": 0 },
+        "prove_gas": { "type": ["integer", "null"], "minimum": 0, "description": "null when the environment cannot measure it (foundry)" },
+        "state_units": { "type": ["integer", "null"], "minimum": 0, "description": "null when the environment cannot measure it (foundry)" },
+        "new_slots": { "type": "integer", "minimum": 0 },
+        "persisted_bytes": { "type": ["integer", "null"], "minimum": 0 },
+        "fee_at_floor_wei": { "$ref": "#/$defs/uintString", "description": "state_units x floor price; exec/prove base fee 0 at or under target" },
+        "ethereum_gas": { "type": ["integer", "null"], "minimum": 0, "description": "Mainnet gas for the same action, as a neutral reference" },
+        "actions_per_block": { "type": ["integer", "null"], "minimum": 0 },
+        "binding_limit": { "enum": ["exec_gas", "prove_gas", "state_burst", "new_slots", "payload", "tx_gas_cap", null] },
+        "sustained_per_day": { "type": ["integer", "null"], "minimum": 0, "description": "refill units per day / state_units" },
+        "latency_ms": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["samples", "inclusion_p50", "inclusion_p95", "finality_p50", "finality_p95"],
+          "properties": {
+            "samples": { "type": "integer", "minimum": 100 },
+            "inclusion_p50": { "type": "number", "minimum": 0 },
+            "inclusion_p95": { "type": "number", "minimum": 0 },
+            "finality_p50": { "type": "number", "minimum": 0 },
+            "finality_p95": { "type": "number", "minimum": 0 }
+          }
+        },
+        "user_signatures": { "type": ["integer", "null"], "minimum": 0, "description": "Signatures the user makes for this action (native-vs-original comparisons)" },
+        "log": { "type": "string" }
+      }
+    }
+  }
+}
