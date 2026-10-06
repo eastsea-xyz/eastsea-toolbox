@@ -1,4 +1,5 @@
-# native/ — EastSea-native templates (Lane B: claims, streams, escrow).
+# native/ — EastSea-native templates (Lane B: claims, streams, escrow;
+# Lane C: token probes, swap pool).
 #
 # Separate from contracts/ (the published examples) and from originals/
 # (unchanged upstream code). EastSea executes revm at the Osaka spec
@@ -39,4 +40,4 @@ runs = 1000
 # `1 << n` is the intended order in bitmap code; vesting and escrow deadlines
 # are wall-clock by design (see each SECURITY.md); tests use deliberate casts.
 exclude_lints = ["incorrect-shift", "block-timestamp"]
-ignore = ["*/test/*.sol", "common/test/*.sol"]
+ignore = ["*/test/*.sol", "*/test/sim/*.sol", "common/test/*.sol"]

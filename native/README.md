@@ -4,7 +4,7 @@ People wanted to exchange assets, get liquidity without selling, pay collaborato
 
 Founder direction, 2026-10-06: **“그 계약들이 뭘 해결하려고 했는지에 보다 집중해줘.”** Start with the person and the problem, then select the layer. A new mechanism is useful only if it improves the completed user task.
 
-These began as **design documents only**. Lane B0–B2 now have unaudited Foundry implementations in [claims](claims/README.md), [streams](streams/README.md) and [escrow](escrow/README.md), with shared pieces in [common](common/README.md); build them with `cd native && forge test`. They are provided AS IS for testing and benchmarking. No measured EastSea performance results, deployments or superiority claims are supplied: each item's GAS.md is a placeholder until the executor recorder runs. The original-compatibility track remains a separate control: an original running unchanged does not prove this native design is good. [Source boundary](PRIMITIVES.md#source-boundary).
+These began as **design documents only**. Lane B0–B2 now have unaudited Foundry implementations in [claims](claims/README.md), [streams](streams/README.md) and [escrow](escrow/README.md), with shared pieces in [common](common/README.md). Lane C0–C1 add [token probes](probes/README.md), a seeded pool simulation with a test-only reference price, and the [swap pool](swap-pool/README.md). Build them with `cd native && forge test`. They are provided AS IS for testing and benchmarking. No measured EastSea performance results, deployments or superiority claims are supplied: each item's GAS.md is a placeholder until the executor recorder runs. The original-compatibility track remains a separate control: an original running unchanged does not prove this native design is good. [Source boundary](PRIMITIVES.md#source-boundary).
 
 ## What EastSea changes
 
@@ -20,7 +20,7 @@ Some attractive changes remain absent: ERC-1271 and NFT receiver hooks are pendi
 
 | User problem | EastSea answer | Detailed design / boundary |
 |---|---|---|
-| Buy one asset with another; keep an always-available pool | Minimal immutable pool; bounded atomic routing in wallet | [Swap pool](swap-pool/DESIGN.md); liquidity and sandwich exposure remain |
+| Buy one asset with another; keep an always-available pool | Minimal immutable pool; bounded atomic routing in wallet | [Swap pool](swap-pool/DESIGN.md) ([implementation](swap-pool/README.md)); liquidity and sandwich exposure remain |
 | Find a better quote or leave a limit order without a permanent order book | Exact constraints in expiring signed intent, anyone can settle | [Intent exchange](intent-exchange/DESIGN.md); 1271 gate; no privileged solver |
 | Borrow against assets without selling them | Isolated immutable lending market with explicit feed/asset trust | [Lending](lending/DESIGN.md); collateral, liquidity, feed and liquidation gates |
 | Hold a useful stable unit | Existing external stable asset if independently supported; experimental collateral debt only after economic validation | [Stable value](stable-value/DESIGN.md); no promise that new debt units become dollars |
