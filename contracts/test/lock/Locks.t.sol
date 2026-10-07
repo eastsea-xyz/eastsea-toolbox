@@ -310,8 +310,10 @@ contract LocksTest is Test {
     function test_meter_vestingClaim() public {
         vm.prank(alice);
         token.transfer(address(this), 1_000e18);
-        address predicted = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+        uint64 n = vm.getNonce(address(this));
+        address predicted = vm.computeCreateAddress(address(this), n);
         token.approve(predicted, 1_000e18);
+        vm.setNonceUnsafe(address(this), n); // see _deployVesting
         LinearVesting v = new LinearVesting(token, bob, 1_000e18, 0, DURATION);
         address[] memory tracked = new address[](1);
         tracked[0] = address(v);
