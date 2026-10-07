@@ -172,9 +172,13 @@ contract LocksTest is Test {
     /// @dev alice(후원자)가 직접 배포 — 생성자 pullExact의 msg.sender는
     ///      alice다. CREATE 주소는 nonce로 예측 가능하므로 미리 승인한다.
     function _deployVesting(uint256 amount) internal returns (LinearVesting v) {
-        address predicted = vm.computeCreateAddress(alice, vm.getNonce(alice));
+        uint64 n = vm.getNonce(alice);
+        address predicted = vm.computeCreateAddress(alice, n);
         vm.startPrank(alice);
         token.approve(predicted, amount);
+        // forge >= 1.8 counts a pranked call as alice's transaction and bumps
+        // her nonce; put it back so the CREATE lands on the approved address.
+        vm.setNonceUnsafe(alice, n);
         v = new LinearVesting(token, bob, amount, CLIFF, DURATION);
         vm.stopPrank();
     }
@@ -263,9 +267,11 @@ contract LocksTest is Test {
         emit log_named_uint("timeLockDeploy codeBytes", r1.codeBytes);
         emit log_named_uint("timeLockDeploy stateUnits", r1.stateUnits);
 
-        address predicted = vm.computeCreateAddress(alice, vm.getNonce(alice));
+        uint64 n = vm.getNonce(alice);
+        address predicted = vm.computeCreateAddress(alice, n);
         vm.startPrank(alice);
         token.approve(predicted, 1_000e18);
+        vm.setNonceUnsafe(alice, n); // see _deployVesting
         (, StateMeter.Result memory r2) = StateMeter.measureDeploy(
             abi.encodePacked(
                 type(LinearVesting).creationCode, abi.encode(address(token), bob, 1_000e18, CLIFF, DURATION)
