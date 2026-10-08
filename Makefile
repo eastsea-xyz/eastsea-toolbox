@@ -1,4 +1,6 @@
-.PHONY: help test test-deep fmt fmt-check manifests bundle apps build clean proof native native-fmt-check
+.PHONY: help test test-deep fmt fmt-check manifests bundle apps build clean proof native native-fmt-check publish-testnet publish-dry-run publish-build test-publisher test-publish-devnet
+
+export RPC FROM NAME REGISTRY NAMES WALLET_COMMAND WALLET_RPC
 
 help:
 	@echo "test       forge test (default fuzz runs)"
@@ -10,6 +12,11 @@ help:
 	@echo "bundle     print canonical bundle hash for an example (make bundle SLUG=vending)"
 	@echo "proof      H1-H11 hazard probes + offline fidelity check (proof/)"
 	@echo "native     EastSea-native templates: forge test + fmt check (native/)"
+	@echo "publish-testnet  publish caller-owned copies (RPC, FROM, REGISTRY, NAMES; NAME or reverse name)"
+	@echo "publish-dry-run  offline publishing plan (FROM, optional NAME/PUBLISH_ARGS)"
+	@echo "publish-build    compile publisher artifacts under tmp/ (honors shared compile gate)"
+	@echo "test-publisher   offline publisher + EIP-1193 + manifest regressions"
+	@echo "test-publish-devnet  owned offline devnet + all 17 Chrome smokes (explicit fixture build)"
 
 test:
 	cd contracts && forge test
@@ -46,3 +53,22 @@ native:
 
 clean:
 	cd contracts && forge clean
+
+publish-testnet:
+	python3 scripts/publish.py $(PUBLISH_ARGS)
+
+publish-dry-run:
+	python3 scripts/publish.py --dry-run $(PUBLISH_ARGS)
+
+publish-build:
+	@mkdir -p "$(CURDIR)/tmp"
+	@if [ -f "$(HOME)/.claude/playbooks/aether-team/wait-compile.sh" ]; then bash "$(HOME)/.claude/playbooks/aether-team/wait-compile.sh"; fi
+	cd contracts && TMPDIR="$(CURDIR)/tmp" forge build --out ../tmp/publish-artifacts --cache-path ../tmp/publish-forge-cache
+
+test-publisher:
+	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_publish*.py' -v
+	python3 scripts/check-apps.py
+	python3 templates/publish/validate-manifests.py
+
+test-publish-devnet:
+	python3 scripts/test-publish-devnet.py --build-fixtures $(DEVNET_ARGS)

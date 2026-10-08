@@ -124,11 +124,11 @@
       }
     },
     "name_binding": {
-      "description": "EastSeaNames name. Shown as @name only when the name's text record `app` also equals app_id.",
+      "description": "EastSeaNames root label or full .sea root/subdomain. Bound only when its text record app equals app_id. Full hosts require the sea-names API.",
       "type": "string",
       "minLength": 3,
-      "maxLength": 32,
-      "pattern": "^(?!-)(?!..--)[a-z0-9-]*[a-z0-9]$"
+      "maxLength": 253,
+      "pattern": "^(?:(?!-)(?!..--)[a-z0-9-]{2,31}[a-z0-9]|(?:(?!-)[a-z0-9-]{1,62}[a-z0-9]\\.)+(?!-)[a-z0-9-]{2,31}[a-z0-9]\\.sea|(?!-)[a-z0-9-]{2,31}[a-z0-9]\\.sea)$"
     },
     "contracts": {
       "description": "Every contract this app calls. Calls to undeclared addresses trigger a strong warning.",

@@ -11,6 +11,125 @@
 > 포함된 예제(1·4·5)는 제한 카테고리다 — **법률 검토 전 공개 배포
 > 금지.** `docs/legal-notes.md` 참고.
 
+## Try the toolbox on the EastSea testnet with your own account
+
+Any ordinary user can publish their own testnet copies of these public tools.
+Use **test coins only**. The toolbox is provided **AS IS**, without audit or
+warranty; deployment and use are **your own responsibility**. Pipln does not
+deploy, host, list or promote these apps. This command creates records submitted
+by your account, with `noindex: true`; it creates no Pipln listing. The existing
+mainnet/public-production restrictions still apply.
+
+Install the existing toolbox prerequisites (Python 3.10+, `jsonschema`, Foundry
+`forge`/`cast`, and the pinned submodules from a recursive clone). Own a live
+root name such as `alice.sea`, and obtain the registry and names contract
+addresses for your test network. No system addresses, company account, private
+key, seed phrase or repository key file are supplied by this tool.
+
+```bash
+# Offline: all 17 examples by default; no network, wallet, files or builds.
+make publish-dry-run FROM=0xYOUR_ACCOUNT NAME=alice
+
+# Compile once; generated artifacts/cache stay under ./tmp/.
+# Honors the shared compiler/release gate when it is installed on this machine.
+make publish-build
+
+# Publish from YOUR connected wallet. Omit WALLET_COMMAND/WALLET_RPC to get a
+# local connection URL; open it in your own wallet-enabled browser and connect.
+# The publisher never launches a browser or an EastSea application.
+make publish-testnet RPC=http://YOUR_NODE_RPC FROM=0xYOUR_ACCOUNT \
+  NAME=alice REGISTRY=0xTEST_REGISTRY NAMES=0xTEST_NAMES \
+  PUBLISH_ARGS='--bundle-mode stub'
+
+# Select examples and use an existing wallet/agent adapter instead.
+python3 scripts/publish.py --rpc http://YOUR_NODE_RPC --from 0xYOUR_ACCOUNT \
+  --name alice --registry 0xTEST_REGISTRY --names 0xTEST_NAMES \
+  --apps invoice,vending --wallet-command 'your-wallet-agent eip1193' \
+  --bundle-mode stub
+```
+
+`FROM` must match an account authorized by your wallet. `NAME` may be omitted
+if the names service has your reverse name. The chain must be the configured
+testnet/devnet (7777 or 7780 by default); use `--test-chain-id <id>` for a
+different **test** network. The root name must already belong to `FROM`.
+Keep the publishing account idle in other applications during a run: the
+constructor-funded vesting example predicts its CREATE address before approval.
+
+The browser connection and command adapter forward ordinary EIP-1193
+`eth_accounts`, `eth_chainId`, and `eth_sendTransaction` requests. A command
+reads one `{ "method": "...", "params": [...] }` JSON object from stdin and
+writes the JSON result (or `{ "error": { "code": ..., "message": ... } }`) to
+stdout. `--wallet-rpc` is an alternative for an EIP-1193 wallet service.
+**Node RPC is not a signing wallet.** Your P-256 wallet owns account
+authorization, signing, transaction limits and B5 execution/proving/state fee
+estimation. The publisher supplies no Ethereum signature, gas-price, nonce or
+fee-envelope assumptions and never reads a key.
+
+Each run checks ownership and required contract APIs before sending transactions,
+deploys the selected examples and shared dependencies, resolves every address
+in copied manifests, builds deterministic bundles, publishes the app records,
+and binds names such as `invoice.alice.sea`. It prints a table with contract
+addresses, `sea://invoice.alice.sea/`, and delivery status. Account/network-scoped
+output defaults to `tmp/publish-testnet/<chain-account-name>/`:
+
+- `examples/<app>/manifest.json`: complete registration manifest, exact-byte
+  SHA-256 bound by the registry; source templates remain available unchanged.
+- `bundles/<app>/`: frontend, runtime `manifest.json`, a deterministic PNG
+  icon and local README/cost/security text files. The runtime manifest contains addresses and chain/currency configuration.
+  Keeping the registration manifest outside the bundle prevents a hash cycle.
+- `bundles/<app>.index.json`: canonical compact JSON `eastsea-bundle/1` index,
+  path sorted, with each file's SHA-256 and size.
+- `state.json` and `uploads/<app>.json`: transaction journal and local upload
+  requests. Reuse this output directory to resume; no keys are stored there.
+
+**Upstream readiness:** the current lead node has no `aether_appBundle` upload
+protocol or AppRegistry implementation, and its names contract still lacks
+`.sea` subdomains. Publishing requires the app-content/sea-names contract APIs:
+`appIdOf`, `publish`, `appOf`, `nodeFor`, `ownerOf`, `createSubdomain`, `setText`,
+and `textOf`. Missing APIs cause a preflight error before any deployment.
+`--bundle-mode stub` saves upload requests and labels every bundle
+`stub-content-pending`: it does **not** upload, host or make a `sea://` URL
+executable. The optional RPC adapter describes a provisional
+`toolbox-appBundle/1` capabilities/put protocol in `scripts/publish.py`; it must
+be matched to the final app-content protocol before real delivery is enabled.
+
+Re-running unchanged input verifies deployed code, registry hashes and name
+records and sends no duplicate transactions. Pending receipts resume by hash.
+A known EIP-1193 rejection can be retried normally; a confirmed reverted/dropped
+transaction requires explicit `--retry-tx <intent>` after fixing the wallet or
+transaction issue. An unknown submission outcome is never resent automatically.
+`--recover-tx <intent>=0xHASH` requires a node that supports transaction lookup
+and matches its sender, recipient, input and value to the saved intent; current
+nodes without that lookup reject recovery. Keep the journal and inspect the
+wallet rather than starting another publication. Source/content changes require
+a separate registry release workflow; this command does not overwrite records.
+
+All frontends read addresses and chain/currency from their bundled manifest,
+use EIP-6963/EIP-1193, and leave signing and fees to the wallet. ERC20 quantities
+use token base units. The unchanged DAO and multisig templates still verify
+secp256k1 signatures with `ecrecover`; their pages explain that P-256 accounts
+cannot supply those signatures. Direct calls and reads work, but P-256 voting
+or multisig execution needs a separate contract design. These limitations are
+not bypassed by the publisher.
+
+```bash
+make test-publisher  # offline recovery/hash/schema + all 17 EIP-1193 regressions
+make test-publish-devnet  # gated fixture compile, owned offline nodes, Chrome
+# Or reuse verified fixture artifacts without starting any compiler:
+python3 scripts/test-publish-devnet.py --fixture-artifacts ./tmp/fixture-project/out
+```
+
+The devnet harness uses public development P-256 accounts only on four owned,
+offline loopback nodes. It verifies all 17 deployments, exact bundle digests,
+registration/name bindings, dry-run/rerun nonces and one Chrome smoke per app.
+Registry/subdomain contracts are explicitly **pending-interface test fixtures**;
+passing those tests does not prove the upstream implementation is deployed.
+The bundle upload stays stubbed. Chrome uses an externally installed Playwright
+module (`PLAYWRIGHT_MODULE`) and optional `--chrome` executable; no frontend
+dependency is added. Runtime reports identify the binary and available B5 fee
+evidence. All nodes and browsers are stopped through the harness's own process
+handles, with evidence under `./tmp/`; no live testnet is used.
+
 ## 카탈로그
 
 | # | 예제 | 폴더 | 앱 이름 | 다루는 것 |
@@ -79,10 +198,10 @@ proof/              증명 벤치 — 위험 프로브, 충실도 검사, 벤치
 ### 프론트엔드
 
 `apps/<slug>/index.html`은 의존성 없는 단일 파일이다 — 지갑 탐지는
-EIP-6963 + `window.aether` 폴백, 체인 검증 `chainId 0x1e64` (EastSea),
+EIP-6963 + `window.aether` 폴백, manifest의 chain id 검증,
 바닐라 ABI 인코딩(selector·topic은 사전 계산 상수), `eth_call` 조회,
 `eth_sendTransaction` 실행, `eth_getLogs` 이벤트 조회. 배포 주소는
-쿼리로 전달한다:
+`manifest.json`으로 읽는다. 수동 contract 쿼리 override도 지원한다:
 
 ```
 https://<host>/apps/vending/?contract=0x1234…
@@ -92,7 +211,7 @@ https://<host>/apps/vending/?contract=0x1234…
 
 1. `examples/<slug>/manifest.json`의 0x0 플레이스홀더를 실제 값으로
    교체 (`app_id`, `bundle.sha256`, `contracts[].address`)
-2. `templates/publish/bundle-hash.sh <앱 폴더>` — 캐노니컬 bundle index
+2. `templates/publish/bundle-hash.sh <앱 폴더>` — compact JSON 캐노니컬 bundle index
    sha256
 3. `python3 templates/publish/validate-manifests.py` — 스키마 최종 검증
 4. **법률 검토 통과 후** 공개 레지스트리 제출 (`docs/legal-notes.md`)

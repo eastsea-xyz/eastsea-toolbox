@@ -49,6 +49,9 @@ jobs:
       - name: Validate all example manifests
         run: python3 templates/publish/validate-manifests.py
 
+      - name: Publisher recovery and deterministic manifest regressions
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_publish*.py' -v
+
   frontends:
     name: static front-ends
     runs-on: ubuntu-latest
