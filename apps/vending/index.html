@@ -36,6 +36,7 @@ a{color:#4dd6c1}
 .actions form{border-top:1px solid #14293a;padding-top:12px;margin-top:12px}
 .actions form:first-child{border-top:0;padding-top:0}
 label{display:block;font-size:13px;color:#9fc4d4;margin-top:4px}
+.hidden{display:none}
 </style>
 </head>
 <body>
@@ -50,11 +51,12 @@ label{display:block;font-size:13px;color:#9fc4d4;margin-top:4px}
     <div class="wallets" id="wallets"><span class="dim">지갑을 찾는 중…</span></div>
     <p id="acct" class="dim">지갑을 선택하세요 (EIP-6963 자동 감지 · 폴백 window.aether).</p>
     <p id="chain" class="dim"></p>
-    <button id="fixchain" class="hidden">EastSea 체인으로 전환</button>
+    <button id="fixchain" class="hidden">배포 체인으로 전환</button>
   </section>
   <section class="card">
     <h2>2 · 컨트랙트 주소</h2>
     <input id="contract" placeholder="0x…" autocomplete="off" spellcheck="false">
+    <p id="deployment" class="dim">manifest.json에서 배포 설정을 읽는 중…</p>
     <p class="hint">Kelp Kiosk 배포 주소. 링크로 전달할 수 있습니다: <span class="mono">apps/vending/?contract=0x…</span></p>
   </section>
   <section class="card" id="views-card">
@@ -63,6 +65,7 @@ label{display:block;font-size:13px;color:#9fc4d4;margin-top:4px}
   </section>
   <section class="card">
     <h2 id="views-card-toggle">4 · 실행 (트랜잭션 · 상태 비용 발생)</h2>
+    <p id="signature-note" class="hint"></p>
     <div class="actions" id="actions"></div>
   </section>
   <section class="card">
@@ -73,14 +76,25 @@ label{display:block;font-size:13px;color:#9fc4d4;margin-top:4px}
   </section>
 </main>
 <footer>예제 문서: <a href="../../examples/vending/README.md">examples/vending/</a> · 가스·상태 비용: <a href="../../examples/vending/GAS.md">GAS.md</a> · 보안: <a href="../../examples/vending/SECURITY.md">SECURITY.md</a><br>
-정적 페이지 — 빌드도 서버도 없습니다. 지갑 연결은 EIP-6963 탐지 후 window.aether 폴백, 체인 검증 chainId 0x1e64 (EastSea).</footer>
+테스트 코인만 사용하세요. AS IS — 실행 결과는 사용자 책임입니다. 배포 주소·체인·코인은 manifest.json에서 읽으며, 계정 서명과 B5 수수료 확인은 연결한 지갑이 담당합니다.</footer>
 <script>
 const APP = {
   "slug": "vending",
   "num": "17",
   "name": "Kelp Kiosk",
   "sub": "Prepaid agent orders",
-  "views": [],
+  "contract": "AgentVending",
+  "signatureNotice": null,
+  "views": [
+    {
+      "f": "price",
+      "sig": "price()",
+      "sel": "0xa035b1fe",
+      "label": "주문 가격",
+      "args": [],
+      "decode": "uint-native"
+    }
+  ],
   "actions": [
     {
       "f": "order",
@@ -94,7 +108,7 @@ const APP = {
           "p": "0x… cast keccak \"명세 원문\""
         }
       ],
-      "value": "ether"
+      "value": "native"
     },
     {
       "f": "deliver",
@@ -145,21 +159,62 @@ const APP = {
 };
 
 'use strict';
+const query = new URLSearchParams(location.search);
+const addrInput = document.getElementById('contract');
+const addressPattern = /^0x[0-9a-fA-F]{40}$/;
+const isDeployedAddress = (a) => addressPattern.test(a) && !/^0x0{40}$/i.test(a);
+let manifestError = null, expectedChainId = null, nativeCurrency = null;
+function chainId(value) {
+  if (typeof value === 'number' && !Number.isSafeInteger(value)) throw new Error('잘못된 chain ID');
+  if (!/^(0x[0-9a-fA-F]+|[0-9]+)$/.test(String(value))) throw new Error('잘못된 chain ID');
+  const id = BigInt(value);
+  if (id <= 0n) throw new Error('잘못된 chain ID');
+  return '0x' + id.toString(16);
+}
+
+async function loadManifest() {
+  try {
+    const response = await fetch('./manifest.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error('manifest.json HTTP ' + response.status);
+    const config = await response.json();
+    expectedChainId = chainId(config['x-toolbox-chain-id'] ?? config.chain_id ?? config.chainId ?? config.network?.chain_id);
+    const currency = config['x-toolbox-native-currency'];
+    if (!currency || typeof currency.symbol !== 'string' || !currency.symbol.trim() || !Number.isInteger(currency.decimals) || currency.decimals < 0 || currency.decimals > 77) throw new Error('manifest의 x-toolbox-native-currency가 필요합니다');
+    const primary = (config.contracts || []).find((c) => c.label === (config['x-toolbox-primary-contract'] || APP.contract));
+    const override = query.get('contract');
+    if (!isDeployedAddress(override || primary?.address)) throw new Error('manifest의 ' + APP.contract + ' 배포 주소가 필요합니다 (?contract=0x…로 재정의 가능)');
+    addrInput.value = override || primary.address;
+    nativeCurrency = { symbol: currency.symbol.trim(), decimals: currency.decimals };
+    note('deployment', (override ? '주소 재정의: ' : '배포 주소: ') + (primary?.label || APP.contract) + ' · chain ' + expectedChainId, 'ok');
+    document.querySelectorAll('[data-native-unit]').forEach((el) => { el.textContent = nativeCurrency.symbol; });
+    return config;
+  } catch (err) {
+    manifestError = new Error('배포 설정을 읽지 못했습니다: ' + errorText(err));
+    note('deployment', manifestError.message, 'err');
+    return null;
+  }
+}
+const manifestReady = loadManifest();
+
 // ---------------------------------------------------------------- wallet discovery (EIP-6963 + legacy fallbacks)
 const discovered = [];
 let provider = null, account = null, chainOk = false;
-const CHAIN_ID = '0x1e64'; // EastSea
+let detachProvider = () => {};
 window.addEventListener('eip6963:announceProvider', (e) => {
-  if (!discovered.some((d) => d.info.uuid === e.detail.info.uuid)) { discovered.push(e.detail); renderWallets(); }
+  const d = e.detail;
+  if (!d?.provider || typeof d.provider.request !== 'function' || !d.info?.uuid) return;
+  if (!discovered.some((known) => known.info.uuid === d.info.uuid || known.provider === d.provider)) { discovered.push(d); renderWallets(); }
 });
 window.dispatchEvent(new Event('eip6963:requestProvider'));
-setTimeout(() => { // give announcers a beat, then fall back to injected providers
-  if (!discovered.length) {
-    const p = window.aether || window.ethereum;
-    if (p) discovered.push({ info: { uuid: 'injected', name: window.aether ? 'Aether (window.aether)' : 'Injected wallet (window.ethereum)' }, provider: p });
-    renderWallets();
-  }
-}, 150);
+function discoverInjected() {
+  [window.aether, window.ethereum].forEach((p, i) => {
+    if (p && typeof p.request === 'function' && !discovered.some((d) => d.provider === p)) discovered.push({ info: { uuid: 'injected-' + i, name: i === 0 ? 'EastSea wallet' : 'Injected wallet' }, provider: p });
+  });
+  renderWallets();
+}
+setTimeout(discoverInjected, 150);
+window.addEventListener('aether#initialized', discoverInjected);
+window.addEventListener('ethereum#initialized', discoverInjected);
 
 function renderWallets() {
   const el = document.getElementById('wallets');
@@ -167,67 +222,119 @@ function renderWallets() {
   el.textContent = '';
   discovered.forEach((d) => {
     const b = document.createElement('button');
-    b.innerHTML = '<span class="dot"></span>' + d.info.name;
+    const dot = document.createElement('span'); dot.className = 'dot'; b.appendChild(dot);
+    b.appendChild(document.createTextNode(d.info.name || 'Wallet'));
     b.onclick = () => connect(d);
     el.appendChild(b);
   });
 }
 
 async function connect(d) {
+  detachProvider();
   provider = d.provider;
+  account = null; chainOk = false;
+  const selected = provider;
+  const onAccounts = (accounts) => { if (selected !== provider) return; setAccount(accounts); chainOk = false; checkChain(); };
+  const onChain = () => { if (selected !== provider) return; chainOk = false; checkChain(); };
+  const onDisconnect = (err) => {
+    if (selected !== provider) return;
+    detachProvider(); provider = null;
+    account = null; chainOk = false;
+    note('acct', '지갑 연결이 끊겼습니다. 다시 연결하세요. ' + errorText(err), 'warn');
+    note('chain', '', 'dim');
+    document.getElementById('fixchain').classList.add('hidden');
+  };
+  if (typeof selected.on === 'function') {
+    selected.on('accountsChanged', onAccounts);
+    selected.on('chainChanged', onChain);
+    selected.on('disconnect', onDisconnect);
+  }
+  detachProvider = () => {
+    if (typeof selected.removeListener !== 'function') return;
+    selected.removeListener('accountsChanged', onAccounts);
+    selected.removeListener('chainChanged', onChain);
+    selected.removeListener('disconnect', onDisconnect);
+  };
   try {
-    const accts = await provider.request({ method: 'eth_requestAccounts' });
-    account = accts[0];
-    document.getElementById('acct').innerHTML = '연결됨: <span class="mono">' + account + '</span>';
+    const accts = await selected.request({ method: 'eth_requestAccounts' });
+    if (selected !== provider) return;
+    setAccount(accts);
+    if (!account) throw new Error('지갑에서 공유한 계정이 없습니다');
     await checkChain();
-  } catch (err) { note('acct', '연결 실패: ' + (err.message || err), 'err'); }
+  } catch (err) { if (selected === provider) { account = null; chainOk = false; note('acct', '연결 실패: ' + errorText(err), 'err'); } }
+}
+
+function setAccount(accounts) {
+  account = Array.isArray(accounts) && addressPattern.test(accounts[0]) ? accounts[0] : null;
+  note('acct', account ? '연결됨: ' + account : '공유된 계정이 없습니다. 지갑을 다시 연결하세요.', account ? 'ok mono' : 'warn');
 }
 
 async function checkChain() {
   const el = document.getElementById('chain'); const fix = document.getElementById('fixchain');
+  chainOk = false; fix.classList.add('hidden');
+  const selected = provider;
   try {
-    const id = await provider.request({ method: 'eth_chainId' });
-    chainOk = (id === CHAIN_ID);
+    await manifestReady;
+    if (manifestError) throw manifestError;
+    if (!selected) throw new Error('먼저 지갑을 연결하세요');
+    const id = chainId(await selected.request({ method: 'eth_chainId' }));
+    if (selected !== provider) return false;
+    chainOk = (id === expectedChainId);
     el.className = chainOk ? 'ok' : 'warn';
-    el.textContent = chainOk ? '체인: EastSea (' + id + ')' : '체인이 EastSea가 아닙니다 (현재 ' + id + ', 필요 ' + CHAIN_ID + ')';
-    fix.classList.toggle('hidden', chainOk);
-  } catch (err) { el.textContent = '체인 조회 실패: ' + (err.message || err); el.className = 'err'; }
+    el.textContent = chainOk ? '체인: ' + id : '배포 체인과 다릅니다 (현재 ' + id + ', 필요 ' + expectedChainId + '). 지갑의 네트워크 설정을 변경하세요.';
+    const supported = selected.supportedMethods;
+    const canSwitch = !selected.isAether && (!Array.isArray(supported) || supported.includes('wallet_switchEthereumChain'));
+    fix.classList.toggle('hidden', chainOk || !canSwitch);
+    return chainOk;
+  } catch (err) { if (selected === provider) { el.textContent = '체인 조회 실패: ' + errorText(err); el.className = 'err'; } return false; }
 }
 
 document.getElementById('fixchain').onclick = async () => {
   try {
-    await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_ID }] });
+    await manifestReady;
+    if (manifestError) throw manifestError;
+    if (!provider) throw new Error('먼저 지갑을 연결하세요');
+    await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: expectedChainId }] });
     await checkChain();
-  } catch (err) { note('chain', '전환 실패: ' + (err.message || err), 'err'); }
+  } catch (err) { note('chain', '전환 실패: ' + errorText(err) + ' 지갑에서 네트워크를 직접 변경하세요.', 'err'); }
 };
 
 function note(id, msg, cls) { const el = document.getElementById(id); el.textContent = msg; el.className = cls || 'dim'; }
+function errorText(err) {
+  const messages = { 4001: '사용자가 요청을 취소했습니다.', 4100: '지갑에 연결 권한을 허용하세요.', 4200: '이 지갑은 요청한 기능을 지원하지 않습니다.', 4900: '지갑이 네트워크에 연결되어 있지 않습니다.', 4901: '지갑이 배포 체인에 연결되어 있지 않습니다.', '-32002': '지갑의 기존 요청을 먼저 확인하세요.' };
+  const detail = err?.message || (err == null ? '' : String(err));
+  return messages[err?.code] ? messages[err.code] + (detail ? ' ' + detail : '') : detail;
+}
 
 // ---------------------------------------------------------------- ABI encoding (types used by the toolbox examples only)
 const strip = (s) => String(s).replace(/^0x/, '').toLowerCase();
 function need64(h, what) { h = strip(h); if (!/^[0-9a-f]+$/.test(h) || h.length !== 64) throw new Error(what + ': 0x로 시작하는 64자리 hex가 필요합니다'); return h; }
 function pad32hex(h, what) { h = strip(h); if (!/^[0-9a-f]*$/.test(h) || h.length > 64) throw new Error(what + ': 올바른 hex가 아닙니다'); return h.padStart(64, '0'); }
 function padAddr(a, what) { a = strip(a); if (!/^[0-9a-f]{40}$/.test(a)) throw new Error(what + ': 0x로 시작하는 40자리 주소가 필요합니다'); return a.padStart(64, '0'); }
-function toWei(s, what) { // decimal AETH string -> wei bigint hex word
+function toAmount(s, what) { // decimal native coin -> ABI integer; precision comes from the manifest
+  if (!nativeCurrency) throw new Error('manifest의 기본 코인 설정을 먼저 읽어야 합니다');
   s = String(s).trim();
   if (!/^\d*(\.\d*)?$/.test(s) || s === '' || s === '.') throw new Error(what + ': 숫자를 입력하세요 (예: 0.2)');
   const [i, f = ''] = s.split('.');
-  const frac = (f + '0'.repeat(18)).slice(0, 18);
-  return (BigInt(i || '0') * 10n ** 18n + BigInt(frac || '0')).toString(16).padStart(64, '0');
+  const decimals = nativeCurrency.decimals;
+  if (f.length > decimals) throw new Error(what + ': 소수점 이하 ' + decimals + '자리까지만 입력하세요');
+  const frac = f.padEnd(decimals, '0');
+  return pad32hex((BigInt(i || '0') * 10n ** BigInt(decimals) + BigInt(frac || '0')).toString(16), what);
 }
 function toUint(s, what) {
   s = String(s).trim();
-  if (s.startsWith('0x')) { if (!/^[0-9a-f]+$/.test(s.slice(2))) throw new Error(what + ': 올바른 hex가 아닙니다'); return s.slice(2).padStart(64, '0'); }
+  if (s.startsWith('0x')) { if (!/^[0-9a-fA-F]+$/.test(s.slice(2))) throw new Error(what + ': 올바른 hex가 아닙니다'); return pad32hex(s, what); }
   if (!/^\d+$/.test(s)) throw new Error(what + ': 10진 양의 정수를 입력하세요');
-  return BigInt(s).toString(16).padStart(64, '0');
+  return pad32hex(BigInt(s).toString(16), what);
 }
 const utf8hex = (str) => Array.from(new TextEncoder().encode(str)).map((b) => b.toString(16).padStart(2, '0')).join('');
-const hexToUtf8 = (h) => new TextDecoder().decode((h.match(/.{1,2}/g) || []).map((x) => parseInt(x, 16)));
+const hexToUtf8 = (h) => new TextDecoder().decode(Uint8Array.from((h.match(/.{1,2}/g) || []).map((x) => parseInt(x, 16))));
 
 // one tail blob (length word + data right-padded to a 32-byte boundary) for bytes / string
 function tailOfBytes(dataHex) {
   const h = strip(dataHex);
-  const byteLen = Math.ceil(h.length / 2);
+  if (!/^(?:[0-9a-f]{2})*$/.test(h)) throw new Error('bytes: 짝수 자리 hex가 필요합니다');
+  const byteLen = h.length / 2;
   const paddedLen = Math.ceil(byteLen / 32) * 32; // ABI: every tail blob occupies whole 32B words
   return byteLen.toString(16).padStart(64, '0') + h.padEnd(paddedLen * 2, '0');
 }
@@ -236,8 +343,8 @@ function argWord(spec, raw) { // static head word, or null for dynamic types
   const t = spec.t;
   if (t === 'address') return padAddr(raw, spec.n);
   if (t === 'bytes32') return need64(raw, spec.n);
-  if (t === 'uint') return toUint(raw, spec.n);
-  if (t === 'ether') return toWei(raw, spec.n);
+  if (t === 'uint' || t === 'token') return toUint(raw, spec.n);
+  if (t === 'native') return toAmount(raw, spec.n);
   return null; // string | bytes | bytes32[] | bytes[]
 }
 
@@ -275,31 +382,52 @@ function fmtResult(hex, kind) {
   const h = rstrip(hex);
   if (h === '') return '(빈 응답)';
   try {
-    if (kind === 'uint') return decAt(h, 0).toString() + ' (wei)';
-    if (kind === 'uint-ether') { const v = decAt(h, 0); const e = v / 10n ** 18n; const f = (v % 10n ** 18n).toString().padStart(18, '0').replace(/0+$/, ''); return e.toString() + (f ? '.' + f : '') + ' AETH'; }
+    if (kind === 'uint' || kind === 'uint-token') return decAt(h, 0).toString() + (kind === 'uint-token' ? ' (토큰 기본 단위)' : '');
+    if (kind === 'uint-native') {
+      const v = decAt(h, 0), scale = 10n ** BigInt(nativeCurrency.decimals);
+      const f = nativeCurrency.decimals ? (v % scale).toString().padStart(nativeCurrency.decimals, '0').replace(/0+$/, '') : '';
+      return (v / scale).toString() + (f ? '.' + f : '') + ' ' + nativeCurrency.symbol;
+    }
     if (kind === 'bool') return decAt(h, 0) !== 0n ? 'true' : 'false';
     if (kind === 'address') return '0x' + h.slice(24, 64);
     if (kind === 'bytes32') return '0x' + h.slice(0, 64);
     if (kind === 'string') { const off = Number(decAt(h, 0) / 32n); const len = Number(decAt(h, off)); return hexToUtf8(h.slice((off + 1) * 64, (off + 1) * 64 + len * 2)); }
   } catch (e) { /* fall through to raw */ }
   const words = []; for (let i = 0; i < h.length; i += 64) words.push('0x' + h.slice(i, i + 64));
-  return words.join('<br>');
+  return words.join('\n');
 }
 
 // ---------------------------------------------------------------- RPC plumbing
-async function call(to, data) { return provider.request({ method: 'eth_call', params: [{ from: account, to, data }, 'latest'] }); }
+async function walletForRequest(isWrite) {
+  await manifestReady;
+  if (manifestError) throw manifestError;
+  const selected = provider;
+  if (!selected) throw new Error('먼저 지갑을 연결하세요');
+  if (isWrite) {
+    const accounts = await selected.request({ method: 'eth_accounts' });
+    if (selected !== provider) throw new Error('지갑이 변경되었습니다. 다시 시도하세요');
+    setAccount(accounts);
+    if (!account) throw new Error('먼저 지갑 계정을 연결하세요');
+  }
+  if (!await checkChain() || selected !== provider) throw new Error('지갑을 배포 체인 ' + expectedChainId + '에 연결하세요');
+  return { selected, from: account };
+}
+async function call(to, data) {
+  const { selected, from } = await walletForRequest(false);
+  const tx = { to, data }; if (from) tx.from = from;
+  return selected.request({ method: 'eth_call', params: [tx, 'latest'] });
+}
 async function sendTx(to, data, valueHex) {
-  const params = { from: account, to, data };
-  if (valueHex) params.value = '0x' + BigInt(valueHex).toString(16);
-  const hash = await provider.request({ method: 'eth_sendTransaction', params: [params] });
+  const { selected, from } = await walletForRequest(true);
+  const params = { from, to, data };
+  if (valueHex != null) params.value = '0x' + BigInt('0x' + strip(valueHex)).toString(16);
+  // The wallet signs its own account envelope and quotes B5 fees. The page never supplies Ethereum fee fields or signing keys.
+  const hash = await selected.request({ method: 'eth_sendTransaction', params: [params] });
   return hash;
 }
 
 // ---------------------------------------------------------------- contract address
-const addrInput = document.getElementById('contract');
-const qaddr = new URLSearchParams(location.search).get('contract');
-if (qaddr) addrInput.value = qaddr;
-function contractAddr() { const a = addrInput.value.trim(); if (!/^0x[0-9a-fA-F]{40}$/.test(a)) throw new Error('컨트랙트 주소를 입력하세요 (0x…40자리) — apps/' + APP.slug + '/?contract=0x… 링크로도 전달할 수 있습니다'); return a; }
+function contractAddr() { const a = addrInput.value.trim(); if (!isDeployedAddress(a)) throw new Error('배포된 컨트랙트 주소를 입력하세요 (0x…40자리) — ?contract=0x… 링크로도 전달할 수 있습니다'); return a; }
 
 // ---------------------------------------------------------------- views
 function fieldInput(id, spec) {
@@ -314,35 +442,41 @@ function buildForm(container, def, isWrite) {
   const specs = []; const inputs = [];
   def.args.forEach((spec, i) => {
     const id = def.f + '_' + i;
-    const lab = document.createElement('label'); lab.textContent = spec.n + (spec.t === 'ether' ? ' (AETH)' : '') + ' — ' + spec.t; form.appendChild(lab);
+    const lab = document.createElement('label'); lab.textContent = spec.n + ' — ' + (spec.t === 'token' ? '토큰 기본 단위 (정수)' : spec.t === 'native' ? '기본 코인 ' : spec.t); form.appendChild(lab);
+    if (spec.t === 'native') { const unit = document.createElement('span'); unit.setAttribute('data-native-unit', ''); lab.appendChild(unit); }
     const inp = fieldInput(id, spec); form.appendChild(inp);
     specs.push(spec); inputs.push(inp);
   });
   let valueInput = null;
-  if (isWrite && def.value === 'ether') {
-    const lab = document.createElement('label'); lab.textContent = 'msg.value (AETH) — 함께 송금할 금액'; form.appendChild(lab);
+  if (isWrite && def.value === 'native') {
+    const lab = document.createElement('label'); lab.textContent = 'msg.value — 함께 송금할 금액 '; form.appendChild(lab);
+    const unit = document.createElement('span'); unit.setAttribute('data-native-unit', ''); lab.appendChild(unit);
     valueInput = document.createElement('input'); valueInput.placeholder = '0.0'; form.appendChild(valueInput);
   }
   const btn = document.createElement('button'); btn.textContent = isWrite ? '트랜잭션 전송' : '조회 (eth_call)'; btn.type = 'submit'; form.appendChild(btn);
   const out = document.createElement('p'); out.className = 'dim'; form.appendChild(out);
   form.onsubmit = async (ev) => {
     ev.preventDefault();
+    if (btn.disabled) return;
+    btn.disabled = true;
     out.className = 'dim'; out.textContent = '…';
     try {
+      await manifestReady;
+      if (manifestError) throw manifestError;
       const to = contractAddr();
       const values = inputs.map((inp) => inp.value.trim());
       const data = encodeCall(def.sel, specs, values);
       if (isWrite) {
-        if (!account) throw new Error('먼저 지갑을 연결하세요');
-        const vhex = valueInput && valueInput.value.trim() !== '' ? '0x' + toWei(valueInput.value, 'msg.value').replace(/^0+/, '') || '0x0' : null;
+        const vhex = valueInput ? toAmount(valueInput.value.trim() || '0', 'msg.value') : null;
         const hash = await sendTx(to, data, vhex);
         out.className = 'ok txhash'; out.textContent = '전송됨: ' + hash;
       } else {
         if (!provider) throw new Error('먼저 지갑을 연결하세요 (조회에도 RPC가 필요합니다)');
         const res = await call(to, data);
-        out.className = 'mono'; out.innerHTML = fmtResult(res, def.decode);
+        out.className = 'mono'; out.textContent = fmtResult(res, def.decode);
       }
-    } catch (err) { out.className = 'err'; out.textContent = (err && err.message) ? err.message : String(err); }
+    } catch (err) { out.className = 'err'; out.textContent = errorText(err); }
+    finally { btn.disabled = false; }
   };
   container.appendChild(form);
 }
@@ -350,17 +484,18 @@ function buildForm(container, def, isWrite) {
 if (APP.views.length) { const c = document.getElementById('views'); APP.views.forEach((v) => buildForm(c, v, false)); }
 else { document.getElementById('views-card').classList.add('hidden'); }
 { const c = document.getElementById('actions'); APP.actions.forEach((a) => buildForm(c, a, true)); }
+if (APP.signatureNotice) note('signature-note', APP.signatureNotice, 'warn');
 
 // ---------------------------------------------------------------- events
 document.getElementById('load-logs').onclick = async () => {
-  const out = document.getElementById('logs'); out.textContent = '…';
+  const out = document.getElementById('logs'); out.textContent = '…'; out.className = 'dim';
   try {
+    const { selected } = await walletForRequest(false);
     const to = contractAddr();
-    if (!provider) throw new Error('먼저 지갑을 연결하세요');
-    const head = await provider.request({ method: 'eth_blockNumber' });
-    const from = '0x' + (BigInt(head) - 5000n).toString(16); // ~83min of 1s blocks
+    const head = BigInt(await selected.request({ method: 'eth_blockNumber' }));
+    const from = '0x' + (head > 5000n ? head - 5000n : 0n).toString(16);
     const topics = [APP.events.map((e) => e.topic)];
-    const logs = await provider.request({ method: 'eth_getLogs', params: [{ address: to, topics, fromBlock: from, toBlock: 'latest' }] });
+    const logs = await selected.request({ method: 'eth_getLogs', params: [{ address: to, topics, fromBlock: from, toBlock: 'latest' }] });
     out.textContent = '';
     if (!logs.length) { out.innerHTML = '<p class="dim">최근 5,000블록에 이벤트가 없습니다.</p>'; return; }
     logs.slice(-25).reverse().forEach((lg) => {
@@ -377,7 +512,7 @@ document.getElementById('load-logs').onclick = async () => {
       if (d.length > 64) { const words = []; for (let i = 0; i < d.length; i += 64) words.push('0x' + d.slice(i, i + 64)); html += '<span class="mono dim">data: ' + words.join(' · ') + '</span><br>'; }
       div.innerHTML = html; out.appendChild(div);
     });
-  } catch (err) { out.innerHTML = '<p class="err">' + ((err && err.message) || err) + '</p>'; }
+  } catch (err) { out.textContent = errorText(err); out.className = 'err'; }
 };
 
 </script>
