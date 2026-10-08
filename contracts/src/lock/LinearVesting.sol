@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {PersonalTest} from "src/common/PersonalTest.sol";
+
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {ReentrancyGuard} from "openzeppelin/utils/ReentrancyGuard.sol";
 import {SafeToken} from "src/common/SafeToken.sol";
@@ -24,7 +26,7 @@ import {SafeToken} from "src/common/SafeToken.sol";
 ///   F-01: claim nonReentrant + CEI(claimed 갱신 후 push).
 ///   F-02/F-03: SafeToken 경로, 생성자 무코드 거부.
 ///   F-04: vested/claimable 상수 시간.
-contract LinearVesting is ReentrancyGuard {
+contract LinearVesting is ReentrancyGuard, PersonalTest {
     uint256 private constant _MAX_UINT128 = type(uint128).max;
 
     IERC20 public immutable token;
@@ -46,6 +48,7 @@ contract LinearVesting is ReentrancyGuard {
     constructor(IERC20 token_, address beneficiary_, uint256 amount, uint256 cliffSec, uint256 durationSec) {
         if (address(token_).code.length == 0) revert ZeroAmount(); // F-03
         if (beneficiary_ == address(0)) revert ZeroAmount();
+        _requirePersonalTestAccount(beneficiary_);
         if (amount == 0) revert ZeroAmount();
         if (amount > _MAX_UINT128) revert AmountTooLarge(amount);
         if (durationSec == 0 || cliffSec > durationSec) revert ZeroDuration();
@@ -57,12 +60,15 @@ contract LinearVesting is ReentrancyGuard {
         cliff = uint48(cliffSec);
         duration = uint48(durationSec);
 
-        SafeToken.pullExact(token_, msg.sender, amount); // 그랜트 전액 예치
+        _checkPersonalTestTokenDeposit(address(token_), amount);
+        SafeToken.pullExact(token_, _exampleDeployer(), amount); // 그랜트 전액 예치
+        _checkPersonalTestTokenCaps();
     }
 
     /// @notice 수혜자에게 해제분을 지급한다. 누구나 호출할 수 있다
     ///         (가스 대낭) — 수령인은 언제나 beneficiary다.
-    function claim() external nonReentrant returns (uint256 paid) {
+    function claim() external personalTestAccess nonReentrant returns (uint256 paid) {
+        _requirePersonalTestAccount(beneficiary);
         uint256 v = _vested();
         paid = v > claimed ? v - claimed : 0;
         if (paid > 0) {

@@ -150,7 +150,7 @@ const query = new URLSearchParams(location.search);
 const addrInput = document.getElementById('contract');
 const addressPattern = /^0x[0-9a-fA-F]{40}$/;
 const isDeployedAddress = (a) => addressPattern.test(a) && !/^0x0{40}$/i.test(a);
-let manifestError = null, expectedChainId = null, nativeCurrency = null;
+let manifestError = null, expectedChainId = null, nativeCurrency = null, personalPolicy = null;
 function chainId(value) {
   if (typeof value === 'number' && !Number.isSafeInteger(value)) throw new Error('잘못된 chain ID');
   if (!/^(0x[0-9a-fA-F]+|[0-9]+)$/.test(String(value))) throw new Error('잘못된 chain ID');
@@ -169,10 +169,22 @@ async function loadManifest() {
     if (!currency || typeof currency.symbol !== 'string' || !currency.symbol.trim() || !Number.isInteger(currency.decimals) || currency.decimals < 0 || currency.decimals > 77) throw new Error('manifest의 x-toolbox-native-currency가 필요합니다');
     const primary = (config.contracts || []).find((c) => c.label === (config['x-toolbox-primary-contract'] || APP.contract));
     const override = query.get('contract');
+    if (config['x-toolbox-network'] === 'mainnet' && config['x-toolbox-mode'] !== 'personal-test') throw new Error('Mainnet requires a personal test instance.');
+    if (config['x-toolbox-mode'] === 'personal-test') {
+      const policy = config['x-toolbox-personal-policy'];
+      if (!policy || policy.schema !== 'eastsea.personal-test/1' || !isDeployedAddress(policy.owner) || !isDeployedAddress(policy.authority)
+          || !/^[1-9][0-9]*$/.test(String(policy.native_cap)) || !/^[1-9][0-9]*$/.test(String(policy.token_cap))
+          || BigInt(policy.native_cap) >= 2n ** 256n || BigInt(policy.token_cap) >= 2n ** 256n
+          || policy.protocol_fee_bps !== 0 || config['x-toolbox-local-only'] !== true || config.noindex !== true) throw new Error('Invalid personal test policy.');
+      if (override && override.toLowerCase() !== primary?.address?.toLowerCase()) throw new Error('Personal test addresses are fixed to your instance.');
+      personalPolicy = { ...policy, contracts: (config.contracts || []).map((c) => c.address.toLowerCase()),
+        readOnly: (config['x-toolbox-read-only-contracts'] || []).map((a) => a.toLowerCase()) };
+      addrInput.readOnly = true;
+    }
     if (!isDeployedAddress(override || primary?.address)) throw new Error('manifest의 ' + APP.contract + ' 배포 주소가 필요합니다 (?contract=0x…로 재정의 가능)');
     addrInput.value = override || primary.address;
     nativeCurrency = { symbol: currency.symbol.trim(), decimals: currency.decimals };
-    note('deployment', (override ? '주소 재정의: ' : '배포 주소: ') + (primary?.label || APP.contract) + ' · chain ' + expectedChainId, 'ok');
+    note('deployment', (personalPolicy ? 'Personal test instance · ' : override ? '주소 재정의: ' : '배포 주소: ') + (primary?.label || APP.contract) + ' · chain ' + expectedChainId, 'ok');
     document.querySelectorAll('[data-native-unit]').forEach((el) => { el.textContent = nativeCurrency.symbol; });
     return config;
   } catch (err) {
@@ -406,11 +418,33 @@ async function call(to, data) {
 }
 async function sendTx(to, data, valueHex) {
   const { selected, from } = await walletForRequest(true);
+  if (personalPolicy) {
+    await verifyPersonalInstance(selected, from, to);
+    const accounts = await selected.request({ method: 'eth_accounts' });
+    const currentChain = chainId(await selected.request({ method: 'eth_chainId' }));
+    if (selected !== provider || accounts?.[0]?.toLowerCase() !== from.toLowerCase() || currentChain !== expectedChainId) throw new Error('Wallet account or network changed. Reconnect to your personal instance.');
+  }
   const params = { from, to, data };
   if (valueHex != null) params.value = '0x' + BigInt('0x' + strip(valueHex)).toString(16);
   // The wallet signs its own account envelope and quotes B5 fees. The page never supplies Ethereum fee fields or signing keys.
   const hash = await selected.request({ method: 'eth_sendTransaction', params: [params] });
   return hash;
+}
+
+async function verifyPersonalInstance(selected, from, to) {
+  const policy = personalPolicy;
+  const target = to.toLowerCase();
+  if (!policy.contracts.includes(target) || policy.readOnly.includes(target)) throw new Error('Use your declared personal instance.');
+  const read = async (destination, data) => selected.request({ method: 'eth_call', params: [{ from, to: destination, data }, 'latest'] });
+  const word = (raw) => { if (!/^0x[0-9a-fA-F]{64}$/.test(raw)) throw new Error('Invalid personal instance response.'); return strip(raw); };
+  if (fmtResult(await read(target, '0x53702e15'), 'string') !== 'personal-test') throw new Error('This contract is not a personal test instance.');
+  if ('0x' + word(await read(target, '0x5d6309b0')).slice(24) !== policy.owner.toLowerCase()
+      || '0x' + word(await read(target, '0x98a760c1')).slice(24) !== policy.authority.toLowerCase()
+      || BigInt('0x' + word(await read(target, '0x7c38dfd9'))) !== BigInt(policy.native_cap)
+      || BigInt('0x' + word(await read(target, '0xdcdc520c'))) !== BigInt(policy.token_cap)) throw new Error('Personal instance owner or caps differ from the local bundle.');
+  const registered = word(await read(policy.authority, '0xcc809606' + padAddr(target, 'instance')));
+  const allowed = word(await read(target, '0x3908af36' + padAddr(from, 'account')));
+  if (BigInt('0x' + registered) !== 1n || BigInt('0x' + allowed) !== 1n) throw new Error('This account is not allowed in your personal instance.');
 }
 
 // ---------------------------------------------------------------- contract address

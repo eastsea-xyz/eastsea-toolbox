@@ -75,3 +75,27 @@ Publish where the original wins (expected: H1 for a single campaign, H5 for late
 cd native && forge test --match-path 'claims/*'
 python3 native/claims/tools/claims_tree.py verify --json native/claims/test/fixtures/campaign1.json
 ```
+
+## Personal test instance: testnet and mainnet
+
+<!-- i18n: personal_test.title personal_test.testnet personal_test.mainnet personal_test.accounts personal_test.local personal_test.fees personal_test.caps -->
+
+Testnet permits shared demonstrations with test coins. Mainnet permits only
+your own private, allowlisted, capped instance: deploy from your EIP-1193
+wallet through `PersonalTestDeployer`, whose constructor fixes your native
+and aggregate token caps. Its `deploy(bytes,bytes32)` atomically initializes
+this contract's existing constructor ABI and marks it `personal-test`.
+Only the deploying wallet starts allowed. Add only other accounts you own,
+and use those accounts for every party, beneficiary, signer and recipient.
+Personal mode charges no protocol fee and adds no administrative withdrawal.
+
+The 17-app publisher does not invent a deployment recipe or shared frontend
+for this native example. Use the
+[generic native deployment interface](../../docs/personal-mainnet-testing.md#native-contracts)
+with its locally built creation bytecode, own test assets, fixed caps and
+wallet-approved calls. Run `cd native && forge test` locally before doing so.
+Do not deploy from a company key or host a shared mainnet interface. Caps
+are raw asset base units, not a dollar valuation; unsolicited external
+transfers cannot be prevented at the receiving contract. The [policy](../../docs/personal-mainnet-testing.md)
+describes exits and those limits. Stable [English translation keys](../../docs/i18n/personal-test.en.json)
+are ready for the language pack.

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {PersonalTest} from "src/common/PersonalTest.sol";
+
 import {EastSeaNames} from "src/system/EastSeaNames.sol";
 import {ReentrancyGuard} from "openzeppelin/utils/ReentrancyGuard.sol";
 
@@ -41,7 +43,7 @@ import {ReentrancyGuard} from "openzeppelin/utils/ReentrancyGuard.sol";
 ///  brake가 없는 이유: 진입(자금·권리 유입)이 없다 — 자격은 외부
 ///  시스템의 상태이고 이 컨트랙트의 상수는 배포 시 고정됐다.
 ///  claim(탈출)과 sweep(탈출)만 남는다 (예제 13과 동일 논리).
-contract NameGatedDrop is ReentrancyGuard {
+contract NameGatedDrop is ReentrancyGuard, PersonalTest {
     /// @dev 시스템 이름 서비스 — 자격의 원천
     EastSeaNames public immutable names;
 
@@ -81,6 +83,7 @@ contract NameGatedDrop is ReentrancyGuard {
     constructor(address names_, address distributor_, uint256 dropAmount_, uint48 claimPeriod) {
         if (dropAmount_ == 0) revert ZeroAmount();
         if (distributor_ == address(0)) revert ZeroDistributor();
+        _requirePersonalTestAccount(distributor_);
         if (claimPeriod == 0) revert ZeroPeriod();
 
         names = EastSeaNames(names_);
@@ -90,13 +93,15 @@ contract NameGatedDrop is ReentrancyGuard {
     }
 
     /// @dev 풀 충전 — 누구나 후원 가능 (claimCount와 무관)
-    receive() external payable {}
+    receive() external payable personalTestAccess {
+        _checkPersonalTestNativeCap();
+    }
 
     // ---------------------------------------------------------------- 청구 (탈출)
 
     /// @notice primary name을 가진 계정에 dropAmount를 지급한다.
     ///         자격·정직성 검증은 names.reverseOf가 대신한다.
-    function claim() external nonReentrant {
+    function claim() external personalTestAccess nonReentrant {
         if (claimed[msg.sender]) revert AlreadyClaimed();
         if (block.timestamp > deadline) revert ClaimClosed(block.timestamp, deadline);
 
@@ -115,7 +120,8 @@ contract NameGatedDrop is ReentrancyGuard {
     // ---------------------------------------------------------------- 회수 (탈출)
 
     /// @notice 마감 후 잔여 전액을 distributor에게 인도한다. 누구나 호출.
-    function sweep() external nonReentrant {
+    function sweep() external personalTestAccess nonReentrant {
+        _requirePersonalTestAccount(distributor);
         if (block.timestamp <= deadline) revert SweepTooEarly(block.timestamp, deadline);
 
         uint256 amount = address(this).balance;

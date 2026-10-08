@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {PersonalTest} from "src/common/PersonalTest.sol";
+
 import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
 import {ReentrancyGuard} from "openzeppelin/utils/ReentrancyGuard.sol";
 
@@ -47,7 +49,7 @@ import {ReentrancyGuard} from "openzeppelin/utils/ReentrancyGuard.sol";
 ///   F-06: distributor는 sweep 수령만. 루트·마감·청구에 키 없음.
 ///   F-07: Claimed 이벤트 ≠ 청구 — 진실은 claimed 매핑이다.
 ///   F-08: 무작위성 없음 — 배정은 오프체인 명단(루트)이 결정했다.
-contract MerkleAirdrop is ReentrancyGuard {
+contract MerkleAirdrop is ReentrancyGuard, PersonalTest {
     /// @dev 분배 명단의 머클 루트 — 리프 = keccak256(abi.encodePacked(account, amount))
     bytes32 public immutable merkleRoot;
 
@@ -83,6 +85,7 @@ contract MerkleAirdrop is ReentrancyGuard {
     constructor(bytes32 merkleRoot_, address distributor_, uint48 claimPeriod) {
         if (merkleRoot_ == bytes32(0)) revert ZeroRoot();
         if (distributor_ == address(0)) revert ZeroDistributor();
+        _requirePersonalTestAccount(distributor_);
         if (claimPeriod == 0) revert DeadlineTooShort();
 
         merkleRoot = merkleRoot_;
@@ -91,14 +94,16 @@ contract MerkleAirdrop is ReentrancyGuard {
     }
 
     /// @dev 풀 충전 — 누구나 후원할 수 있다 (totalClaimed와 무관)
-    receive() external payable {}
+    receive() external payable personalTestAccess {
+        _checkPersonalTestNativeCap();
+    }
 
     // ---------------------------------------------------------------- 청구
 
     /// @notice 증명으로 자격을 보여주고 amount를 청구한다.
     /// @param amount 리프에 커밋된 금액
     /// @param proof  루트까지의 머클 증명
-    function claim(uint256 amount, bytes32[] calldata proof) external nonReentrant {
+    function claim(uint256 amount, bytes32[] calldata proof) external personalTestAccess nonReentrant {
         if (claimed[msg.sender]) revert AlreadyClaimed();
         if (block.timestamp > deadline) revert ClaimClosed(block.timestamp, deadline);
 
@@ -117,7 +122,8 @@ contract MerkleAirdrop is ReentrancyGuard {
     // ---------------------------------------------------------------- 회수 (탈출)
 
     /// @notice 마감 후 잔여 전액을 distributor에게 인도한다. 누구나 호출.
-    function sweep() external nonReentrant {
+    function sweep() external personalTestAccess nonReentrant {
+        _requirePersonalTestAccount(distributor);
         if (block.timestamp <= deadline) revert SweepTooEarly(block.timestamp, deadline);
 
         uint256 amount = address(this).balance;

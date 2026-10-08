@@ -55,6 +55,17 @@ An illustrative 500 u action burns **0.000500 DBLN** in state fees at the floor 
 
 ## Founder-compatible trust
 
+Mainnet testing means a **personal test instance**, never a shared financial
+service operated by Pipln or the founder. The four implementations (claims,
+streams, escrow and swap-pool) and the token diagnostic accept the common
+atomic wallet-owned deployment policy. It guards allowed own accounts,
+aggregate admitted holdings and counterparties, sets personal fees to zero,
+and reports `personal-test` on chain. The existing constructor ABI and
+testnet behavior remain available. See [the generic deployment interface](../docs/personal-mainnet-testing.md#native-contracts)
+and the README for each implementation. Lending and yield-vault still have
+no executable contract; their new READMEs record the same required policy.
+No design-only item is advertised as a working mainnet example.
+
 No design gives Pipln, a founder key, a curator, a registry publisher, or a privileged solver the ability to upgrade custody logic, levy an operator toll, select approved users, or seize funds. Liquidity-provider compensation and user-selected counterparties are disclosed economics, not a founder protocol fee. Immutable deployment parameters are chosen by users of an instance; a different instance is a different product choice.
 
 Each contract reports a deterministic **local** entry brake with no discretionary guardian. Predicates, latch behavior and exits are defined per item. A halted market cannot mint liquidity; repayment, refund and withdrawal retain their conservation, collateral and token-transfer preconditions. Manifest/brake evidence describes behavior; it is not curation or a safety certificate. [Registry/brake boundary](PRIMITIVES.md#capability-and-dependency-register).

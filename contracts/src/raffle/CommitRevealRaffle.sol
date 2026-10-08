@@ -97,14 +97,15 @@ contract CommitRevealRaffle is SimpleBrake, ReentrancyGuard {
     }
 
     /// @dev 참가비 밖 송금 거부 — 풀은 티켓 판매로만 커진다
-    receive() external payable {
+    receive() external payable personalTestAccess {
         revert WrongPrice(msg.value, ticketPrice);
     }
 
     // ---------------------------------------------------------------- 참가 (진입 — brake 차단)
 
     /// @notice 티켓 1장을 산다. 여러 장은 여러 번 호출한다.
-    function enter() external payable nonReentrant whenEntryOpen {
+    function enter() external payable personalTestAccess nonReentrant whenEntryOpen {
+        _checkPersonalTestNativeCap();
         if (msg.value != ticketPrice) revert WrongPrice(msg.value, ticketPrice);
         if (block.timestamp > enterDeadline) revert EntryClosed(block.timestamp, enterDeadline);
 
@@ -116,7 +117,7 @@ contract CommitRevealRaffle is SimpleBrake, ReentrancyGuard {
 
     /// @notice 참가 마감 후 operator 시드를 공개해 추첨한다.
     ///         누구나 호출 가능 — 공개된 시드는 누구나 제출할 수 있다.
-    function reveal(bytes32 seed) external nonReentrant {
+    function reveal(bytes32 seed) external personalTestAccess nonReentrant {
         if (drawn) revert AlreadyDrawn();
         if (block.timestamp <= enterDeadline) revert RevealTooEarly(block.timestamp, enterDeadline);
         if (block.timestamp > revealDeadline) revert RevealClosed(block.timestamp, revealDeadline);
@@ -133,7 +134,7 @@ contract CommitRevealRaffle is SimpleBrake, ReentrancyGuard {
 
     /// @notice 리빌 마감 후 추첨을 강행한다 — operator가 시드를
     ///         보류하면 시드 없이 prevrandao만으로 뽑는다.
-    function drawWithoutSeed() external nonReentrant {
+    function drawWithoutSeed() external personalTestAccess nonReentrant {
         if (drawn) revert AlreadyDrawn();
         if (block.timestamp <= revealDeadline) revert SeedWithheld(block.timestamp, revealDeadline);
 
@@ -147,6 +148,7 @@ contract CommitRevealRaffle is SimpleBrake, ReentrancyGuard {
 
     /// @dev drawn 플래그를 먼저 올리고(CEI) 상금 전액을 보낸다.
     function _payout(address who, bytes32 mixed) private {
+        _requirePersonalTestAccount(who);
         drawn = true; // CEI: 두 번째 추첨은 죽는다
         winner = who;
         emit Drawn(who, address(this).balance, mixed);

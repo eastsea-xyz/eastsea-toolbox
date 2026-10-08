@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {PersonalTest} from "src/common/PersonalTest.sol";
+
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {ReentrancyGuard} from "openzeppelin/utils/ReentrancyGuard.sol";
 import {SafeToken} from "src/common/SafeToken.sol";
@@ -14,7 +16,7 @@ import {AmmPair} from "./AmmPair.sol";
 ///  필요하면 래핑 토큰을 경로에 넣어라 (래핑 자체가 별도 예제 주제).
 ///  F-04: 경로 길이는 호출자가 준 path[] 배열에 한정된다 — 순회 뷰가
 ///  아니다. getAmountsOut은 path.length만큼만 계산한다.
-contract AmmRouter is ReentrancyGuard {
+contract AmmRouter is ReentrancyGuard, PersonalTest {
     using SafeToken for IERC20;
 
     AmmFactory public immutable factory;
@@ -37,6 +39,7 @@ contract AmmRouter is ReentrancyGuard {
 
     constructor(AmmFactory _factory) {
         factory = _factory;
+        _requirePersonalTestAccount(address(_factory));
     }
 
     // ---- 유동성 ----
@@ -53,7 +56,8 @@ contract AmmRouter is ReentrancyGuard {
         uint256 amountBMin,
         address to,
         uint256 deadline
-    ) external nonReentrant returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
+    ) external personalTestAccess nonReentrant returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
+        _requirePersonalTestAccount(to);
         if (block.timestamp > deadline) revert Expired();
         (AmmPair pair, uint256 reserveA, uint256 reserveB) = _pairForOrCreate(tokenA, tokenB);
         (amountA, amountB) = _optimalAmounts(amountADesired, amountBDesired, amountAMin, amountBMin, reserveA, reserveB);
@@ -65,8 +69,14 @@ contract AmmRouter is ReentrancyGuard {
 
     /// @dev 사용자로부터 두 토큰을 끌어와 페어로 전달한다 (잔여분 포함).
     function _fundPair(address tokenA, address tokenB, address pair, uint256 amountA, uint256 amountB) private {
+        _registerPersonalTestToken(tokenA);
+        _registerPersonalTestToken(tokenB);
+        _checkPersonalTestTokenDeposit(tokenA, amountA);
         IERC20(tokenA).pull(msg.sender, amountA);
+        _checkPersonalTestTokenCaps();
+        _checkPersonalTestTokenDeposit(tokenB, amountB);
         IERC20(tokenB).pull(msg.sender, amountB);
+        _checkPersonalTestTokenCaps();
         IERC20(tokenA).push(pair, IERC20(tokenA).balanceOf(address(this)));
         IERC20(tokenB).push(pair, IERC20(tokenB).balanceOf(address(this)));
     }
@@ -102,7 +112,8 @@ contract AmmRouter is ReentrancyGuard {
         uint256 amountBMin,
         address to,
         uint256 deadline
-    ) external nonReentrant returns (uint256 amountA, uint256 amountB) {
+    ) external personalTestAccess nonReentrant returns (uint256 amountA, uint256 amountB) {
+        _requirePersonalTestAccount(to);
         if (block.timestamp > deadline) revert Expired();
         AmmPair pair = _mustPair(tokenA, tokenB);
 
@@ -124,14 +135,17 @@ contract AmmRouter is ReentrancyGuard {
         address[] calldata path,
         address to,
         uint256 deadline
-    ) external nonReentrant returns (uint256[] memory amounts) {
+    ) external personalTestAccess nonReentrant returns (uint256[] memory amounts) {
+        _requirePersonalTestAccount(to);
         if (block.timestamp > deadline) revert Expired();
         amounts = getAmountsOut(amountIn, path);
         if (amounts[amounts.length - 1] < amountOutMin) {
             revert InsufficientOutput(amountOutMin, amounts[amounts.length - 1]);
         }
 
+        _checkPersonalTestTokenDeposit(path[0], amounts[0]);
         IERC20(path[0]).pull(msg.sender, amounts[0]);
+        _checkPersonalTestTokenCaps();
         IERC20(path[0]).push(address(_mustPair(path[0], path[1])), amounts[0]);
         _swap(amounts, path, to);
     }
@@ -148,11 +162,14 @@ contract AmmRouter is ReentrancyGuard {
         address[] calldata path,
         address to,
         uint256 deadline
-    ) external nonReentrant {
+    ) external personalTestAccess nonReentrant {
+        _requirePersonalTestAccount(to);
         if (block.timestamp > deadline) revert Expired();
         if (path.length < 2 || path.length > 4) revert InvalidPath();
 
+        _checkPersonalTestTokenDeposit(path[0], amountIn);
         IERC20(path[0]).pull(msg.sender, amountIn);
+        _checkPersonalTestTokenCaps();
         IERC20(path[0]).push(address(_mustPair(path[0], path[1])), IERC20(path[0]).balanceOf(address(this)));
 
         uint256 amountOut;
@@ -207,12 +224,12 @@ contract AmmRouter is ReentrancyGuard {
     /// @notice 상수곱 출력량 (수수료 0.30% 반영).
     function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)
         public
-        pure
+        view
         returns (uint256 amountOut)
     {
         if (amountIn == 0) revert InsufficientAmount();
         if (reserveIn == 0 || reserveOut == 0) revert InsufficientLiquidityPair();
-        uint256 amountInWithFee = amountIn * FEE_NUMERATOR;
+        uint256 amountInWithFee = amountIn * (personalTestEnabled ? FEE_DENOMINATOR : FEE_NUMERATOR);
         amountOut = (amountInWithFee * reserveOut) / (reserveIn * FEE_DENOMINATOR + amountInWithFee);
     }
 

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {PersonalTest} from "src/common/PersonalTest.sol";
+
 import {ECDSA} from "openzeppelin/utils/cryptography/ECDSA.sol";
 import {EIP712} from "openzeppelin/utils/cryptography/EIP712.sol";
 import {SignatureChecker} from "openzeppelin/utils/cryptography/SignatureChecker.sol";
@@ -27,7 +29,7 @@ import {SignatureChecker} from "openzeppelin/utils/cryptography/SignatureChecker
 ///   F-03: 대상 call은 EOA 송금(value>0, data 빈)도 정상 처리한다.
 ///   F-04: getTransactionHash 상수 시간.
 ///   F-05: 코드가 있는 소유자는 SignatureChecker의 ERC-1271 경로를 따른다.
-contract SimpleMultisig is EIP712 {
+contract SimpleMultisig is EIP712, PersonalTest {
     bytes32 public constant TRANSACTION_TYPEHASH =
         keccak256("Transaction(address to,uint256 value,bytes data,uint256 nonce,uint256 deadline)");
 
@@ -72,7 +74,9 @@ contract SimpleMultisig is EIP712 {
     }
 
     /// @notice 이후 승인된 지급에 쓸 native 자금을 받는다.
-    receive() external payable {}
+    receive() external payable personalTestAccess {
+        _checkPersonalTestNativeCap();
+    }
 
     // ---------------------------------------------------------------- 실행
 
@@ -85,6 +89,7 @@ contract SimpleMultisig is EIP712 {
     /// @param signatures 복구된 소유자 주소 기준 오름차순 EOA 서명 배열
     function execute(address to, uint256 value, bytes calldata data, uint256 nonce, bytes[] calldata signatures)
         external
+        personalTestAccess
         returns (bytes memory)
     {
         bytes32 h = _consume(to, value, data, nonce, type(uint256).max);
@@ -101,7 +106,7 @@ contract SimpleMultisig is EIP712 {
         uint256 nonce,
         address[] calldata signers,
         bytes[] calldata signatures
-    ) external returns (bytes memory) {
+    ) external personalTestAccess returns (bytes memory) {
         return _executeWithSigners(to, value, data, nonce, type(uint256).max, signers, signatures);
     }
 
@@ -115,17 +120,20 @@ contract SimpleMultisig is EIP712 {
         uint256 deadline,
         address[] calldata signers,
         bytes[] calldata signatures
-    ) external returns (bytes memory) {
+    ) external personalTestAccess returns (bytes memory) {
         return _executeWithSigners(to, value, data, nonce, deadline, signers, signatures);
     }
 
     /// @notice 소유자 자신의 트랜잭션으로 승인한다 (만료 없음).
-    function approve(address to, uint256 value, bytes calldata data, uint256 nonce) external {
+    function approve(address to, uint256 value, bytes calldata data, uint256 nonce) external personalTestAccess {
         _approve(to, value, data, nonce, type(uint256).max);
     }
 
     /// @notice 오프체인 서명이 불가능한 소유자도 계정 호출로 승인할 수 있다.
-    function approve(address to, uint256 value, bytes calldata data, uint256 nonce, uint256 deadline) external {
+    function approve(address to, uint256 value, bytes calldata data, uint256 nonce, uint256 deadline)
+        external
+        personalTestAccess
+    {
         _approve(to, value, data, nonce, deadline);
     }
 
@@ -174,6 +182,7 @@ contract SimpleMultisig is EIP712 {
     }
 
     function _approve(address to, uint256 value, bytes calldata data, uint256 nonce, uint256 deadline) private {
+        _requirePersonalTestAccount(to);
         if (!isOwner[msg.sender]) revert NotOwner();
         if (block.timestamp > deadline) revert TransactionExpired(deadline);
         bytes32 h = getTransactionHash(to, value, data, nonce, deadline);
@@ -186,6 +195,7 @@ contract SimpleMultisig is EIP712 {
         private
         returns (bytes32 h)
     {
+        _requirePersonalTestAccount(to);
         if (block.timestamp > deadline) revert TransactionExpired(deadline);
         h = getTransactionHash(to, value, data, nonce, deadline);
         if (executed[h]) revert AlreadyExecuted();
@@ -211,6 +221,7 @@ contract SimpleMultisig is EIP712 {
                     || !SignatureChecker.isValidSignatureNow(recovered, h, signatures[i])
             ) revert InvalidSignature();
             last = recovered;
+            _requirePersonalTestAccount(recovered);
             ++count;
         }
     }
@@ -226,6 +237,7 @@ contract SimpleMultisig is EIP712 {
         address last = address(0);
         for (uint256 i; i < n; ++i) {
             address signer = signers[i];
+            _requirePersonalTestAccount(signer);
             if (signer <= last || !isOwner[signer]) revert InvalidSignature();
             bool valid = signatures[i].length == 0
                 ? approvals[h][signer]

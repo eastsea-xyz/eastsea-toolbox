@@ -2,11 +2,12 @@
 pragma solidity ^0.8.24;
 
 import {IEastSeaBrake} from "./IEastSeaBrake.sol";
+import {PersonalTest} from "src/common/PersonalTest.sol";
 
 /// @notice IEastSeaBrake의 최소 구현. 상속해서 쓴다.
 /// @dev 가디언은 생성 시 고정되며 state는 단조 증가만 한다. 출금 경로에
 ///      whenBrakeBelow를 붙이는 것을 금지한다 — brake는 진입만 막는다.
-abstract contract SimpleBrake is IEastSeaBrake {
+abstract contract SimpleBrake is IEastSeaBrake, PersonalTest {
     /// @dev 0 = 정상, 1 = 신규 진입 정지, 2 = 전면 정지
     uint8 private _brakeState;
     uint64 private _brakeSince;
@@ -30,7 +31,7 @@ abstract contract SimpleBrake is IEastSeaBrake {
     }
 
     /// @notice 가디언만 호출. state는 현재보다 커야 한다 (되돌림 불가).
-    function engageBrake(uint8 state) external onlyBrakeGuardian {
+    function engageBrake(uint8 state) external personalTestAccess onlyBrakeGuardian {
         if (state == 0 || state > 2) revert BrakeOnlyStronger(_brakeState, state);
         if (state <= _brakeState) revert BrakeOnlyStronger(_brakeState, state);
         _brakeState = state;

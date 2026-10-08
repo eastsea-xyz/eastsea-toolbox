@@ -14,6 +14,8 @@ import {ExactToken, IERC20Min} from "../../common/src/ExactToken.sol";
 ///         returns the remainder to the fixed refund recipient; after close
 ///         anyone may prune its replay bitmap. Nobody can edit a root,
 ///         redirect a claim, sweep early, upgrade or charge a fee.
+///         Personal instances admit only the deploying wallet's accounts
+///         and enforce their configured custody cap on new funding.
 /// @dev Design: native/claims/DESIGN.md. Storage per live campaign is three
 ///      words (C0 root, C1 refund|deadline|leafCount, C2 remaining|funded)
 ///      plus one bitmap word per touched 256-index group.
@@ -94,6 +96,7 @@ contract ClaimCampaigns is NativeBrake, TransientLock {
         if (token_.code.length == 0) revert TokenHasNoCode();
         token = token_;
         tokenCodeHash = token_.codehash;
+        _registerPersonalTestToken(token_);
         _meta.nextCampaign = 1;
     }
 
@@ -113,7 +116,7 @@ contract ClaimCampaigns is NativeBrake, TransientLock {
         uint64 deadline,
         uint128 amount,
         bytes32 dataHash
-    ) external lock returns (uint256 id) {
+    ) external personalTestAccess lock returns (uint256 id) {
         _requireEntryOpen();
         Meta memory m = _meta;
         id = m.nextCampaign;
@@ -121,9 +124,12 @@ contract ClaimCampaigns is NativeBrake, TransientLock {
         if (root == bytes32(0)) revert ZeroRoot();
         if (leafCount == 0 || leafCount > MAX_LEAVES) revert BadLeafCount(leafCount);
         if (refundRecipient == address(0) || refundRecipient == address(this)) revert BadRefundRecipient();
+        _requirePersonalTestAccount(refundRecipient);
         if (deadline <= block.number) revert BadDeadline();
         if (amount == 0) revert ZeroAmount();
         if (uint256(m.outstanding) + amount > type(uint128).max) revert OutstandingOverflow();
+        _checkPersonalTestNativeCap();
+        _checkPersonalTestTokenDeposit(token, amount);
 
         _meta = Meta({nextCampaign: m.nextCampaign + 1, brakeSince: m.brakeSince, outstanding: m.outstanding + amount});
         _campaigns[id] = Campaign({
@@ -136,13 +142,19 @@ contract ClaimCampaigns is NativeBrake, TransientLock {
         });
 
         ExactToken.pullExact(token, msg.sender, amount);
+        _checkPersonalTestTokenCaps();
         emit CampaignCreated(id, msg.sender, root, amount, deadline, leafCount, refundRecipient, dataHash);
     }
 
     // ------------------------------------------------------------------ exits
 
     /// @notice Pay a valid leaf to its fixed account. Anyone may submit.
-    function claim(uint256 id, uint256 index, address account, uint128 amount, bytes32[] calldata proof) external lock {
+    function claim(uint256 id, uint256 index, address account, uint128 amount, bytes32[] calldata proof)
+        external
+        personalTestAccess
+        lock
+    {
+        _requirePersonalTestAccount(account);
         Campaign storage c = _campaigns[id];
         _checkLeaf(c, id, index, account, amount, proof);
         _consumeBit(id, index);
@@ -160,12 +172,13 @@ contract ClaimCampaigns is NativeBrake, TransientLock {
     /// @notice Close an ended (past deadline) or fully paid campaign and send
     ///         the remainder to its fixed refund recipient. Anyone may call.
     ///         A failed refund transfer reverts and leaves the campaign intact.
-    function close(uint256 id) external lock {
+    function close(uint256 id) external personalTestAccess lock {
         Campaign storage c = _campaigns[id];
         if (c.root == bytes32(0)) revert CampaignNotLive(id);
         uint128 refund = c.remaining;
         if (block.number <= c.deadline && refund != 0) revert NotClosable(id);
         address to = c.refundRecipient;
+        _requirePersonalTestAccount(to);
 
         delete _campaigns[id];
         uint128 owed = _meta.outstanding - refund;
@@ -180,7 +193,7 @@ contract ClaimCampaigns is NativeBrake, TransientLock {
 
     /// @notice Clear up to eight bitmap words of a closed campaign. Never
     ///         touches a live campaign. Clearing refunds no burned state fee.
-    function prune(uint256 id, uint256 startWord, uint256 count) external {
+    function prune(uint256 id, uint256 startWord, uint256 count) external personalTestAccess {
         if (count == 0 || count > MAX_PRUNE_WORDS) revert BadPruneCount(count);
         if (id == 0 || id >= _meta.nextCampaign) revert NotClosed(id);
         if (_campaigns[id].root != bytes32(0)) revert NotClosed(id);

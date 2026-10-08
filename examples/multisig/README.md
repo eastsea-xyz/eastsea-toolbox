@@ -139,3 +139,49 @@ forge create src/multisig/SimpleMultisig.sol:SimpleMultisig \
 | `contracts/test/utils/EastSeaAccountMock.sol` | EastSea v2 계정 인터페이스·실제 P-256 검증 mock |
 | [SECURITY.md](SECURITY.md) | F-01..F-08 매핑·서명 검증 상세 |
 | [GAS.md](GAS.md) | 상태 units 계량·온체인 컨펌 대비 |
+
+## Personal test instance: testnet and mainnet
+
+<!-- i18n: personal_test.title personal_test.testnet personal_test.mainnet personal_test.accounts personal_test.local personal_test.fees personal_test.caps personal_test.identity -->
+
+On **testnet**, use test coins. A shared demo is allowed. Publish with your
+own wallet using `--network testnet --apps multisig` and the testnet registry,
+names service and owned name described in the [publisher guide](../../README.md#try-the-toolbox-on-the-eastsea-testnet-with-your-own-account).
+Ordinary constructors retain the existing testnet behavior; `--personal-test`
+also works on testnet for rehearsing the private flow.
+
+On **mainnet**, deploy and use **your own private copy only**. Neither Pipln
+nor the founder operates a financial service for other people. After setting
+`YOUR_ACCOUNT`, `YOUR_NODE_RPC` and the actual `MAINNET_CHAIN_ID` from your
+wallet/node, first inspect the offline plan:
+
+```bash
+python3 scripts/publish.py --network mainnet --personal-test --dry-run \
+  --apps multisig --from "$YOUR_ACCOUNT" --chain-id "$MAINNET_CHAIN_ID"
+
+# Run from the repository root when you choose to deploy your own instance.
+# Your EIP-1193 wallet approves each transaction; no key is passed to Python.
+python3 scripts/publish.py --network mainnet --personal-test \
+  --apps multisig --from "$YOUR_ACCOUNT" --chain-id "$MAINNET_CHAIN_ID" \
+  --rpc "$YOUR_NODE_RPC" --bundle-mode local
+```
+
+The atomic personal deployer sets `instanceMode()` to `personal-test` before
+use. Only your deploying wallet is initially allowlisted. Add another account
+**only if it is yours** with `setPersonalTestAccount(address,bool)` through
+your wallet; counterparties/beneficiaries must be your own allowed accounts.
+A native cap and an aggregate admitted token cap apply to each instance.
+Defaults are `10000000000000000` native base units and `5000000000000000000`
+18-decimal **own test-token** units; adjust with `--personal-native-cap` and
+`--personal-token-cap`. These are quantities, **not a dollar-equivalence claim**.
+No protocol fee or new administrative withdrawal exists in personal mode;
+network fees still apply.
+
+Use the generated local bundle against its fixed addresses. Serve it on
+loopback or let the wallet browser load its local assets; do not upload it,
+register it as a public app, or run a shared mainnet frontend. The frontend
+checks mode, owner, caps, authority and your account before writes. See
+[the policy and wallet interface](../../docs/personal-mainnet-testing.md)
+for asset-cap limitations, account removal/exit behavior and local loading.
+English copy has stable [translation keys](../../docs/i18n/personal-test.en.json);
+this branch has not integrated the five-language pack.

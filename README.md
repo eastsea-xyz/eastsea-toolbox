@@ -11,6 +11,46 @@
 > 포함된 예제(1·4·5)는 제한 카테고리다 — **법률 검토 전 공개 배포
 > 금지.** `docs/legal-notes.md` 참고.
 
+## Try on mainnet, just for you
+
+Mainnet tests use **each person's own private instance**. Neither Pipln nor
+the founder runs a shared financial service or shared mainnet frontend.
+`--network mainnet` requires `--personal-test`, your wallet account and an
+explicit `--chain-id`. The atomic deployer fixes an owner-only initial
+allowlist and native/aggregate token caps before use; personal mode has no
+protocol fee, no administrative rescue, and the on-chain marker
+`instanceMode() == "personal-test"`.
+
+```bash
+# Offline plan: no wallet/node requests, writes or deployments.
+python3 scripts/publish.py --network mainnet --personal-test --dry-run \
+  --from "$YOUR_ACCOUNT" --chain-id "$MAINNET_CHAIN_ID" --apps invoice,escrow
+
+# When you choose to deploy: your EIP-1193 wallet approves every transaction.
+# The result stays in ./tmp/, with local-only frontends and no registry upload.
+make publish-personal-mainnet RPC="$YOUR_NODE_RPC" FROM="$YOUR_ACCOUNT" \
+  PUBLISH_ARGS='--chain-id YOUR_MAINNET_CHAIN_ID --apps invoice,escrow'
+```
+
+Defaults are 0.01 native units (18 decimals) and 5 aggregate **own test-token**
+units (18 decimals), not a dollar price. Configure raw base units with
+`--personal-native-cap` and `--personal-token-cap`. Add only other accounts
+you own; private test counterparties are your own accounts. Personal bundles
+never upload content, publish AppRegistry records or bind `.sea` app names.
+Serve the generated bundle on loopback or use the wallet browser's local
+asset loader. Its frontend verifies the owner, caps, authority and allowed
+account before writes, and fixes addresses to your copies.
+
+All 17 examples have this mode. Four implemented native products and the
+token diagnostic use the same deployer; native lending and yield-vault are
+still design-only. Originals remain fidelity references with unchanged
+code; the deploy-time guard rejects unguarded originals. Full quantities,
+exit and unsolicited-transfer limits, native deployment ABI, explorer
+exclusion rules and the later wallet browser integration are in
+[personal mainnet testing](docs/personal-mainnet-testing.md). Each example
+README describes both networks; [English keys](docs/i18n/personal-test.en.json)
+are ready for the five-language pack when it lands.
+
 ## Try the toolbox on the EastSea testnet with your own account
 
 Any ordinary user can publish their own testnet copies of these public tools.
@@ -106,11 +146,11 @@ a separate registry release workflow; this command does not overwrite records.
 
 All frontends read addresses and chain/currency from their bundled manifest,
 use EIP-6963/EIP-1193, and leave signing and fees to the wallet. ERC20 quantities
-use token base units. The unchanged DAO and multisig templates still verify
-secp256k1 signatures with `ecrecover`; their pages explain that P-256 accounts
-cannot supply those signatures. Direct calls and reads work, but P-256 voting
-or multisig execution needs a separate contract design. These limitations are
-not bypassed by the publisher.
+use token base units. DAO and multisig retain the secp256k1 signature API and
+also provide explicit-signer ERC-1271 execution for contract accounts. The
+caller must obtain the account's supported signature through its wallet;
+the publisher never manufactures signatures. In personal mode every signer,
+party and recipient must be an allowed own account or guarded own instance.
 
 ```bash
 make test-publisher  # offline recovery/hash/schema + all 17 EIP-1193 regressions
@@ -222,7 +262,8 @@ proof/              증명 벤치 — 위험 프로브, 충실도 검사, 벤치
 EIP-6963 + `window.aether` 폴백, manifest의 chain id 검증,
 바닐라 ABI 인코딩(selector·topic은 사전 계산 상수), `eth_call` 조회,
 `eth_sendTransaction` 실행, `eth_getLogs` 이벤트 조회. 배포 주소는
-`manifest.json`으로 읽는다. 수동 contract 쿼리 override도 지원한다:
+`manifest.json`으로 읽는다. 테스트넷에서는 수동 contract 쿼리 override도 지원한다.
+개인 메인넷 번들은 자기 인스턴스 주소를 고정한다:
 
 ```
 https://<host>/apps/vending/?contract=0x1234…

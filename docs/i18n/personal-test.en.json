@@ -1,0 +1,12 @@
+{
+  "personal_test.title": "Personal test instance",
+  "personal_test.try_mainnet": "Try on mainnet (just for you)",
+  "personal_test.testnet": "Shared demos with test coins are allowed on testnet.",
+  "personal_test.mainnet": "Deploy and use your own allowlisted, capped private copy on mainnet.",
+  "personal_test.accounts": "Add only other accounts you own; there is no public enrollment.",
+  "personal_test.local": "Keep the frontend local. No uploads, public listing, or shared mainnet service.",
+  "personal_test.fees": "No protocol fee. Your wallet still pays network execution, proving and state fees.",
+  "personal_test.caps": "Caps use raw base units, not a dollar price or an oracle.",
+  "personal_test.identity": "Verify personal-test, owner, caps and deployment authority before use.",
+  "personal_test.unavailable": "This design has no executable contract yet; mainnet testing needs an implementation with the same personal policy."
+}

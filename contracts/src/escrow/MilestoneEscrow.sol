@@ -74,7 +74,7 @@ contract MilestoneEscrow is SimpleBrake, ReentrancyGuard {
     constructor(address guardian) SimpleBrake(guardian) {}
 
     /// @dev 직접 송금 거부 — 자금은 createDeal의 회계를 거쳐야 한다.
-    receive() external payable {
+    receive() external payable personalTestAccess {
         revert NativeTransferFailed();
     }
 
@@ -83,7 +83,15 @@ contract MilestoneEscrow is SimpleBrake, ReentrancyGuard {
     /// @notice 에스크로를 열고 전액을 예치한다 (진입 — brake 차단).
     ///         마일스톤 금액 목록은 오프체인 계약서에 두고, 여기는
     ///         개수만 고정한다.
-    function createDeal(address seller, uint64 milestoneCount) external payable nonReentrant whenEntryOpen {
+    function createDeal(address seller, uint64 milestoneCount)
+        external
+        payable
+        personalTestAccess
+        nonReentrant
+        whenEntryOpen
+    {
+        _checkPersonalTestNativeCap();
+        _requirePersonalTestAccount(seller);
         if (msg.value == 0) revert ZeroAmount();
         if (seller == address(0) || seller == msg.sender) revert NotDealParty();
         if (milestoneCount == 0) revert ZeroMilestones();
@@ -96,7 +104,7 @@ contract MilestoneEscrow is SimpleBrake, ReentrancyGuard {
 
     /// @notice 마일스톤 승인 — 이후 그 금액은 판매자 몫이 된다.
     ///         승인은 취소할 수 없다 (되돌림은 별도 합의·환불 절차).
-    function approveMilestone(uint256 dealId, uint64 index, uint256 amount) external nonReentrant {
+    function approveMilestone(uint256 dealId, uint64 index, uint256 amount) external personalTestAccess nonReentrant {
         Deal storage d = deals[dealId];
         if (d.deposited == 0) revert DealNotFound(dealId);
         if (msg.sender != d.buyer) revert NotDealParty();
@@ -117,7 +125,7 @@ contract MilestoneEscrow is SimpleBrake, ReentrancyGuard {
     // ---------------------------------------------------------------- 인출 (탈출 — brake 무관)
 
     /// @notice 승인 누적 중 아직 인출하지 않은 분을 판매자가 받는다.
-    function sellerWithdraw(uint256 dealId) external nonReentrant {
+    function sellerWithdraw(uint256 dealId) external personalTestAccess nonReentrant {
         Deal storage d = deals[dealId];
         if (d.deposited == 0) revert DealNotFound(dealId);
         if (msg.sender != d.seller) revert NotDealParty();
@@ -131,7 +139,7 @@ contract MilestoneEscrow is SimpleBrake, ReentrancyGuard {
     }
 
     /// @notice 미승인 잔여를 구매자가 회수한다. 승인분은 유지된다.
-    function buyerRefund(uint256 dealId) external nonReentrant {
+    function buyerRefund(uint256 dealId) external personalTestAccess nonReentrant {
         Deal storage d = deals[dealId];
         if (d.deposited == 0) revert DealNotFound(dealId);
         if (msg.sender != d.buyer) revert NotDealParty();
@@ -158,6 +166,7 @@ contract MilestoneEscrow is SimpleBrake, ReentrancyGuard {
     // ---------------------------------------------------------------- 내부
 
     function _pay(address to, uint256 amount) private {
+        _requirePersonalTestAccount(to);
         (bool ok,) = to.call{value: amount}("");
         if (!ok) revert NativeTransferFailed();
     }

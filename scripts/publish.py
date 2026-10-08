@@ -24,6 +24,8 @@ import zlib
 ROOT = Path(__file__).resolve().parent.parent
 ZERO = "0x" + "0" * 40
 ZERO_HASH = "0x" + "0" * 64
+PERSONAL_NATIVE_CAP = 10**16
+PERSONAL_TOKEN_CAP = 5 * 10**18
 SLUGS = tuple(sorted(p.parent.name for p in (ROOT / "examples").glob("*/manifest.json")))
 PRIMARY = {"token": "IslandCoin token", "nft": "Editions1155 sales", "lock": "LinearVesting"}
 DEPENDENCIES = {"amm", "launchpad", "rewards", "lock", "dao"}
@@ -81,9 +83,75 @@ def selected(value):
     return result
 
 
-def atomic_json(path, value):
+def personal_policy(args, sender):
+    return {"schema": "eastsea.personal-test/1", "mode": "personal-test", "owner": sender,
+            "native_cap": str(args.personal_native_cap), "token_cap": str(args.personal_token_cap),
+            "initial_allowlist": [sender], "protocol_fee_bps": 0}
+
+
+def validate_options(args):
+    """Reject unsafe plans before RPC, wallet connection, output creation, or dry-run."""
+    slugs = selected(args.apps)
+    if args.network == "mainnet":
+        if not args.personal_test:
+            raise PublishError("--network mainnet requires --personal-test")
+        if args.chain_id is None:
+            raise PublishError("Mainnet requires an explicit --chain-id; no mainnet identity is assumed")
+        if args.wallet_command:
+            raise PublishError("Mainnet forbids --wallet-command/WALLET_COMMAND; use your browser wallet or local --wallet-rpc")
+        if args.wallet_rpc:
+            endpoint = urlsplit(args.wallet_rpc)
+            if (endpoint.scheme not in {"http", "https"} or endpoint.hostname not in {"localhost", "127.0.0.1", "::1"}
+                    or endpoint.username or endpoint.password):
+                raise PublishError("Mainnet --wallet-rpc must be your own loopback wallet/node endpoint")
+    if args.chain_id is not None and (isinstance(args.chain_id, bool) or not 0 < args.chain_id < 2**256):
+        raise PublishError("--chain-id must be a positive 256-bit integer")
+    args.native_symbol = args.native_symbol or ("DBLN" if args.network == "mainnet" else "SEA")
+    if not re.fullmatch(r"[A-Za-z][A-Za-z0-9]{0,11}", args.native_symbol):
+        raise PublishError("--native-symbol must be a 1–12 character alphanumeric currency symbol")
+    if isinstance(args.native_decimals, bool) or not 0 <= args.native_decimals <= 77:
+        raise PublishError("--native-decimals must be an integer from 0 through 77")
+    if args.personal_test:
+        for label, cap in (("native", args.personal_native_cap), ("token", args.personal_token_cap)):
+            if isinstance(cap, bool) or not isinstance(cap, int) or not 0 < cap < 2**256:
+                raise PublishError(f"--personal-{label}-cap must be a positive 256-bit integer in base units")
+        if "launchpad" in slugs and args.personal_token_cap < 10000:
+            raise PublishError("Launchpad personal token cap must be at least 10000 base units for graduation liquidity")
+        if "amm" in slugs and args.personal_token_cap < 4000:
+            raise PublishError("AMM personal token cap must be at least 4000 base units for minimum liquidity")
+        if args.bundle_mode not in {None, "local"}:
+            raise PublishError("Personal-test instances require --bundle-mode local; upload/hosting is disabled")
+        args.bundle_mode = "local"
+    elif args.bundle_mode is None:
+        args.bundle_mode = "rpc"
+    elif args.bundle_mode == "local":
+        raise PublishError("--bundle-mode local requires --personal-test")
+    if any(not math.isfinite(v) or v <= 0 for v in (args.receipt_timeout, args.poll_interval, args.wallet_timeout)):
+        raise PublishError("Receipt/wallet timeouts and polling interval must be positive and finite")
+    if args.output:
+        safe_output_path(args.output, ROOT / "tmp" if args.personal_test else None)
+    return slugs
+
+
+def safe_output_path(path, root=None):
+    """Keep unresolved symlinks from redirecting task outputs or state reads."""
+    path = Path(os.path.abspath(path))
+    if root is not None:
+        root = Path(os.path.abspath(root))
+        if not path.is_relative_to(root):
+            raise PublishError(f"Output path escapes its local namespace: {path}")
+    for component in reversed((path, *path.parents)):
+        if component.is_symlink():
+            raise PublishError(f"Output path contains a symlink: {component}")
+    if root is not None and not path.resolve().is_relative_to(root.resolve()):
+        raise PublishError(f"Resolved output path escapes its local namespace: {path}")
+    return path
+
+
+def atomic_json(path, value, root=None):
+    path = safe_output_path(path, root)
+    pending = safe_output_path(path.with_suffix(path.suffix + ".pending"), root)
     path.parent.mkdir(parents=True, exist_ok=True)
-    pending = path.with_suffix(path.suffix + ".pending")
     pending.write_bytes(canonical(value) + b"\n")
     pending.replace(path)
 
@@ -112,13 +180,15 @@ class Rpc:
 class Wallet:
     """A command or wallet RPC owns signing, account policy and B5 fee estimation."""
 
-    def __init__(self, command=None, url=None, sender=None, chain=None, timeout=300):
+    def __init__(self, command=None, url=None, sender=None, chain=None, timeout=300, network="testnet", policy=None):
         if command and url:
             raise PublishError("Choose WALLET_COMMAND/--wallet-command or --wallet-rpc")
+        if network == "mainnet" and command:
+            raise PublishError("Mainnet forbids wallet-command signing")
         self.command = shlex.split(command) if command else None
         self.rpc = Rpc(url) if url else None
         self.browser = None
-        self.browser_settings = (sender, chain, timeout) if not command and not url else None
+        self.browser_settings = (sender, chain, timeout, network, policy) if not command and not url else None
 
     def close(self):
         if self.browser:
@@ -137,7 +207,7 @@ class Wallet:
                 raise PublishError(str(error)) from error
         if self.rpc:
             return self.rpc.request(method, params)
-        task_tmp = ROOT / "tmp"
+        task_tmp = safe_output_path(ROOT / "tmp")
         task_tmp.mkdir(exist_ok=True)
         env = dict(os.environ, TMPDIR=str(task_tmp))
         try:
@@ -246,36 +316,80 @@ def normalize_receipt(reply):
 
 class Publisher:
     def __init__(self, args, rpc=None, wallet=None, abi=None):
+        validate_options(args)
         self.args = args
+        self.sender = address(args.sender)
+        if args.personal_test:
+            self.names = address(args.names) if "names" in selected(args.apps) else ZERO
+            self.registry = ZERO
+        else:
+            self.names, self.registry = address(args.names), address(args.registry)
         self.rpc = rpc or Rpc(args.rpc)
         self.abi = abi or Abi(args.cast)
-        self.sender = address(args.sender)
-        self.names, self.registry = address(args.names), address(args.registry)
         self.chain = hex(int(self.rpc.request("eth_chainId"), 16))
-        if int(self.chain, 16) not in args.test_chain_ids:
+        if args.chain_id is not None and int(self.chain, 16) != args.chain_id:
+            raise PublishError(f"Node chain {self.chain} differs from the requested --chain-id {hex(args.chain_id)}")
+        if args.network == "testnet" and int(self.chain, 16) not in args.test_chain_ids:
             raise PublishError(f"Chain {self.chain} is not an explicitly configured test chain; use --test-chain-id for an owned devnet/testnet")
-        self.wallet = wallet or Wallet(args.wallet_command, args.wallet_rpc, self.sender, self.chain, args.wallet_timeout)
-        self.name = root_name(args.name or abi_string(self.read(self.names, "reverseOf(address)", self.sender)))
-        default_output = ROOT / "tmp" / "publish-testnet" / f"{self.chain}-{self.sender[2:]}-{self.name}"
-        self.output = Path(args.output or default_output).resolve()
+        self.policy = personal_policy(args, self.sender) if args.personal_test else None
+        self.wallet = wallet or Wallet(args.wallet_command, args.wallet_rpc, self.sender, self.chain, args.wallet_timeout,
+                                     args.network, self.policy)
+        self.name = root_name(args.name or ("personal" if args.personal_test else abi_string(self.read(self.names, "reverseOf(address)", self.sender))))
+        output_group = "publish-personal" if args.personal_test else "publish-testnet"
+        output_label = f"{self.chain}-{self.sender[2:]}-{self.name}"
+        if args.personal_test:
+            output_label = args.network + "-" + output_label
+        default_output = ROOT / "tmp" / output_group / output_label
+        self.output = safe_output_path(args.output or default_output, ROOT / "tmp" if args.personal_test else None)
         if self.output == ROOT or ROOT in self.output.parents and self.output.parts[len(ROOT.parts)] in {"apps", "examples", "contracts", "scripts"}:
             raise PublishError("Output must be isolated from repository source files")
-        self.output.mkdir(parents=True, exist_ok=True)
-        self.state_file = self.output / "state.json"
+        if args.personal_test and not self.output.is_relative_to((ROOT / "tmp").resolve()):
+            raise PublishError("Personal-test local output must be under the workspace ./tmp/")
+        self.state_file = self.output_path("state.json")
+        self.output_path("state.json.pending")
         self.state = json.loads(self.state_file.read_text()) if self.state_file.exists() else {
             "schema": "toolbox-publish-state/1", "chain_id": self.chain, "from": self.sender,
             "name": self.name, "registry": self.registry, "names": self.names, "transactions": {}, "contracts": {}, "apps": {},
+            "network": args.network, "mode": "personal-test" if args.personal_test else "testnet-demo", "policy": self.policy,
+            "native_currency": {"symbol": args.native_symbol, "decimals": args.native_decimals},
         }
-        for key, expected in (("chain_id", self.chain), ("from", self.sender), ("name", self.name), ("registry", self.registry), ("names", self.names)):
-            if self.state.get(key) != expected:
-                raise PublishError(f"Output state belongs to a different {key}; choose another --output")
+        self.check_state(self.state)
+        self.output.mkdir(parents=True, exist_ok=True)
         self.artifact_cache = {}
         self.source_hashes = {}
         self.library_roots = {}
         self.lock = None
 
+    def output_path(self, *parts):
+        return safe_output_path(self.output.joinpath(*parts), self.output)
+
+    def check_output_paths(self, slugs):
+        self.output_path("state.json")
+        self.output_path("state.json.pending")
+        self.output_path(".publisher.lock")
+        for slug in slugs:
+            for name in ("index.html", "manifest.json", "icon.png", "README.txt", "GAS.txt", "SECURITY.txt"):
+                self.output_path("bundles", slug, name)
+            self.output_path("bundles", slug + ".index.json")
+            self.output_path("examples", slug, "manifest.json")
+            self.output_path("examples", slug, "manifest.json.pending")
+            if not self.args.personal_test:
+                self.output_path("uploads", slug + ".json")
+                self.output_path("uploads", slug + ".json.pending")
+
+    def check_state(self, state):
+        identity = {"chain_id": self.chain, "from": self.sender, "name": self.name, "registry": self.registry, "names": self.names}
+        if self.args.personal_test:
+            identity.update(network=self.args.network, mode="personal-test", policy=personal_policy(self.args, self.sender))
+            identity["native_currency"] = {"symbol": self.args.native_symbol, "decimals": self.args.native_decimals}
+        elif state.get("mode", "testnet-demo") != "testnet-demo" or state.get("network", "testnet") != "testnet":
+            raise PublishError("Output state belongs to a personal/mainnet instance; choose another --output")
+        for key, expected in identity.items():
+            if state.get(key) != expected:
+                raise PublishError(f"Output state belongs to a different {key}; choose another --output")
+
     def save(self):
-        atomic_json(self.state_file, self.state)
+        atomic_json(self.state_file, self.state, self.output)
 
     def read(self, target, signature, *args):
         return self.rpc.request("eth_call", [{"from": self.sender, "to": target, "data": self.abi.call(signature, *args)}, "latest"])
@@ -286,13 +400,60 @@ class Publisher:
             raise PublishError(f"No contract code at {target}")
         return result
 
-    def preflight(self):
+    def read_word(self, target, signature, *args):
+        result = words(self.read(target, signature, *args))
+        if len(result) != 1:
+            raise PublishError(f"Invalid personal-test policy response: {signature}")
+        return result[0]
+
+    def verify_personal(self, target, authority=None):
+        """Check policy from chain, including on every cached-deployment resume."""
+        if abi_string(self.read(target, "instanceMode()")) != "personal-test":
+            raise PublishError(f"Contract {target} is not an on-chain personal-test instance")
+        if "0x" + self.read_word(target, "personalTestOwner()")[-40:] != self.sender:
+            raise PublishError(f"Personal-test owner differs from your wallet at {target}")
+        for label, cap in (("Native", self.args.personal_native_cap), ("Token", self.args.personal_token_cap)):
+            if int(self.read_word(target, f"personalTest{label}Cap()"), 16) != cap:
+                raise PublishError(f"Personal-test {label.lower()} cap differs from the saved policy at {target}")
+        if int(self.read_word(target, "personalTestAllowed(address)", self.sender), 16) != 1:
+            raise PublishError(f"Your wallet is not allowed by personal-test instance {target}")
+        if authority:
+            if "0x" + self.read_word(target, "personalTestAuthority()")[-40:] != authority:
+                raise PublishError(f"Personal-test authority differs from your deployer at {target}")
+            if int(self.read_word(authority, "isPersonalTestInstance(address)", target), 16) != 1:
+                raise PublishError(f"Contract {target} is not registered by your personal-test deployer")
+
+    def wallet_identity(self):
         accounts = self.wallet.request("eth_accounts")
-        if not isinstance(accounts, list) or self.sender not in [a.lower() for a in accounts]:
+        if not isinstance(accounts, list) or self.sender not in [str(a).lower() for a in accounts]:
             raise PublishError("FROM is not an account exposed by your wallet; connect/authorize it first")
         wallet_chain = self.wallet.request("eth_chainId")
         if int(wallet_chain, 16) != int(self.chain, 16):
             raise PublishError("Wallet and node are on different chains")
+
+    def preflight(self):
+        self.wallet_identity()
+        if self.args.personal_test:
+            required = {name for slug in selected(self.args.apps) for name in APP_ARTIFACTS[slug]}
+            required.add("PersonalTestDeployer")
+            if DEPENDENCIES.intersection(selected(self.args.apps)):
+                required.add("FixedSupplyToken")
+            for contract in sorted(required):
+                self.artifact(contract)
+            if "names" in selected(self.args.apps):
+                self.code(self.names)
+                abi_string(self.read(self.names, "reverseOf(address)", self.sender))
+            factory = self.state["contracts"].get("personal.deployer")
+            if self.state["contracts"] and not factory:
+                raise PublishError("Personal-test state contains instances without their policy deployer")
+            if factory:
+                self.verify_personal(factory["address"])
+                for key, deployed in self.state["contracts"].items():
+                    if sha256(self.code(deployed["address"]).encode()) != deployed["code_sha256"]:
+                        raise PublishError(f"Deployed code changed for {key}")
+                    if key != "personal.deployer":
+                        self.verify_personal(deployed["address"], factory["address"])
+            return
         self.code(self.names)
         self.code(self.registry)
         node = words(self.read(self.names, "nodeFor(string)", self.name + ".sea"))
@@ -370,6 +531,18 @@ class Publisher:
             time.sleep(self.args.poll_interval)
 
     def transact(self, key, data, target=None, value=0):
+        if self.args.network == "mainnet" and not self.args.personal_test:
+            raise PublishError("Mainnet transactions require personal-test mode")
+        if self.args.personal_test:
+            if value < 0 or value > self.args.personal_native_cap:
+                raise PublishError("Transaction value exceeds the personal native cap")
+            if target is None and key != "deploy:personal.deployer":
+                raise PublishError("Personal-test creation must use the atomic policy deployer")
+            if target:
+                factory = self.state["contracts"].get("personal.deployer")
+                if not factory:
+                    raise PublishError("Personal-test transaction has no owned policy deployer")
+                self.verify_personal(target, None if target == factory["address"] else factory["address"])
         tx = {"from": self.sender, "data": data, "value": hex(value)}
         if target:
             tx["to"] = address(target)
@@ -385,6 +558,8 @@ class Publisher:
             previous["status"] = "finalized"
             self.save()
             return receipt
+        if self.args.personal_test:
+            self.wallet_identity()
         self.state["transactions"][key] = {"intent": fingerprint, "status": "submitting"}
         self.save()
         try:
@@ -453,49 +628,112 @@ class Publisher:
 
     def deploy(self, key, contract, signature, *args):
         data = self.artifact(contract) + self.abi.encode(signature, *args)[2:]
+        if self.args.personal_test and contract != "PersonalTestDeployer":
+            return self.deploy_personal(key, contract, data)
+        if self.args.personal_test and key != "personal.deployer":
+            raise PublishError("Personal-test policy deployer must use its reserved journal key")
         existing = self.state["contracts"].get(key)
         if existing:
             if existing["init_sha256"] != sha256(data.encode()):
                 raise PublishError(f"Deployment changed for {key}; choose another output")
             if sha256(self.code(existing["address"]).encode()) != existing["code_sha256"]:
                 raise PublishError(f"Deployed code changed for {key}")
+            if self.args.personal_test:
+                self.verify_personal(existing["address"])
             return existing["address"]
         print(f"Deploying {key} ({contract})", file=sys.stderr, flush=True)
         receipt = self.transact("deploy:" + key, data)
         deployed = address(receipt.get("contractAddress"))
+        if self.args.personal_test:
+            self.verify_personal(deployed)
+            if "0x" + self.read_word(deployed, "personalTestAuthority()")[-40:] != deployed:
+                raise PublishError("Personal-test deployer reports a different policy authority")
         self.state["contracts"][key] = {"address": deployed, "contract": contract,
             "init_sha256": sha256(data.encode()), "code_sha256": sha256(self.code(deployed).encode())}
         self.save()
         return deployed
 
+    def personal_deployer(self):
+        return self.deploy("personal.deployer", "PersonalTestDeployer", "f(uint256,uint256)",
+                           self.args.personal_native_cap, self.args.personal_token_cap)
+
+    def personal_prediction(self, key, data):
+        factory = self.personal_deployer()
+        salt = self.abi.keccak(canonical(["toolbox-personal-create2/1", self.args.network, self.chain,
+                                          self.sender, key, sha256(data.encode())]))
+        predicted = address("0x" + self.read_word(factory, "predict(bytes,bytes32)", data, salt)[-40:])
+        return factory, salt, predicted
+
+    def deploy_personal(self, key, contract, data):
+        factory, salt, predicted = self.personal_prediction(key, data)
+        existing = self.state["contracts"].get(key)
+        if existing:
+            if (existing["init_sha256"] != sha256(data.encode()) or existing["address"] != predicted
+                    or existing.get("authority") != factory or existing.get("salt") != salt):
+                raise PublishError(f"Personal-test deployment changed for {key}; choose another output")
+            if sha256(self.code(predicted).encode()) != existing["code_sha256"]:
+                raise PublishError(f"Deployed code changed for {key}")
+            self.verify_personal(predicted, factory)
+            return predicted
+        print(f"Deploying personal-test {key} ({contract})", file=sys.stderr, flush=True)
+        self.transact("deploy:" + key, self.abi.call("deploy(bytes,bytes32)", data, salt), factory)
+        # A factory call has no receipt.contractAddress. The checked prediction
+        # and registry bind the finalized deployment to its atomic policy.
+        self.verify_personal(predicted, factory)
+        self.state["contracts"][key] = {"address": predicted, "contract": contract, "authority": factory, "salt": salt,
+            "mode": "personal-test", "init_sha256": sha256(data.encode()), "code_sha256": sha256(self.code(predicted).encode())}
+        self.save()
+        return predicted
+
     def contracts(self, slug):
         sender, amount = self.sender, 10**18
+        personal = self.args.personal_test
+        supply = min(10**24, max(1, self.args.personal_token_cap // 2)) if personal else 10**24
+        native_amount = min(10**15, max(1, self.args.personal_native_cap // 10)) if personal else amount
+        if personal:
+            amount = min(amount, max(1, supply // 4))
         token = factory = None
         if slug in DEPENDENCIES:
-            token = self.deploy("shared.token", "FixedSupplyToken", "f(string,string,uint256,address)", "Toolbox Test Coin", "TEST", 10**24, sender)
+            token = self.deploy("shared.token", "FixedSupplyToken", "f(string,string,uint256,address)", "Toolbox Test Coin", "TEST", supply, sender)
         if slug in {"amm", "launchpad"}:
             factory = self.deploy("shared.factory", "AmmFactory", "f(address)", sender)
         recipes = {
-            "token": [("IslandCoin token", "FixedSupplyToken", "f(string,string,uint256,address)", ("Island Test Coin", "ISLE", 10**24, sender))],
-            "nft": [("OnchainNFT 721", "OnchainNFT", "f(string,string,uint256,uint96,address)", ("Island Folk", "FOLK", 1000, 500, sender)), ("Editions1155 sales", "Editions1155", "f(address)", (sender,))],
+            "token": [("IslandCoin token", "FixedSupplyToken", "f(string,string,uint256,address)", ("Island Test Coin", "ISLE", supply, sender))],
+            "nft": [("OnchainNFT 721", "OnchainNFT", "f(string,string,uint256,uint96,address)", ("Island Folk", "FOLK", 1000, 0 if personal else 500, sender)), ("Editions1155 sales", "Editions1155", "f(address)", (sender,))],
             "market": [("FixedPriceMarket", "FixedPriceMarket", "f(address)", (sender,))],
             "rewards": [("RewardDistributor", "RewardDistributor", "f(address,address,address)", (sender, token, token))],
             "multisig": [("SimpleMultisig", "SimpleMultisig", "f(address[],uint256)", (f"[{sender}]", 1))],
             "escrow": [("MilestoneEscrow", "MilestoneEscrow", "f(address)", (sender,))],
-            "subscription": [("SubscriptionManager", "SubscriptionManager", "f(address,address,uint256)", (sender, sender, 10**12))],
+            "subscription": [("SubscriptionManager", "SubscriptionManager", "f(address,address,uint256)", (sender, sender, min(10**12, native_amount) if personal else 10**12))],
             "dao": [("SimpleDAO", "SimpleDAO", "f(address,address,uint256,uint48,uint48,uint48)", (sender, token, amount, 3600, 3600, 86400))],
-            "crowdfund": [("AllOrNothingCrowdfund", "AllOrNothingCrowdfund", "f(address,address,uint128,uint48)", (sender, sender, 10**19, 86400))],
+            "crowdfund": [("AllOrNothingCrowdfund", "AllOrNothingCrowdfund", "f(address,address,uint128,uint48)", (sender, sender, min(10**19, max(1, self.args.personal_native_cap // 2)) if personal else 10**19, 86400))],
             "invoice": [("InvoiceBook", "InvoiceBook", "f(address,address)", (sender, sender))],
-            "vending": [("AgentVending", "AgentVending", "f(address,address,uint256,uint48)", (sender, sender, 10**15, 3600))],
+            "vending": [("AgentVending", "AgentVending", "f(address,address,uint256,uint48)", (sender, sender, native_amount if personal else 10**15, 3600))],
         }
         if slug == "amm":
             router = self.deploy("amm.AmmRouter", "AmmRouter", "f(address)", factory)
             return {"AmmFactory": factory, "AmmRouter": router}
         if slug == "launchpad":
-            cfg = f"(Tide Test Token,TIDE,{10**24},{10**20},{10**22},{10**21},30,0,0,0,{sender})"
+            floor = max(1, supply // 5)
+            cfg = (f"(Tide Test Token,TIDE,{supply},{floor},{floor},{floor},0,0,0,0,{sender})" if personal
+                   else f"(Tide Test Token,TIDE,{10**24},{10**20},{10**22},{10**21},30,0,0,0,{sender})")
             recipes[slug] = [("BondingLaunchpad", "BondingLaunchpad", "f(address,address,address,(string,string,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,address))", (sender, token, factory, cfg))]
         if slug == "lock":
             lock = self.deploy("lock.TokenTimeLock", "TokenTimeLock", "f(address,address)", sender, token)
+            if personal:
+                signature = "f(address,address,uint256,uint256,uint256)"
+                parameters = (token, sender, amount, 0, 86400)
+                data = self.artifact("LinearVesting") + self.abi.encode(signature, *parameters)[2:]
+                _, _, expected = self.personal_prediction("lock.LinearVesting", data)
+                # Token approval/funding must target the exact CREATE2 address;
+                # the constructor pulls this wallet's own test tokens atomically.
+                if "lock.LinearVesting" not in self.state["contracts"]:
+                    self.transact("lock.allow:" + expected, self.abi.call("setPersonalTestAccount(address,bool)", expected, "true"), token)
+                    self.transact("lock.approve:" + expected, self.abi.call("approve(address,uint256)", expected, amount), token)
+                vest = self.deploy("lock.LinearVesting", "LinearVesting", signature, *parameters)
+                if vest != expected:
+                    raise PublishError("Personal vesting address differs from its approved CREATE2 prediction")
+                return {"TokenTimeLock": lock, "LinearVesting": vest}
             # Once a creation was submitted, only its saved receipt may resolve it.
             if "deploy:lock.LinearVesting" not in self.state["transactions"]:
                 nonce = int(self.rpc.request("eth_getTransactionCount", [sender, "latest"]), 16)
@@ -530,35 +768,49 @@ class Publisher:
                 raise PublishError("Wallet nonce changed between approval and vesting deployment; use an isolated publishing session")
             return {"TokenTimeLock": lock, "LinearVesting": vest}
         if slug == "airdrop":
-            leaf = self.abi.keccak(bytes.fromhex(sender[2:]) + amount.to_bytes(32, "big"))
+            leaf_amount = native_amount if personal else amount
+            leaf = self.abi.keccak(bytes.fromhex(sender[2:]) + leaf_amount.to_bytes(32, "big"))
+            if personal:
+                self.state["airdrop_test_claim"] = {"account": sender, "amount": str(leaf_amount), "proof": []}
+                self.save()
             recipes[slug] = [("MerkleAirdrop", "MerkleAirdrop", "f(bytes32,address,uint48)", (leaf, sender, 86400))]
         if slug == "raffle":
             # Public deterministic test-only seed, not a wallet key or fair randomness claim.
             seed = self.abi.keccak(canonical(["toolbox-test-seed", self.chain, sender]))
             self.state["raffle_test_seed"] = seed
             self.save()
-            recipes[slug] = [("CommitRevealRaffle", "CommitRevealRaffle", "f(address,bytes32,uint256,uint48,uint48)", (sender, self.abi.keccak(bytes.fromhex(seed[2:])), 10**15, 86400, 3600))]
+            recipes[slug] = [("CommitRevealRaffle", "CommitRevealRaffle", "f(address,bytes32,uint256,uint48,uint48)", (sender, self.abi.keccak(bytes.fromhex(seed[2:])), native_amount if personal else 10**15, 86400, 3600))]
         if slug == "names":
-            drop = self.deploy("names.NameGatedDrop", "NameGatedDrop", "f(address,address,uint256,uint48)", self.names, sender, amount, 86400)
+            drop = self.deploy("names.NameGatedDrop", "NameGatedDrop", "f(address,address,uint256,uint48)", self.names, sender, native_amount if personal else amount, 86400)
             return {"NameGatedDrop": drop, "EastSeaNames (system)": self.names}
         return {label: self.deploy(f"{slug}.{contract}", contract, signature, *args) for label, contract, signature, args in recipes[slug]}
 
     def build_bundle(self, slug, deployed):
+        self.check_output_paths([slug])
         manifest = json.loads((ROOT / "examples" / slug / "manifest.json").read_text())
         manifest.pop("x-toolbox-note", None)
         manifest.update(app_id=self.app_id(slug), name_binding=f"{slug}.{self.name}.sea", noindex=True,
                         publisher={"display": self.name})
+        if self.args.personal_test:
+            manifest.pop("name_binding", None)
+            manifest.pop("mirrors", None)
         for contract in manifest["contracts"]:
             contract["address"] = deployed[contract["label"]]
             if contract.get("brake") != "none" and "brake" in contract:
                 contract["brake"] = "none" if slug in {"airdrop", "names"} else contract["address"]
             if slug == "amm" and contract["label"] == "AmmRouter":
                 contract["brake"] = deployed["AmmFactory"]
-        extensions = {"x-toolbox-chain-id": self.chain, "x-toolbox-native-currency": {"symbol": "SEA", "decimals": 18},
+        extensions = {"x-toolbox-chain-id": self.chain, "x-toolbox-native-currency": {"symbol": self.args.native_symbol or "SEA", "decimals": self.args.native_decimals},
                       "x-toolbox-primary-contract": PRIMARY.get(slug, manifest["contracts"][0]["label"]),
                       "x-toolbox-test-only": True}
+        if self.args.personal_test:
+            authority = self.state["contracts"]["personal.deployer"]["address"]
+            extensions.update({"x-toolbox-mode": "personal-test", "x-toolbox-network": self.args.network,
+                               "x-toolbox-local-only": True,
+                               "x-toolbox-personal-policy": {**personal_policy(self.args, self.sender), "authority": authority},
+                               "x-toolbox-read-only-contracts": [self.names] if slug == "names" else []})
         manifest.update(extensions)
-        bundle = self.output / "bundles" / slug
+        bundle = self.output_path("bundles", slug)
         # Rebuild in place, rejecting unknown leftovers rather than hashing stale files.
         bundle.mkdir(parents=True, exist_ok=True)
         allowed = {"index.html", "manifest.json", "icon.png", "README.txt", "GAS.txt", "SECURITY.txt"}
@@ -567,11 +819,11 @@ class Publisher:
         frontend = (ROOT / "apps" / slug / "index.html").read_bytes()
         for doc in ("README", "GAS", "SECURITY"):
             frontend = frontend.replace(f"../../examples/{slug}/{doc}.md".encode(), f"{doc}.txt".encode())
-            (bundle / f"{doc}.txt").write_bytes((ROOT / "examples" / slug / f"{doc}.md").read_bytes())
-        (bundle / "index.html").write_bytes(frontend)
-        (bundle / "icon.png").write_bytes(icon_png())
-        runtime = {"schema": "toolbox-runtime/1", "app_id": manifest["app_id"], "contracts": manifest["contracts"], **extensions}
-        (bundle / "manifest.json").write_bytes(canonical(runtime) + b"\n")
+            self.output_path("bundles", slug, f"{doc}.txt").write_bytes((ROOT / "examples" / slug / f"{doc}.md").read_bytes())
+        self.output_path("bundles", slug, "index.html").write_bytes(frontend)
+        self.output_path("bundles", slug, "icon.png").write_bytes(icon_png())
+        runtime = {"schema": "toolbox-runtime/1", "app_id": manifest["app_id"], "contracts": manifest["contracts"], "noindex": True, **extensions}
+        self.output_path("bundles", slug, "manifest.json").write_bytes(canonical(runtime) + b"\n")
         index = bundle_index(bundle)
         entries = json.loads(index)["files"]
         manifest["bundle"] = {"format": "eastsea-bundle/1", "sha256": sha256(index),
@@ -587,18 +839,22 @@ class Publisher:
         errors = list(jsonschema.Draft202012Validator(schema).iter_errors(manifest))
         if errors:
             raise PublishError("Resolved manifest is invalid: " + errors[0].message)
-        atomic_json(self.output / "examples" / slug / "manifest.json", manifest)
-        (self.output / "bundles" / f"{slug}.index.json").write_bytes(index)
+        atomic_json(self.output_path("examples", slug, "manifest.json"), manifest, self.output)
+        self.output_path("bundles", f"{slug}.index.json").write_bytes(index)
         return manifest, encoded, bundle, index
 
     def upload(self, slug, manifest, encoded, bundle, index):
+        if self.args.personal_test or self.args.network == "mainnet":
+            raise PublishError("Personal-test bundles stay local; upload/hosting is forbidden")
+        self.check_output_paths([slug])
+        bundle = safe_output_path(bundle, self.output)
         # Adapter contract is explicit: actual aether_appBundle API is not shipped yet.
         request = {"protocol": "toolbox-appBundle/1", "operation": "put", "sha256": manifest["bundle"]["sha256"],
                    "index": json.loads(index), "manifest_sha256": sha256(encoded),
                    "manifest_base64": base64.b64encode(encoded).decode(),
-                   "files": [{"path": e["path"], "content_base64": base64.b64encode((bundle / e["path"]).read_bytes()).decode()}
+                   "files": [{"path": e["path"], "content_base64": base64.b64encode(safe_output_path(bundle / e["path"], bundle).read_bytes()).decode()}
                              for e in json.loads(index)["files"]]}
-        atomic_json(self.output / "uploads" / f"{slug}.json", request)
+        atomic_json(self.output_path("uploads", f"{slug}.json"), request, self.output)
         if self.args.bundle_mode == "stub":
             return "stub-content-pending"
         result = self.rpc.request("aether_appBundle", [request])
@@ -607,6 +863,9 @@ class Publisher:
         return "node-verified"
 
     def register(self, slug, manifest, encoded):
+        if self.args.personal_test or self.args.network == "mainnet":
+            raise PublishError("Personal-test instances are not published to a registry or .sea name")
+        self.check_output_paths([slug])
         app_id = manifest["app_id"]
         expected_manifest, expected_bundle = sha256(encoded), manifest["bundle"]["sha256"]
         record = words(self.read(self.registry, "appOf(bytes32)", app_id))
@@ -636,18 +895,18 @@ class Publisher:
             raise PublishError(f"Subdomain {host} did not verify on-chain")
 
     def run(self):
-        lock_file = self.output / ".publisher.lock"
+        self.check_output_paths(selected(self.args.apps))
+        lock_file = self.output_path(".publisher.lock")
         try:
             self.lock = os.open(lock_file, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         except FileExistsError as error:
             raise PublishError(f"Publication is locked at {lock_file}; check its PID before removing a stale lock") from error
         try:
             os.write(self.lock, str(os.getpid()).encode())
-            if self.state_file.exists():
-                loaded = json.loads(self.state_file.read_text())
-                for key in ("chain_id", "from", "name", "registry", "names"):
-                    if loaded.get(key) != self.state[key]:
-                        raise PublishError(f"Publication state changed its {key} while acquiring the lock")
+            state_file = self.output_path("state.json")
+            if state_file.exists():
+                loaded = json.loads(state_file.read_text())
+                self.check_state(loaded)
                 self.state = loaded
             for key in self.args.retry_tx:
                 tx = self.state["transactions"].get(key)
@@ -685,11 +944,19 @@ class Publisher:
             for slug in selected(self.args.apps):
                 deployed = self.contracts(slug)
                 manifest, encoded, bundle, index = self.build_bundle(slug, deployed)
-                delivery = self.upload(slug, manifest, encoded, bundle, index)
-                self.register(slug, manifest, encoded)
-                self.state["apps"][slug] = {"contracts": deployed, "app_id": manifest["app_id"],
+                if self.args.personal_test:
+                    delivery = "local-only"
+                else:
+                    delivery = self.upload(slug, manifest, encoded, bundle, index)
+                    self.register(slug, manifest, encoded)
+                app = {"contracts": deployed, "app_id": manifest["app_id"],
                     "manifest_sha256": sha256(encoded), "bundle_sha256": manifest["bundle"]["sha256"],
-                    "sea_url": f"sea://{slug}.{self.name}.sea/", "bundle_status": delivery, "registered": True}
+                    "sea_url": f"sea://{slug}.{self.name}.sea/", "bundle_status": delivery, "registered": not self.args.personal_test}
+                if self.args.personal_test:
+                    app.pop("sea_url")
+                    app["local_entry"] = (bundle / "index.html").as_uri()
+                    app["runtime_manifest"] = str(bundle / "manifest.json")
+                self.state["apps"][slug] = app
                 self.save()
             summary(self.state["apps"], selected(self.args.apps))
             if self.args.bundle_mode == "stub":
@@ -703,12 +970,12 @@ class Publisher:
 
 
 def summary(apps, slugs):
-    print("App | Contract addresses | sea:// URL | Bundle")
+    print("App | Contract addresses | Entry | Bundle")
     print("--- | --- | --- | ---")
     for slug in slugs:
         app = apps[slug]
         print(f"{slug} | " + "; ".join(f"{label}: {target}" for label, target in app["contracts"].items())
-              + f" | {app['sea_url']} | {app['bundle_status']}")
+              + f" | {app.get('local_entry', app.get('sea_url', ''))} | {app['bundle_status']}")
 
 
 def parser():
@@ -719,12 +986,19 @@ def parser():
     p.add_argument("--registry", default=os.getenv("REGISTRY"))
     p.add_argument("--names", default=os.getenv("NAMES"))
     p.add_argument("--apps", default="all", help="all (17) or comma-separated example slugs")
+    p.add_argument("--network", choices=("testnet", "mainnet"), default="testnet")
+    p.add_argument("--personal-test", action="store_true", help="wallet-owned allowlisted, capped instances; local bundles only")
+    p.add_argument("--chain-id", type=lambda x: int(x, 0), help="explicit node/wallet chain ID; required for mainnet")
+    p.add_argument("--native-symbol", help="native currency symbol (mainnet DBLN, testnet SEA); verify against your node")
+    p.add_argument("--native-decimals", type=int, default=18, help="native currency base-unit decimals (default 18)")
+    p.add_argument("--personal-native-cap", type=lambda x: int(x, 0), default=PERSONAL_NATIVE_CAP, help="maximum native balance in base units (default 10000000000000000)")
+    p.add_argument("--personal-token-cap", type=lambda x: int(x, 0), default=PERSONAL_TOKEN_CAP, help="maximum own test-token balance in base units (default 5000000000000000000)")
     p.add_argument("--wallet-command", default=os.getenv("WALLET_COMMAND"))
     p.add_argument("--wallet-rpc", default=os.getenv("WALLET_RPC"))
     p.add_argument("--wallet-timeout", type=float, default=300, help="local browser-wallet request timeout; no automatic resubmission")
     p.add_argument("--artifacts", default=str(ROOT / "tmp" / "publish-artifacts"))
-    p.add_argument("--output", help="isolated output directory; default ./tmp/publish-testnet/<chain-account-name>")
-    p.add_argument("--bundle-mode", choices=("rpc", "stub"), default="rpc")
+    p.add_argument("--output", help="isolated output directory; personal bundles must stay under ./tmp/")
+    p.add_argument("--bundle-mode", choices=("rpc", "stub", "local"), help="default rpc on testnet, local for personal-test; personal uploads are forbidden")
     p.add_argument("--test-chain-id", dest="test_chain_ids", action="append", type=lambda x: int(x, 0), default=[7777, 7780])
     p.add_argument("--receipt-timeout", type=float, default=300)
     p.add_argument("--poll-interval", type=float, default=1)
@@ -741,26 +1015,30 @@ def main(argv=None):
     p = parser()
     args = p.parse_args(argv)
     try:
+        slugs = validate_options(args)
         if args.hash_bundle:
             if not args.hash_bundle.is_dir():
                 raise PublishError("Bundle directory does not exist")
             index = bundle_index(args.hash_bundle)
             print(index.decode() if args.index else sha256(index))
             return 0
-        slugs = selected(args.apps)
         if not args.sender:
             raise PublishError("--from/FROM is required")
         sender = address(args.sender)
         if args.dry_run:
             name = root_name(args.name or "your-name")
             summary({slug: {"contracts": {c["label"]: "(deploy from " + sender + ")" for c in json.loads((ROOT / "examples" / slug / "manifest.json").read_text())["contracts"]},
-                           "sea_url": f"sea://{slug}.{name}.sea/ (planned)", "bundle_status": "planned"} for slug in slugs}, slugs)
+                           "sea_url": f"sea://{slug}.{name}.sea/ (planned)" if not args.personal_test else "local personal instance (planned)",
+                           "bundle_status": "local-only (planned)" if args.personal_test else "planned"} for slug in slugs}, slugs)
+            if args.personal_test:
+                print("Personal policy: " + canonical(personal_policy(args, sender)).decode())
+                print("No registry/name publication or bundle upload/hosting.")
             print("DRY RUN: offline plan only; no wallet/RPC requests, transactions, files or builds.")
             return 0
-        if not all((args.rpc, args.registry, args.names)):
-            raise PublishError("RPC, REGISTRY and NAMES are required; no network or system addresses are assumed")
-        if any(not math.isfinite(v) or v <= 0 for v in (args.receipt_timeout, args.poll_interval, args.wallet_timeout)):
-            raise PublishError("Receipt/wallet timeouts and polling interval must be positive and finite")
+        if not args.rpc or not args.personal_test and not all((args.registry, args.names)):
+            raise PublishError("RPC is required; testnet demos also require REGISTRY and NAMES")
+        if args.personal_test and "names" in slugs and not args.names:
+            raise PublishError("The names example requires explicit --names for its read-only system dependency")
         Publisher(args).run()
         return 0
     except (PublishError, OSError, ValueError, KeyError) as error:

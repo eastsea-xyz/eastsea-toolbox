@@ -15,6 +15,8 @@ import {ExactToken, IERC20Min} from "../../common/src/ExactToken.sol";
 ///      fee (0-100 bps), the locked minimum, the brake document hash. No
 ///      owner, factory allowlist, protocol fee, proxy, hook, callback, flash
 ///      swap, price oracle, skim or rescue key.
+///      Personal instances restrict actors and recipients to their wallet,
+///      enforce aggregate custody caps, and always use a zero LP fee.
 ///
 ///      Storage (newly occupied slots):
 ///        slot 0 `_r`: reserve0 | reserve1 | lastHeightLow  (first liquidity)
@@ -95,9 +97,11 @@ contract SwapPool is NativeBrake, TransientLock {
         if (feeBps_ > MAX_FEE_BPS) revert FeeTooHigh();
         token0 = tokenA;
         token1 = tokenB;
-        feeBps = feeBps_;
+        feeBps = _isPersonalTest() ? 0 : feeBps_;
         token0CodeHash = tokenA.codehash;
         token1CodeHash = tokenB.codehash;
+        _registerPersonalTestToken(tokenA);
+        _registerPersonalTestToken(tokenB);
         _m.createdAt = _height();
     }
 
@@ -139,6 +143,7 @@ contract SwapPool is NativeBrake, TransientLock {
     /// @notice Spend exactly `amountIn` of `tokenIn`; receive at least `minOut`.
     function swapExactInput(address tokenIn, uint256 amountIn, uint256 minOut, address recipient, uint64 deadline)
         external
+        personalTestAccess
         lock
         returns (uint256 amountOut)
     {
@@ -151,6 +156,7 @@ contract SwapPool is NativeBrake, TransientLock {
     /// @notice Receive exactly `amountOut`; spend at most `maxIn` of `tokenIn`.
     function swapExactOutput(address tokenIn, uint256 amountOut, uint256 maxIn, address recipient, uint64 deadline)
         external
+        personalTestAccess
         lock
         returns (uint256 amountIn)
     {
@@ -166,6 +172,7 @@ contract SwapPool is NativeBrake, TransientLock {
     {
         if (block.timestamp > deadline) revert Expired();
         if (recipient == address(0) || recipient == address(this)) revert BadRecipient();
+        _requirePersonalTestAccount(recipient);
         _requireEntryOpen();
         (uint256 r0, uint256 r1) = _absorb();
         if (r0 == 0) revert NotInitialized();
@@ -184,11 +191,15 @@ contract SwapPool is NativeBrake, TransientLock {
             revert InvariantBroken();
         }
         (address tIn, address tOut) = zeroIn ? (token0, token1) : (token1, token0);
+        _checkPersonalTestNativeCap();
+        _checkPersonalTestTokenDeposit(tIn, amountIn);
         // Effects first: readers re-entering through a token see final reserves.
         if (zeroIn) _write(newIn, newOut);
         else _write(newOut, newIn);
         ExactToken.pullExact(tIn, msg.sender, amountIn);
+        _checkPersonalTestTokenCaps();
         ExactToken.pushExact(tOut, to, amountOut);
+        _checkPersonalTestTokenCaps();
         // Both amounts are below 2^112 (reserve bound), so the int casts are exact.
         // forge-lint: disable-next-line(unsafe-typecast)
         (int256 i, int256 o) = (int256(amountIn), int256(amountOut));
@@ -223,6 +234,7 @@ contract SwapPool is NativeBrake, TransientLock {
     ///         rounded up in the pool's favour, and leave the rest with you.
     function add(uint256 max0, uint256 max1, uint256 minShares, uint64 deadline)
         external
+        personalTestAccess
         lock
         returns (uint256 used0, uint256 used1, uint256 minted)
     {
@@ -257,8 +269,12 @@ contract SwapPool is NativeBrake, TransientLock {
         // forge-lint: disable-next-line(unsafe-typecast)
         shares[msg.sender] += uint128(minted);
         _write(r0 + used0, r1 + used1);
+        _checkPersonalTestNativeCap();
+        _checkPersonalTestTokenDeposit(token0, used0);
         ExactToken.pullExact(token0, msg.sender, used0);
+        _checkPersonalTestTokenDeposit(token1, used1);
         ExactToken.pullExact(token1, msg.sender, used1);
+        _checkPersonalTestTokenCaps();
         emit Added(msg.sender, used0, used1, minted);
     }
 
@@ -268,11 +284,13 @@ contract SwapPool is NativeBrake, TransientLock {
     ///         `min0`/`min1` bound what actually leaves the pool for you.
     function remove(uint256 amount, uint256 min0, uint256 min1, address recipient, uint64 deadline)
         external
+        personalTestAccess
         lock
         returns (uint256 out0, uint256 out1)
     {
         if (block.timestamp > deadline) revert Expired();
         if (recipient == address(0) || recipient == address(this)) revert BadRecipient();
+        _requirePersonalTestAccount(recipient);
         if (amount == 0) revert ZeroAmount();
         uint256 have = shares[msg.sender];
         if (amount > have) revert NotEnoughShares(have, amount);

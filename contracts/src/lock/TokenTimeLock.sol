@@ -58,6 +58,7 @@ contract TokenTimeLock is SimpleBrake, ReentrancyGuard {
         // F-03: 무코드 주소는 배포 단계에서 거부한다.
         if (address(token_).code.length == 0) revert ZeroAmount();
         token = token_;
+        _registerPersonalTestToken(address(token_));
     }
 
     // ---------------------------------------------------------------- 잠금
@@ -66,23 +67,27 @@ contract TokenTimeLock is SimpleBrake, ReentrancyGuard {
     ///         수혜자당 활성 잠금은 1개다.
     function lockFor(address beneficiary, uint256 amount, uint256 cliffSec, uint256 durationSec)
         external
+        personalTestAccess
         nonReentrant
         whenEntryOpen
     {
+        _requirePersonalTestAccount(beneficiary);
         if (amount == 0) revert ZeroAmount();
         if (durationSec == 0 || cliffSec > durationSec) revert ZeroDuration();
         if (amount > _MAX_UINT128) revert AmountTooLarge(amount);
         Lock storage existing = locks[beneficiary];
         if (existing.amount != 0 && existing.released < existing.amount) revert AlreadyLocked(beneficiary);
 
+        _checkPersonalTestTokenDeposit(address(token), amount);
         SafeToken.pullExact(token, msg.sender, amount); // F-02: 정확한 금액
+        _checkPersonalTestTokenCaps();
         locks[beneficiary] = Lock(uint128(amount), 0, uint48(block.timestamp), uint48(cliffSec), uint48(durationSec));
         emit Locked(msg.sender, beneficiary, amount, cliffSec, durationSec);
     }
 
     /// @notice 해제분을 인출한다 (탈출 — brake와 무관하게 항상 열려 있다).
     ///         수혜자 본인만 호출한다.
-    function release() external nonReentrant {
+    function release() external personalTestAccess nonReentrant {
         Lock storage l = locks[msg.sender];
         // vested는 단조 증가, released는 vested에서만 나가므로 차 >= 0
         uint256 due = _vested(msg.sender) - l.released;

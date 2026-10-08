@@ -45,7 +45,7 @@ _PAGE = r"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="referrer" content="same-origin"><title>Toolbox wallet connection</title>
 <style>body{font:16px/1.5 system-ui,sans-serif;max-width:760px;margin:32px auto;padding:0 16px}button{font:inherit;padding:8px 14px;margin:4px}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #bbb;padding:12px}#status{min-height:3em}</style></head>
-<body><h1>Connect your wallet</h1><p>This local publisher uses your own account. Test coins only. AS IS; publishing is your responsibility.</p>
+<body><h1>Connect your wallet</h1><p>__INTRO__</p>
 <pre id="identity"></pre><div id="wallets">Finding wallet providers…</div><p id="status">Choose a wallet, then approve its account connection.</p>
 <h2>Current request</h2><pre id="request">Waiting for the publisher.</pre>
 <script nonce="__NONCE__">
@@ -54,6 +54,7 @@ const CONFIG = __CONFIG__;
 const TOKEN = new URLSearchParams(location.hash.slice(1)).get('token');
 const identity = document.getElementById('identity'), status = document.getElementById('status'), summary = document.getElementById('request');
 identity.textContent = 'Requested account: ' + CONFIG.sender + '\nRequested chain: ' + CONFIG.chain_id + '\nSignatures and B5 fee approval stay in your wallet.';
+if (CONFIG.policy) identity.textContent += '\nMode: personal-test · ' + CONFIG.network + '\nNative balance cap (base units): ' + CONFIG.policy.native_cap + '\nOwn test-token cap (base units): ' + CONFIG.policy.token_cap + '\nOnly your wallet starts allowed. No protocol fee, public registration, or bundle upload.';
 const discovered = [];
 let provider = null, connected = false, running = false, stopped = false, connecting = false, awaitingResponse = false;
 const normalizeChain = (value) => '0x' + BigInt(value).toString(16);
@@ -121,6 +122,7 @@ async function handle(request) {
   try {
     current = await validateWallet(selected);
     if (request.method === 'eth_sendTransaction' && (!tx || tx.from?.toLowerCase() !== CONFIG.sender || Object.keys(tx).some((key) => !['from', 'to', 'value', 'data'].includes(key)))) throw failure(-32602, 'Invalid publisher transaction.');
+    if (tx && CONFIG.policy && BigInt(tx.value || '0x0') > BigInt(CONFIG.policy.native_cap)) throw failure(-32602, 'Transaction exceeds your personal native cap.');
     if (!['eth_accounts', 'eth_chainId', 'eth_sendTransaction'].includes(request.method)) throw failure(4200, 'The local publisher does not support this wallet method.');
   } catch (error) {
     // No send was dispatched: the publisher can safely clear this intent and retry.
@@ -163,12 +165,27 @@ if (!TOKEN) status.textContent = 'Use the complete URL printed by the publisher,
 class BrowserWallet:
     """A temporary, user-opened browser connection implementing request()."""
 
-    def __init__(self, sender, chain_id, timeout=300):
+    def __init__(self, sender, chain_id, timeout=300, network="testnet", policy=None):
         if not isinstance(sender, str) or not _ADDRESS.fullmatch(sender) or int(sender, 16) == 0:
             raise ValueError("sender must be a nonzero 20-byte account address")
         if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or timeout <= 0:
             raise ValueError("timeout must be positive and finite")
+        if network not in {"testnet", "mainnet"}:
+            raise ValueError("network must be testnet or mainnet")
+        if network == "mainnet" and policy is None:
+            raise ValueError("mainnet browser wallet requires personal-test policy")
+        if policy is not None:
+            if (not isinstance(policy, dict) or policy.get("schema") != "eastsea.personal-test/1"
+                    or policy.get("mode") != "personal-test" or policy.get("owner") != sender.lower()
+                    or policy.get("initial_allowlist") != [sender.lower()] or policy.get("protocol_fee_bps") != 0):
+                raise ValueError("browser wallet requires your own initial personal-test policy")
+            for key in ("native_cap", "token_cap"):
+                cap = policy.get(key)
+                if not isinstance(cap, str) or not re.fullmatch(r"[1-9][0-9]{0,77}", cap) or int(cap) >= 2**256:
+                    raise ValueError("personal-test caps must be positive decimal 256-bit base units")
         self.sender, self.chain_id, self.timeout = sender.lower(), _chain_id(chain_id), float(timeout)
+        self.network = network
+        self.policy = json.loads(json.dumps(policy)) if policy is not None else None
         self._token, self._nonce = secrets.token_urlsafe(32), secrets.token_urlsafe(18)
         self._condition, self._queue, self._closed = threading.Condition(), deque(), False
         self._server = ThreadingHTTPServer(("127.0.0.1", 0), self._handler())
@@ -176,8 +193,11 @@ class BrowserWallet:
         self._host = f"127.0.0.1:{self._server.server_port}"
         self.origin = f"http://{self._host}"
         self.url = f"{self.origin}/#token={self._token}"
-        config = json.dumps({"sender": self.sender, "chain_id": self.chain_id}, separators=(",", ":"))
-        self._page = _PAGE.replace("__NONCE__", self._nonce).replace("__CONFIG__", config).encode("utf-8")
+        config = json.dumps({"schema": "toolbox-wallet-bridge/1", "sender": self.sender, "chain_id": self.chain_id,
+                             "network": network, "policy": self.policy}, separators=(",", ":")).replace("<", "\\u003c")
+        intro = ("Deploy and test your own personal-test instance. Mainnet uses real native coins. The bundle stays on this Mac."
+                 if network == "mainnet" else "This local publisher uses your own account on testnet. Test coins only.")
+        self._page = _PAGE.replace("__NONCE__", self._nonce).replace("__CONFIG__", config).replace("__INTRO__", intro).encode("utf-8")
         self._thread = threading.Thread(target=self._server.serve_forever, kwargs={"poll_interval": 0.1}, daemon=True)
         self._thread.start()
         print(f"Open this URL in your wallet-enabled browser (no browser is launched):\n{self.url}", file=sys.stderr, flush=True)
@@ -286,6 +306,8 @@ class BrowserWallet:
                 raise WalletBridgeError("Contract creation requires init code", code=-32602)
             if "value" in tx and (not isinstance(tx["value"], str) or not re.fullmatch(r"0x[0-9a-fA-F]+", tx["value"]) or int(tx["value"], 16) >= 2 ** 256):
                 raise WalletBridgeError("Transaction value must be a 256-bit hex quantity", code=-32602)
+            if self.policy and int(tx.get("value", "0x0"), 16) > int(self.policy["native_cap"]):
+                raise WalletBridgeError("Transaction exceeds your personal native cap", code=-32602)
         elif params:
             raise WalletBridgeError(f"{method} takes no parameters", code=-32602)
         # Snapshot the transaction; a caller cannot mutate an intent after queueing it.

@@ -45,6 +45,18 @@ async function boot(search = '', overrides = {}) {
       requests.push(req);
       if (req.method === 'eth_chainId') return this.chain;
       if (req.method === 'eth_requestAccounts' || req.method === 'eth_accounts') return this.accounts;
+      if (req.method === 'eth_call' && this.personal) {
+        const p = this.personal, data = req.params[0].data;
+        const word = (value) => BigInt(value).toString(16).padStart(64, '0');
+        if (data === '0x53702e15') { const text = Buffer.from(p.mode); return '0x' + word(32) + word(text.length) + text.toString('hex').padEnd(64, '0'); }
+        if (data === '0x5d6309b0') return '0x' + word(p.owner);
+        if (data === '0x98a760c1') return '0x' + word(p.authority);
+        if (data === '0x7c38dfd9') return '0x' + word(p.native_cap);
+        if (data === '0xdcdc520c') return '0x' + word(p.token_cap);
+        if (data.startsWith('0xcc809606')) return '0x' + word(p.registered ? 1 : 0);
+        if (data.startsWith('0x3908af36')) return '0x' + word(p.allowed.has('0x' + data.slice(-40)) ? 1 : 0);
+        throw new Error('Unexpected personal policy call');
+      }
       if (req.method === 'eth_call') return '0x' + '0'.repeat(64);
       if (req.method === 'eth_sendTransaction') return '0x' + 'b'.repeat(64);
       if (req.method === 'eth_blockNumber') return '0x1';
@@ -107,6 +119,37 @@ async function boot(search = '', overrides = {}) {
   assert.ok(zero.run('manifestError'), 'template placeholders must not become transaction targets');
   const invalid = await boot('', { 'x-toolbox-chain-id': undefined });
   assert.ok(invalid.run('manifestError'), 'missing chain configuration must fail closed');
+  const policy = { schema: 'eastsea.personal-test/1', owner: address('a'), authority: address('f'),
+    native_cap: '10000000000000000', token_cap: '5000000000000000000', initial_allowlist: [address('a')], protocol_fee_bps: 0 };
+  const personalConfig = { 'x-toolbox-mode': 'personal-test', 'x-toolbox-network': 'mainnet',
+    'x-toolbox-personal-policy': policy, 'x-toolbox-local-only': true, noindex: true };
+  const personal = await boot('', personalConfig);
+  assert.equal(personal.document.getElementById('contract').readOnly, true);
+  await personal.run('connect(discovered[0])');
+  personal.wallet.personal = { ...policy, mode: 'personal-test', registered: true, allowed: new Set([policy.owner]) };
+  await personal.run("sendTx(contractAddr(), '0x12345678')");
+  const sends = () => personal.requests.filter((r) => r.method === 'eth_sendTransaction').length;
+  assert.equal(sends(), 1, 'own verified personal copy can be used');
+  for (const [field, bad] of [['mode', 'testnet'], ['owner', address('b')], ['authority', address('b')], ['native_cap', '1'], ['token_cap', '1'], ['registered', false]]) {
+    const saved = personal.wallet.personal[field]; personal.wallet.personal[field] = bad;
+    await assert.rejects(personal.run("sendTx(contractAddr(), '0x12345678')"), field + ' mismatch must block submission');
+    personal.wallet.personal[field] = saved;
+  }
+  personal.wallet.accounts = [address('c')];
+  await assert.rejects(personal.run("sendTx(contractAddr(), '0x12345678')"), 'unlisted second account cannot send');
+  assert.equal(sends(), 1, 'personal failures do not reach wallet submission');
+  personal.wallet.personal.allowed.add(address('c'));
+  await personal.run("sendTx(contractAddr(), '0x12345678')");
+  assert.equal(sends(), 2, 'an explicitly added own account may use the same instance');
+  const override = await boot('?contract=' + address('d'), personalConfig);
+  assert.ok(override.run('manifestError'), 'personal query override cannot substitute a public target');
+  const unsafeMainnet = await boot('', { 'x-toolbox-network': 'mainnet' });
+  assert.ok(unsafeMainnet.run('manifestError'), 'mainnet bundle requires personal-test mode');
+  const invalidAuthority = await boot('', { ...personalConfig, 'x-toolbox-personal-policy': { ...policy, authority: address('0') } });
+  assert.ok(invalidAuthority.run('manifestError'), 'personal authority must be configured');
+  personal.document.getElementById('contract').value = address('d');
+  await assert.rejects(personal.run("sendTx(contractAddr(), '0x12345678')"), 'manual edits cannot escape the declared graph');
+  assert.equal(sends(), 2);
 })().catch((err) => { console.error(err); process.exitCode = 1; });
 """
 

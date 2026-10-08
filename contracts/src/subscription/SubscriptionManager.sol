@@ -80,13 +80,14 @@ contract SubscriptionManager is SimpleBrake, ReentrancyGuard {
 
     constructor(address guardian, address payee_, uint256 ratePerSecond_) SimpleBrake(guardian) {
         if (payee_ == address(0)) revert ZeroPayee();
+        _requirePersonalTestAccount(payee_);
         if (ratePerSecond_ == 0) revert PaymentTooSmall(0, 1);
         payee = payee_;
         ratePerSecond = ratePerSecond_;
     }
 
     /// @dev 직접 송금 거부 — 기간 매수는 subscribe의 회계를 거친다.
-    receive() external payable {
+    receive() external payable personalTestAccess {
         revert PaymentTooSmall(0, ratePerSecond);
     }
 
@@ -95,7 +96,8 @@ contract SubscriptionManager is SimpleBrake, ReentrancyGuard {
     /// @notice 보낸 금액만큼 구독 기간을 연장한다 (진입 — brake 차단).
     ///         미구독이면 지금부터, 구독 중이면 만료 시각에 이어서.
     ///         이전 기간이 이미 만료였다면 먼저 수익으로 정산한다.
-    function subscribe() external payable nonReentrant whenEntryOpen {
+    function subscribe() external payable personalTestAccess nonReentrant whenEntryOpen {
+        _checkPersonalTestNativeCap();
         uint256 secondsToAdd = msg.value / ratePerSecond;
         if (secondsToAdd == 0) revert PaymentTooSmall(msg.value, ratePerSecond);
 
@@ -122,7 +124,7 @@ contract SubscriptionManager is SimpleBrake, ReentrancyGuard {
     /// @notice 남은 기간을 비례 환불받고 구독을 끊는다 (탈출 — brake 무관).
     ///         납입 원금 전액이 준비금에서 해제된다 — 소비분은 이 순간
     ///         수익이 된다.
-    function cancel() external nonReentrant {
+    function cancel() external personalTestAccess nonReentrant {
         Subscriber storage s = subscribers[msg.sender];
         uint256 remaining = s.expiry > block.timestamp ? s.expiry - block.timestamp : 0;
         if (remaining == 0) revert NotSubscribed();
@@ -144,7 +146,8 @@ contract SubscriptionManager is SimpleBrake, ReentrancyGuard {
 
     /// @notice 만료된 구독의 납입 잔고를 수익으로 확정한다.
     ///         누구나 호출 가능 — 보상을 붙이고 싶은 키퍼의 기본 재료.
-    function settleExpired(address user) external nonReentrant {
+    function settleExpired(address user) external personalTestAccess nonReentrant {
+        _requirePersonalTestAccount(user);
         Subscriber storage s = subscribers[user];
         if (s.expiry > block.timestamp || s.contributed == 0) revert NothingToSettle();
         _settle(user, s);
@@ -153,7 +156,8 @@ contract SubscriptionManager is SimpleBrake, ReentrancyGuard {
     /// @notice 준비금으로 뒷받침되지 않는 잔액(=소비 확정 수익 + dust)을
     ///         payee에게 인도한다. 누구나 호출 가능 — payee는 온체인 행동이
     ///         필요 없다.
-    function claimRevenue() external nonReentrant {
+    function claimRevenue() external personalTestAccess nonReentrant {
+        _requirePersonalTestAccount(payee);
         uint256 amount = address(this).balance - refundReserve;
         if (amount == 0) revert NothingToClaim();
 

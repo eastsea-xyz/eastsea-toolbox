@@ -73,6 +73,8 @@ contract RewardDistributor is SimpleBrake, ReentrancyGuard {
         }
         stakingToken = stakingToken_;
         rewardToken = rewardToken_;
+        _registerPersonalTestToken(address(stakingToken_));
+        _registerPersonalTestToken(address(rewardToken_));
     }
 
     // ---------------------------------------------------------------- 보상 풀
@@ -80,12 +82,14 @@ contract RewardDistributor is SimpleBrake, ReentrancyGuard {
     /// @notice 보상 토큰을 풀에 추가하고 duration 동안 선형 방출한다.
     ///         이미 채워진 풀의 미방출분과 합쳐서 새 rate을 계산한다.
     /// @dev 누구나 호출 가능 (후원 모델). 신규 예치 = 진입이라 brake에 걸린다.
-    function fundRewards(uint256 amount, uint256 durationSec) external nonReentrant whenEntryOpen {
+    function fundRewards(uint256 amount, uint256 durationSec) external personalTestAccess nonReentrant whenEntryOpen {
         if (amount == 0) revert ZeroAmount();
         if (durationSec == 0) revert ZeroDuration();
 
         _updateGlobal(); // fund 시점까지의 귀속을 먼저 마감한다
+        _checkPersonalTestTokenDeposit(address(rewardToken), amount);
         SafeToken.pullExact(rewardToken, msg.sender, amount);
+        _checkPersonalTestTokenCaps();
 
         // 잔액 기반 remaining: 스테이커 부재 구간의 방출 예정분도 회수된다
         uint256 remaining = rewardToken.balanceOf(address(this)) - totalDebt;
@@ -98,12 +102,14 @@ contract RewardDistributor is SimpleBrake, ReentrancyGuard {
     // ---------------------------------------------------------------- 스테이킹
 
     /// @notice 스테이크 토큰을 예치한다 (진입 — brake 차단).
-    function stake(uint256 amount) external nonReentrant whenEntryOpen {
+    function stake(uint256 amount) external personalTestAccess nonReentrant whenEntryOpen {
         if (amount == 0) revert ZeroAmount();
         _updateGlobal();
         _checkpoint(msg.sender);
         // F-02: 도착량 기준 — FoT 스테이크 토큰도 실제 도착만 크레딧
+        _checkPersonalTestTokenDeposit(address(stakingToken), amount);
         uint256 delivered = SafeToken.pull(stakingToken, msg.sender, amount);
+        _checkPersonalTestTokenCaps();
         totalStaked += delivered;
         userStaked[msg.sender] += delivered;
         emit Staked(msg.sender, delivered);
@@ -112,7 +118,7 @@ contract RewardDistributor is SimpleBrake, ReentrancyGuard {
     /// @notice 스테이크를 회수한다 (탈출 — brake와 무관하게 항상 열려 있다).
     ///         checkpoint가 진행분을 userOwed로 이월하므로 전액 인출 후에도
     ///         귀속 보상은 유지된다 (claim으로 수령).
-    function unstake(uint256 amount) external nonReentrant {
+    function unstake(uint256 amount) external personalTestAccess nonReentrant {
         if (amount > userStaked[msg.sender]) revert InsufficientStake(amount, userStaked[msg.sender]);
         _updateGlobal();
         _checkpoint(msg.sender);
@@ -124,7 +130,7 @@ contract RewardDistributor is SimpleBrake, ReentrancyGuard {
 
     /// @notice 귀속된 보상을 수령한다 (탈출 — brake와 무관).
     /// @dev CEI: owed 소거와 totalDebt 감소를 먼저, 지급(push)을 마지막에.
-    function claim() external nonReentrant returns (uint256 paid) {
+    function claim() external personalTestAccess nonReentrant returns (uint256 paid) {
         _updateGlobal();
         _checkpoint(msg.sender);
         paid = userOwed[msg.sender];

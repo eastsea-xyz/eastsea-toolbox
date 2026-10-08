@@ -50,9 +50,9 @@ contract OnchainNFT is ERC721, ERC2981, SimpleBrake {
         address brakeGuardian_
     ) ERC721(name_, symbol_) SimpleBrake(brakeGuardian_) {
         if (maxSupply_ == 0) revert BadTrait();
-        creator = msg.sender;
+        creator = _exampleDeployer();
         maxSupply = maxSupply_;
-        _setDefaultRoyalty(msg.sender, royaltyFeeNumerator_);
+        _setDefaultRoyalty(creator, personalTestEnabled ? 0 : royaltyFeeNumerator_);
     }
 
     modifier onlyCreator() {
@@ -65,6 +65,7 @@ contract OnchainNFT is ERC721, ERC2981, SimpleBrake {
     /// @notice 크리에이터 발행. 특성값은 각각 0..7.
     function mint(address to, uint8 color, uint8 shape, uint8 pattern, uint8 halo)
         external
+        personalTestAccess
         onlyCreator
         whenEntryOpen
         returns (uint256 tokenId)
@@ -85,11 +86,32 @@ contract OnchainNFT is ERC721, ERC2981, SimpleBrake {
     }
 
     /// @notice 소유자 소각. 특성 슬롯을 반납한다.
-    function burn(uint256 tokenId) external {
+    function burn(uint256 tokenId) external personalTestAccess {
         if (_ownerOf(tokenId) != msg.sender) revert NotOwnerOf(tokenId, msg.sender);
         delete _traits[tokenId]; // cleared slot: 상태 비용 관점 반납
         _burn(tokenId);
         emit Burned(tokenId, msg.sender);
+    }
+
+    function _update(address to, uint256 tokenId, address auth) internal override returns (address) {
+        _requirePersonalTestAccount(msg.sender);
+        if (to != address(0)) _requirePersonalTestAccount(to);
+        address from = _ownerOf(tokenId);
+        if (from != address(0)) _requirePersonalTestAccount(from);
+        return super._update(to, tokenId, auth);
+    }
+
+    function _approve(address to, uint256 tokenId, address auth, bool emitEvent) internal override {
+        _requirePersonalTestAccount(msg.sender);
+        if (to != address(0)) _requirePersonalTestAccount(to);
+        super._approve(to, tokenId, auth, emitEvent);
+    }
+
+    function _setApprovalForAll(address owner, address operator, bool approved) internal override {
+        _requirePersonalTestAccount(msg.sender);
+        _requirePersonalTestAccount(owner);
+        if (approved) _requirePersonalTestAccount(operator);
+        super._setApprovalForAll(owner, operator, approved);
     }
 
     // ---- 특성 뷰 ----

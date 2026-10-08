@@ -2,12 +2,13 @@
 pragma solidity ^0.8.31;
 
 import {INativeBrake} from "./INativeBrake.sol";
+import {PersonalTest} from "toolbox-personal/PersonalTest.sol";
 
 /// @title Shared latch logic for INativeBrake
 /// @dev The inheriting contract owns its packed storage word; this base only
 ///      reads and writes the latch height through the two hooks, so no extra
 ///      storage slot is occupied for the brake.
-abstract contract NativeBrake is INativeBrake {
+abstract contract NativeBrake is INativeBrake, PersonalTest {
     uint8 internal constant REASON_CODE_CHANGED = 1;
     uint8 internal constant REASON_DEFICIT = 2;
     uint8 internal constant REASON_IDS_EXHAUSTED = 4;
@@ -52,7 +53,7 @@ abstract contract NativeBrake is INativeBrake {
         return _brakeReasons();
     }
 
-    function tripBrake() external {
+    function tripBrake() external personalTestAccess {
         uint64 since = _brakeSince();
         if (since != 0) revert BrakeAlreadyLatched(since);
         uint8 reasons = _brakeReasons();

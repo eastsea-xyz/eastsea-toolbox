@@ -20,6 +20,8 @@ import {ExactToken, IERC20Min} from "../../common/src/ExactToken.sol";
 /// @dev Design: native/escrow/DESIGN.md. Immutable per instance: asset
 ///      (address(0) = native DBLN), arbiter (address(0) = none), ruling
 ///      window, public specification hash. No owner, fee, proxy or rescue.
+///      A personal instance adds wallet-owned access and custody caps;
+///      that policy grants no authority to redirect either party's awards.
 ///      Storage per live deal: four words (S0-S3) and, only after the first
 ///      proposal, a fifth (S4). Everything is deleted after both payouts.
 contract EscrowBook is NativeBrake, TransientLock {
@@ -116,6 +118,7 @@ contract EscrowBook is NativeBrake, TransientLock {
         if (asset_ != address(0) && asset_.code.length == 0) revert AssetHasNoCode();
         if ((arbiter_ == address(0)) != (rulingDuration_ == 0)) revert BadArbiterConfig();
         asset = asset_;
+        if (asset_ != address(0)) _registerPersonalTestToken(asset_);
         arbiter = arbiter_;
         rulingDuration = rulingDuration_;
         specHash = specHash_;
@@ -129,12 +132,15 @@ contract EscrowBook is NativeBrake, TransientLock {
     function create(address seller, uint128 amount, uint64 acceptBy, uint64 deliverBy, uint8 policy, bytes32 termsHash)
         external
         payable
+        personalTestAccess
         lock
         returns (uint256 id)
     {
         _requireEntryOpen();
         address buyer = msg.sender;
         if (seller == address(0) || seller == buyer || seller == address(this)) revert BadParty();
+        _requirePersonalTestAccount(seller);
+        if (arbiter != address(0)) _requirePersonalTestAccount(arbiter);
         if (arbiter != address(0) && (buyer == arbiter || seller == arbiter)) revert BadParty();
         if (amount == 0) revert ZeroAmount();
         if (!(block.timestamp < acceptBy && acceptBy < deliverBy)) revert BadDeadlines();
@@ -160,9 +166,14 @@ contract EscrowBook is NativeBrake, TransientLock {
 
         if (asset == address(0)) {
             if (msg.value != amount) revert BadFunding();
+            _checkPersonalTestNativeCap();
+            _checkPersonalTestTokenCaps();
         } else {
             if (msg.value != 0) revert BadFunding();
+            _checkPersonalTestNativeCap();
+            _checkPersonalTestTokenDeposit(asset, amount);
             ExactToken.pullExact(asset, buyer, amount);
+            _checkPersonalTestTokenCaps();
         }
         emit Funded(id, buyer, seller, amount, acceptBy, deliverBy, policy, termsHash);
     }
@@ -170,7 +181,7 @@ contract EscrowBook is NativeBrake, TransientLock {
     // ---------------------------------------------------- agreement and exits
 
     /// @notice Seller accepts before the acceptance deadline.
-    function accept(uint256 id) external {
+    function accept(uint256 id) external personalTestAccess {
         Deal storage d = _live(id);
         if (d.phase != OFFERED) revert WrongPhase(id, d.phase);
         if (msg.sender != d.seller) revert NotAuthorized();
@@ -181,7 +192,7 @@ contract EscrowBook is NativeBrake, TransientLock {
 
     /// @notice An unaccepted offer returns everything to the buyer: the buyer
     ///         may withdraw it at any time, anyone may lapse it at `acceptBy`.
-    function cancel(uint256 id) external {
+    function cancel(uint256 id) external personalTestAccess {
         Deal storage d = _live(id);
         if (d.phase != OFFERED) revert WrongPhase(id, d.phase);
         if (msg.sender != d.buyer && block.timestamp < d.clock) revert NotAuthorized();
@@ -189,21 +200,21 @@ contract EscrowBook is NativeBrake, TransientLock {
     }
 
     /// @notice Buyer releases everything to the seller (also ends a dispute).
-    function release(uint256 id) external {
+    function release(uint256 id) external personalTestAccess {
         Deal storage d = _open(id);
         if (msg.sender != d.buyer) revert NotAuthorized();
         _resolve(id, d, d.amount);
     }
 
     /// @notice Seller refunds everything to the buyer (also ends a dispute).
-    function refund(uint256 id) external {
+    function refund(uint256 id) external personalTestAccess {
         Deal storage d = _open(id);
         if (msg.sender != d.seller) revert NotAuthorized();
         _resolve(id, d, 0);
     }
 
     /// @notice Either party proposes a split; a new proposal replaces the old.
-    function propose(uint256 id, uint128 sellerAward) external {
+    function propose(uint256 id, uint128 sellerAward) external personalTestAccess {
         Deal storage d = _open(id);
         uint8 role = _role(d);
         if (sellerAward > d.amount) revert AwardTooLarge(sellerAward, d.amount);
@@ -213,7 +224,7 @@ contract EscrowBook is NativeBrake, TransientLock {
     }
 
     /// @notice The other party accepts the exact current proposal.
-    function acceptProposal(uint256 id, uint64 round, uint128 sellerAward) external {
+    function acceptProposal(uint256 id, uint64 round, uint128 sellerAward) external personalTestAccess {
         Deal storage d = _open(id);
         uint8 role = _role(d);
         Proposal memory p = _proposals[id];
@@ -224,7 +235,7 @@ contract EscrowBook is NativeBrake, TransientLock {
 
     /// @notice Either party opens a dispute before the delivery deadline
     ///         (arbiter instances only). The ruling window is fixed.
-    function dispute(uint256 id) external {
+    function dispute(uint256 id) external personalTestAccess {
         if (arbiter == address(0)) revert NoArbiter();
         Deal storage d = _live(id);
         if (d.phase != ACCEPTED) revert WrongPhase(id, d.phase);
@@ -238,7 +249,7 @@ contract EscrowBook is NativeBrake, TransientLock {
 
     /// @notice The instance's arbiter splits a disputed deal before `rulingBy`.
     ///         Funds can only go to the two fixed parties.
-    function rule(uint256 id, uint128 sellerAward) external {
+    function rule(uint256 id, uint128 sellerAward) external personalTestAccess {
         if (msg.sender != arbiter || arbiter == address(0)) revert NotAuthorized();
         Deal storage d = _live(id);
         if (d.phase != DISPUTED) revert WrongPhase(id, d.phase);
@@ -249,7 +260,7 @@ contract EscrowBook is NativeBrake, TransientLock {
 
     /// @notice Anyone applies the agreed silence policy: at `deliverBy` for an
     ///         accepted deal, at `rulingBy` for a disputed one.
-    function resolveTimeout(uint256 id) external {
+    function resolveTimeout(uint256 id) external personalTestAccess {
         Deal storage d = _live(id);
         uint8 phase = d.phase;
         if (phase == ACCEPTED) {
@@ -265,7 +276,7 @@ contract EscrowBook is NativeBrake, TransientLock {
     /// @notice Pay one party's award to its fixed address. Anyone may call.
     ///         A failed transfer reverts and keeps the right; the other
     ///         party's payout is independent.
-    function pay(uint256 id, bool toSeller) external lock {
+    function pay(uint256 id, bool toSeller) external personalTestAccess lock {
         Deal storage d = _live(id);
         if (d.phase != RESOLVED) revert WrongPhase(id, d.phase);
         uint8 flag = toSeller ? PAID_SELLER : PAID_BUYER;
@@ -273,6 +284,7 @@ contract EscrowBook is NativeBrake, TransientLock {
         if (paid & flag != 0) revert AlreadyPaid();
         uint256 award = toSeller ? d.sellerAward : d.amount - d.sellerAward;
         address to = toSeller ? d.seller : d.buyer;
+        _requirePersonalTestAccount(to);
 
         paid |= flag;
         if (paid == PAID_SELLER | PAID_BUYER) {

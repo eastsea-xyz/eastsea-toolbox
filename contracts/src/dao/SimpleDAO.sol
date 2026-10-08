@@ -134,14 +134,16 @@ contract SimpleDAO is SimpleBrake, ReentrancyGuard, EIP712 {
     }
 
     /// @dev 국고 — 제안이 집행할 native를 받는다. 누구나 충전 가능.
-    receive() external payable {}
+    receive() external payable personalTestAccess {
+        _checkPersonalTestNativeCap();
+    }
 
     // ---------------------------------------------------------------- 제안 (진입 — brake 차단)
 
     /// @notice 실행할 행동의 해시를 커밋해 제안을 연다.
     ///         executionHash = keccak256(abi.encode(target, value, data)).
     ///         제안 등록은 누구나 — 승인은 쿼럼의 몫이다 (F-07).
-    function propose(bytes32 executionHash) external whenEntryOpen returns (uint256 proposalId) {
+    function propose(bytes32 executionHash) external personalTestAccess whenEntryOpen returns (uint256 proposalId) {
         proposalId = nextProposalId;
         nextProposalId = proposalId + 1;
 
@@ -154,7 +156,7 @@ contract SimpleDAO is SimpleBrake, ReentrancyGuard, EIP712 {
 
     /// @notice 오프체인 서명 없이 msg.sender 계정으로 찬성한다.
     ///         투표 종료 전만 가능하며 무게는 다른 표와 함께 실행 시 읽는다.
-    function vote(uint256 proposalId) external whenEntryOpen {
+    function vote(uint256 proposalId) external personalTestAccess whenEntryOpen {
         Proposal storage p = proposals[proposalId];
         if (p.executionHash == bytes32(0)) revert ProposalNotFound(proposalId);
         if (block.timestamp >= p.votingEnds) revert VotingClosed(block.timestamp, p.votingEnds);
@@ -177,7 +179,7 @@ contract SimpleDAO is SimpleBrake, ReentrancyGuard, EIP712 {
         uint256 value,
         bytes calldata data,
         bytes[] calldata signatures
-    ) external nonReentrant returns (bytes memory) {
+    ) external personalTestAccess nonReentrant returns (bytes memory) {
         _validateExecution(proposalId, target, value, data);
         uint256 weight = _checkVotes(proposalId, signatures);
         return _execute(proposalId, target, value, data, weight);
@@ -193,7 +195,7 @@ contract SimpleDAO is SimpleBrake, ReentrancyGuard, EIP712 {
         bytes calldata data,
         address[] calldata signers,
         bytes[] calldata signatures
-    ) external nonReentrant returns (bytes memory) {
+    ) external personalTestAccess nonReentrant returns (bytes memory) {
         _validateExecution(proposalId, target, value, data);
         uint256 weight = _checkExplicitVotes(proposalId, signers, signatures);
         return _execute(proposalId, target, value, data, weight);
@@ -229,6 +231,7 @@ contract SimpleDAO is SimpleBrake, ReentrancyGuard, EIP712 {
     // ---------------------------------------------------------------- 내부
 
     function _validateExecution(uint256 proposalId, address target, uint256 value, bytes calldata data) private view {
+        _requirePersonalTestAccount(target);
         Proposal storage p = proposals[proposalId];
         if (p.executionHash == bytes32(0)) revert ProposalNotFound(proposalId);
         if (p.executed) revert AlreadyExecuted(proposalId);
@@ -265,6 +268,7 @@ contract SimpleDAO is SimpleBrake, ReentrancyGuard, EIP712 {
                 revert InvalidSignature();
             }
             last = recovered;
+            _requirePersonalTestAccount(recovered);
             weight += votesToken.balanceOf(recovered); // FoT면 왜곡 — README 요구사항
         }
 
@@ -283,6 +287,7 @@ contract SimpleDAO is SimpleBrake, ReentrancyGuard, EIP712 {
 
         for (uint256 i; i < signers.length; ++i) {
             address signer = signers[i];
+            _requirePersonalTestAccount(signer);
             if (signer <= last) revert InvalidSignature();
             bytes calldata sig = signatures[i];
             if (sig.length == 0) {

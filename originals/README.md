@@ -16,6 +16,13 @@ Track 1 of the proof (clone catalog §8). Each folder holds **unmodified upstrea
 
 Each folder has the licence text (`LICENSE`) and a `README.md` that lists its items. The toolbox root stays MIT. Code with no licence or a proprietary licence (Curve, Orca, Marinade, Metaplex, Jupiter, pump.fun) is **never** copied. Its behaviour is rebuilt clean-room under `../clones/`.
 
+Originals remain fidelity references, outside the 17 executable publisher
+examples. Mainnet personal publishing never deploys a bare original:
+`PersonalTestDeployer` rejects unguarded creation bytecode atomically. Keep
+all original code/pins/fidelity artifacts unchanged; future adapters must
+meet the [complete personal graph policy](../docs/personal-mainnet-testing.md#originals-and-clones).
+A proxy that leaves the original directly usable is not a deployment guard.
+
 ## Adding an item (lanes A–D)
 
 1. `git submodule add <repo> originals/<class>/<item>`, then check out the exact commit used for the mainnet deployment.

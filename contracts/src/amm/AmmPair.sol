@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {PersonalTest} from "src/common/PersonalTest.sol";
+
 import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {ReentrancyGuard} from "openzeppelin/utils/ReentrancyGuard.sol";
@@ -15,10 +17,10 @@ import {AmmFactory} from "./AmmFactory.sol";
 ///  burn(회수)·skim(잔여 회수)은 항상 열려 있다. 탈출은 막지 않는다.
 ///  TWAP: price{0,1}CumulativeLast는 reserve 기반 순간가격의 시간 적산.
 ///  소비자는 두 시점의 차이를 경과 시간으로 나눠 평균가를 얻는다.
-contract AmmPair is ERC20, ReentrancyGuard {
+contract AmmPair is ERC20, ReentrancyGuard, PersonalTest {
     uint256 public constant MINIMUM_LIQUIDITY = 1000;
     /// @dev 스왑 수수료 0.30% — getAmountOut의 997/1000와 짝을 이룬다.
-    uint256 public constant FEE_NUMERATOR = 997;
+    uint256 public immutable FEE_NUMERATOR;
     uint256 public constant FEE_DENOMINATOR = 1000;
     /// @dev 최소 유동성 잠금처 — 프라이빗 키가 없는 관례 주소.
     address private constant _DEAD = 0x000000000000000000000000000000000000dEaD;
@@ -67,8 +69,12 @@ contract AmmPair is ERC20, ReentrancyGuard {
 
     constructor(IERC20 _token0, IERC20 _token1, AmmFactory _factory) ERC20("EastSea AMM LP", "EALP") {
         factory = _factory;
+        FEE_NUMERATOR = personalTestEnabled ? FEE_DENOMINATOR : 997;
         token0 = _token0;
         token1 = _token1;
+        _requirePersonalTestAccount(address(_factory));
+        _registerPersonalTestToken(address(_token0));
+        _registerPersonalTestToken(address(_token1));
     }
 
     function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) {
@@ -77,7 +83,9 @@ contract AmmPair is ERC20, ReentrancyGuard {
     }
 
     /// @notice 예치(라우터가 토큰을 미리 보낸 뒤 호출). LP는 to에게.
-    function mint(address to) external nonReentrant factoryEntryOpen returns (uint256 liquidity) {
+    function mint(address to) external personalTestAccess nonReentrant factoryEntryOpen returns (uint256 liquidity) {
+        _requirePersonalTestAccount(to);
+        _checkPersonalTestTokenCaps();
         // F-02: 유입량 = 잔액 - 리저브 (약속이 아니라 도착량 기준)
         (uint112 _reserve0, uint112 _reserve1,) = getReserves();
         uint256 balance0 = token0.balanceOf(address(this));
@@ -105,7 +113,8 @@ contract AmmPair is ERC20, ReentrancyGuard {
     }
 
     /// @notice 회수(라우터가 LP를 미리 보낸 뒤 호출). 토큰은 to에게 직접.
-    function burn(address to) external nonReentrant returns (uint256 amount0, uint256 amount1) {
+    function burn(address to) external personalTestAccess nonReentrant returns (uint256 amount0, uint256 amount1) {
+        _requirePersonalTestAccount(to);
         // 탈출 경로 — 팩토리 brake와 무관하게 항상 열려 있다
         (uint112 _reserve0, uint112 _reserve1,) = getReserves();
         uint256 balance0 = token0.balanceOf(address(this));
@@ -132,7 +141,14 @@ contract AmmPair is ERC20, ReentrancyGuard {
 
     /// @notice 스왑. 정확히 한쪽 out만 0이 아니어야 하고, 수령인은 to.
     /// @dev 라우터가 out 계산을 책임진다. 페어는 k 보존만 강제한다.
-    function swap(uint256 amount0Out, uint256 amount1Out, address to) external nonReentrant factoryEntryOpen {
+    function swap(uint256 amount0Out, uint256 amount1Out, address to)
+        external
+        personalTestAccess
+        nonReentrant
+        factoryEntryOpen
+    {
+        _requirePersonalTestAccount(to);
+        _checkPersonalTestTokenCaps();
         if (amount0Out == 0 && amount1Out == 0) revert InvalidSwapAmounts();
         (uint112 _reserve0, uint112 _reserve1,) = getReserves();
         if (amount0Out >= _reserve0 || amount1Out >= _reserve1) revert InsufficientLiquidity();
@@ -174,7 +190,8 @@ contract AmmPair is ERC20, ReentrancyGuard {
     }
 
     /// @notice 잔액-리저브 초과분(우연 입금 등)을 to로 꺼낸다. sync의 안전한 짝.
-    function skim(address to) external nonReentrant {
+    function skim(address to) external personalTestAccess nonReentrant {
+        _requirePersonalTestAccount(to);
         (uint112 _reserve0, uint112 _reserve1,) = getReserves();
         _safeTransfer(token0, to, token0.balanceOf(address(this)) - _reserve0);
         _safeTransfer(token1, to, token1.balanceOf(address(this)) - _reserve1);
@@ -182,8 +199,24 @@ contract AmmPair is ERC20, ReentrancyGuard {
 
     /// @notice 리저브를 현재 잔액으로 강제 재동기화. 토큰이 잔액을 스스로
     ///         늘린 뒤 복구하는 비상구. k는 줄어들 수 있다 — 문서 참조.
-    function sync() external nonReentrant {
+    function sync() external personalTestAccess nonReentrant {
+        _checkPersonalTestTokenCaps();
         _update(token0.balanceOf(address(this)), token1.balanceOf(address(this)));
+    }
+
+    function _update(address from, address to, uint256 value) internal override {
+        _requirePersonalTestAccount(msg.sender);
+        if (from != address(0)) _requirePersonalTestAccount(from);
+        // The original AMM minimum-liquidity burn remains an internal mint only.
+        if (to != address(0) && !(from == address(0) && to == _DEAD)) _requirePersonalTestAccount(to);
+        super._update(from, to, value);
+    }
+
+    function _approve(address owner, address spender, uint256 value, bool emitEvent) internal override {
+        _requirePersonalTestAccount(msg.sender);
+        _requirePersonalTestAccount(owner);
+        if (value != 0) _requirePersonalTestAccount(spender);
+        super._approve(owner, spender, value, emitEvent);
     }
 
     // ---- 내부 ----

@@ -75,18 +75,24 @@ contract InvoiceBook is SimpleBrake, ReentrancyGuard {
     /// @param payee_    정산 수취인
     constructor(address guardian, address payee_) SimpleBrake(guardian) {
         if (payee_ == address(0)) revert NotPayee(address(0));
+        _requirePersonalTestAccount(payee_);
         payee = payee_;
     }
 
     /// @dev 결제는 settle(id) 로만 — 밖 송금 거부
-    receive() external payable {
+    receive() external payable personalTestAccess {
         revert PaymentNotAllowed();
     }
 
     // ---------------------------------------------------------------- 발행 (진입 — brake 차단)
 
     /// @notice 청구서를 발행한다. memo(품목·주문번호)는 로그에만 남는다.
-    function issue(uint128 amount, uint48 payBy, string calldata memo) external whenEntryOpen returns (uint256 id) {
+    function issue(uint128 amount, uint48 payBy, string calldata memo)
+        external
+        personalTestAccess
+        whenEntryOpen
+        returns (uint256 id)
+    {
         if (msg.sender != payee) revert NotPayee(msg.sender);
         if (amount == 0) revert ZeroAmount();
         if (payBy == 0) revert ZeroPeriod();
@@ -99,7 +105,9 @@ contract InvoiceBook is SimpleBrake, ReentrancyGuard {
     // ---------------------------------------------------------------- 결제 (탈출 — 슬롯 반납)
 
     /// @notice 청구서를 정확한 금액으로 결제한다. 정산은 즉시.
-    function settle(uint256 id) external payable nonReentrant {
+    function settle(uint256 id) external payable personalTestAccess nonReentrant {
+        _checkPersonalTestNativeCap();
+        _requirePersonalTestAccount(payee);
         Invoice memory inv = invoices[id]; // 결제 후 부재가 답이다
         if (inv.amount == 0) revert UnknownInvoice(id);
         if (msg.value != inv.amount) revert WrongAmount(msg.value, inv.amount);
@@ -116,7 +124,7 @@ contract InvoiceBook is SimpleBrake, ReentrancyGuard {
     // ---------------------------------------------------------------- 폐기·반납 (탈출)
 
     /// @notice 미결제 청구서를 폐기한다 — payee 전용, 만료 무관.
-    function void(uint256 id) external {
+    function void(uint256 id) external personalTestAccess {
         if (msg.sender != payee) revert NotPayee(msg.sender);
         if (invoices[id].amount == 0) revert UnknownInvoice(id);
 
@@ -125,7 +133,7 @@ contract InvoiceBook is SimpleBrake, ReentrancyGuard {
     }
 
     /// @notice 만료된 미결제 청구서의 슬롯을 반납한다. 누구나.
-    function purge(uint256 id) external {
+    function purge(uint256 id) external personalTestAccess {
         Invoice memory inv = invoices[id];
         if (inv.amount == 0) revert UnknownInvoice(id);
         if (block.timestamp <= inv.due) revert NotPastDue(block.timestamp, inv.due);

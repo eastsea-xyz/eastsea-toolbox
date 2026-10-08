@@ -31,7 +31,12 @@ contract AmmFactory is SimpleBrake {
     }
 
     /// @notice 새 페어를 만든다. tokenA/tokenB 순서는 임의로 넣어도 된다.
-    function createPair(address tokenA, address tokenB) external whenEntryOpen returns (address pair) {
+    function createPair(address tokenA, address tokenB)
+        external
+        personalTestAccess
+        whenEntryOpen
+        returns (address pair)
+    {
         if (tokenA == tokenB) revert IdenticalTokens(tokenA);
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
         if (token0 == address(0)) revert ZeroTokenAddress();
@@ -42,6 +47,7 @@ contract AmmFactory is SimpleBrake {
         if (getPair[token0][token1] != address(0)) revert PairExists(getPair[token0][token1]);
 
         pair = address(new AmmPair(IERC20(token0), IERC20(token1), this));
+        _registerPersonalTestChild(pair);
         getPair[token0][token1] = pair;
         getPair[token1][token0] = pair;
         allPairs.push(pair);

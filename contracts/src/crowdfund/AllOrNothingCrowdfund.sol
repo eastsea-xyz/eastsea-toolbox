@@ -72,6 +72,7 @@ contract AllOrNothingCrowdfund is SimpleBrake, ReentrancyGuard {
     /// @param durationSec  마감까지의 기간 (배포 시각부터)
     constructor(address guardian, address beneficiary_, uint128 goal_, uint48 durationSec) SimpleBrake(guardian) {
         if (beneficiary_ == address(0)) revert ZeroAmount();
+        _requirePersonalTestAccount(beneficiary_);
         if (goal_ == 0) revert GoalTooLow();
         if (durationSec == 0) revert DeadlineTooShort();
 
@@ -81,14 +82,15 @@ contract AllOrNothingCrowdfund is SimpleBrake, ReentrancyGuard {
     }
 
     /// @dev 직접 송금 거부 — 기여는 contribute의 회계를 거친다.
-    receive() external payable {
+    receive() external payable personalTestAccess {
         revert NativeTransferFailed();
     }
 
     // ---------------------------------------------------------------- 기여 (진입 — brake 차단)
 
     /// @notice 목표가 채울 때까지 기여한다. 마감 후·달성 후 거부.
-    function contribute() external payable nonReentrant whenEntryOpen {
+    function contribute() external payable personalTestAccess nonReentrant whenEntryOpen {
+        _checkPersonalTestNativeCap();
         if (msg.value == 0) revert ZeroAmount();
         if (block.timestamp > deadline) revert DeadlinePassed(block.timestamp, deadline);
 
@@ -106,7 +108,7 @@ contract AllOrNothingCrowdfund is SimpleBrake, ReentrancyGuard {
 
     /// @notice 캠페인 실패(마감 + 목표 미달) 시 전액 환불받는다.
     ///         환불은 기여 슬롯을 지운다 — 캠페인의 상태는 정리된다.
-    function refund() external nonReentrant {
+    function refund() external personalTestAccess nonReentrant {
         uint128 c = contributions[msg.sender];
         if (c == 0) revert NothingToRefund();
 
@@ -126,7 +128,8 @@ contract AllOrNothingCrowdfund is SimpleBrake, ReentrancyGuard {
 
     /// @notice 목표 달성 시 모금액 전액을 beneficiary에게 인도한다.
     ///         누구나 호출 가능 (가스 대낭) — 수령인은 항상 beneficiary.
-    function withdraw() external nonReentrant {
+    function withdraw() external personalTestAccess nonReentrant {
+        _requirePersonalTestAccount(beneficiary);
         Campaign storage c = campaign;
         if (c.withdrawn || c.raised < goal) revert NothingToWithdraw();
 

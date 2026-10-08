@@ -74,6 +74,7 @@ contract Editions1155 is ERC1155, ERC2981, SimpleBrake, ReentrancyGuard {
 
     function createEdition(string memory name_, uint256 cap, uint256 maxPerWallet, uint256 price, uint16 feeBps)
         external
+        personalTestAccess
         whenEntryOpen
         returns (uint256 editionId)
     {
@@ -82,6 +83,7 @@ contract Editions1155 is ERC1155, ERC2981, SimpleBrake, ReentrancyGuard {
         if (maxPerWallet == 0 || maxPerWallet > cap || maxPerWallet > type(uint32).max) revert BadEditionParams();
         if (price > type(uint128).max) revert BadEditionParams();
         if (feeBps > FEE_CAP_BPS) revert BadEditionParams();
+        if (personalTestEnabled) feeBps = 0;
 
         editionId = _nextEditionId++;
         _editions[editionId] = Edition(msg.sender, feeBps, uint32(maxPerWallet), uint48(cap), 0, uint128(price));
@@ -92,7 +94,8 @@ contract Editions1155 is ERC1155, ERC2981, SimpleBrake, ReentrancyGuard {
     // ---- 구매 ----
 
     /// @notice 1장 구매. msg.value는 price와 정확히 같아야 한다.
-    function mint(uint256 editionId) external payable nonReentrant whenEntryOpen {
+    function mint(uint256 editionId) external payable personalTestAccess nonReentrant whenEntryOpen {
+        _checkPersonalTestNativeCap();
         Edition storage e = _editions[editionId];
         if (e.creator == address(0)) revert UnknownEdition(editionId);
         if (msg.value != e.price) revert WrongPrice(editionId, e.price, msg.value);
@@ -110,7 +113,7 @@ contract Editions1155 is ERC1155, ERC2981, SimpleBrake, ReentrancyGuard {
     // ---- 정산 ----
 
     /// @notice 크리에이터 인출. brake 걸린 상태에서도 열려 있다 (진입만 막는다).
-    function withdraw(uint256 editionId) external nonReentrant {
+    function withdraw(uint256 editionId) external personalTestAccess nonReentrant {
         Edition storage e = _editions[editionId];
         if (e.creator != msg.sender) revert NotEditionCreator(editionId, msg.sender);
         uint256 amount = withdrawable(editionId);
@@ -119,6 +122,20 @@ contract Editions1155 is ERC1155, ERC2981, SimpleBrake, ReentrancyGuard {
         (bool ok,) = msg.sender.call{value: amount}("");
         if (!ok) revert TransferFailed(); // revert 시 상태 전체 롤백 — 불변식 유지
         emit Withdrawn(editionId, msg.sender, amount);
+    }
+
+    function _update(address from, address to, uint256[] memory ids, uint256[] memory values) internal override {
+        _requirePersonalTestAccount(msg.sender);
+        if (from != address(0)) _requirePersonalTestAccount(from);
+        if (to != address(0)) _requirePersonalTestAccount(to);
+        super._update(from, to, ids, values);
+    }
+
+    function _setApprovalForAll(address owner, address operator, bool approved) internal override {
+        _requirePersonalTestAccount(msg.sender);
+        _requirePersonalTestAccount(owner);
+        if (approved) _requirePersonalTestAccount(operator);
+        super._setApprovalForAll(owner, operator, approved);
     }
 
     /// @notice 인출 가능 잔액 = price*minted - 누적 인출.

@@ -27,3 +27,18 @@ For these, the proof is **the same user-facing behaviour**, rebuilt in Solidity 
 | E24 StableSwap | Curve StableSwap, built from the whitepaper | B, under a strict no-source rule |
 
 Problem-first redesigns native to EastSea (Track 2) are not clones. They live in `native/`.
+
+## Personal mainnet deployment guard
+
+The items above are planned designs, not executable publisher examples.
+Mainnet copies must use the [personal deployment policy](../docs/personal-mainnet-testing.md#originals-and-clones).
+`PersonalTestDeployer` rejects bare original bytecode without the policy,
+atomically leaving no unguarded deployed instance. Original source and
+fidelity bytes must never be edited to pass this guard.
+
+A future thin adapter must guard the whole call graph, initialize constructor
+state correctly, prevent direct implementation access and unguarded children,
+track all supported assets, and remove protocol fees without claiming the
+wrapper itself is byte-for-byte original code. A public forwarding proxy is
+insufficient. WETH9, Multicall3, Uniswap V2 and Permit2 remain fidelity controls
+until such an adapter is reviewed; the BUSL mainnet exclusion still applies.

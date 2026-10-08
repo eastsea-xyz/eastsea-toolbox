@@ -64,7 +64,14 @@ contract FixedPriceMarket is SimpleBrake, ReentrancyGuard {
 
     // ---- 마켓은 ERC-721을 받을 수 있어야 한다 (에스크로) ----
 
-    function onERC721Received(address, address, uint256, bytes calldata) external pure returns (bytes4) {
+    function onERC721Received(address operator, address from, uint256, bytes calldata)
+        external
+        view
+        personalTestAccess
+        returns (bytes4)
+    {
+        _requirePersonalTestAccount(operator);
+        if (from != address(0)) _requirePersonalTestAccount(from);
         return this.onERC721Received.selector;
     }
 
@@ -72,7 +79,12 @@ contract FixedPriceMarket is SimpleBrake, ReentrancyGuard {
 
     /// @notice 판매자가 NFT를 마켓에 에스크로한다. 사전에
     ///         setApprovalForAll(마켓, true) 또는 approve(마켓, tokenId) 필요.
-    function list(IERC721 token, uint256 tokenId, uint256 price) external whenEntryOpen returns (uint256 listingId) {
+    function list(IERC721 token, uint256 tokenId, uint256 price)
+        external
+        personalTestAccess
+        whenEntryOpen
+        returns (uint256 listingId)
+    {
         if (price == 0) revert ZeroPrice();
         if (token.ownerOf(tokenId) != msg.sender) revert NotOwner();
         if (!(token.getApproved(tokenId) == address(this) || token.isApprovedForAll(msg.sender, address(this)))) {
@@ -88,7 +100,8 @@ contract FixedPriceMarket is SimpleBrake, ReentrancyGuard {
     // ---- 구매 ----
 
     /// @notice 정확한 가격으로 구매. NFT는 즉시, 대금은 크레딧으로.
-    function buy(uint256 listingId) external payable nonReentrant whenEntryOpen {
+    function buy(uint256 listingId) external payable personalTestAccess nonReentrant whenEntryOpen {
+        _checkPersonalTestNativeCap();
         Listing storage l = _listings[listingId];
         if (l.seller == address(0)) revert UnknownListing(listingId);
         if (msg.value != l.price) revert WrongPrice(listingId, l.price, msg.value);
@@ -102,6 +115,7 @@ contract FixedPriceMarket is SimpleBrake, ReentrancyGuard {
 
         // 로열티 분할 먼저 계산 (view 호출)
         (uint256 sellerAmount, uint256 royalty, address royaltyReceiver) = _split(l);
+        _requirePersonalTestAccount(seller_);
 
         // effects: 정산을 확정한다 — NFT 전달보다 먼저.
         delete _listings[listingId];
@@ -116,7 +130,7 @@ contract FixedPriceMarket is SimpleBrake, ReentrancyGuard {
     // ---- 취소 ----
 
     /// @notice 판매 철회. brake 걸려도 열려 있다 (자구 경로).
-    function cancel(uint256 listingId) external nonReentrant {
+    function cancel(uint256 listingId) external personalTestAccess nonReentrant {
         Listing storage l = _listings[listingId];
         if (l.seller != msg.sender) revert NotSeller(listingId, msg.sender);
 
@@ -130,7 +144,7 @@ contract FixedPriceMarket is SimpleBrake, ReentrancyGuard {
     // ---- 정산 ----
 
     /// @notice 크레딧 인출 (판매대금 + 로열티). brake 걸려도 열려 있다.
-    function withdraw() external nonReentrant {
+    function withdraw() external personalTestAccess nonReentrant {
         uint256 amount = credits[msg.sender];
         if (amount == 0) revert ZeroCredit();
         credits[msg.sender] = 0; // effects 먼저
@@ -158,6 +172,7 @@ contract FixedPriceMarket is SimpleBrake, ReentrancyGuard {
     {
         royalty = 0;
         royaltyReceiver = address(0);
+        if (personalTestEnabled) return (l.price, 0, address(0));
         if (l.token.code.length > 0) {
             try IERC165(l.token).supportsInterface(type(IERC2981).interfaceId) returns (bool ok) {
                 if (ok) {

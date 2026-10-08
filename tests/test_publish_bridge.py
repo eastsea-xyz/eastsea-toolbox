@@ -117,6 +117,37 @@ class BrowserWalletTests(unittest.TestCase):
             self.post(wallet)
         wallet.close()
 
+    def test_mainnet_requires_own_personal_policy_before_listening(self):
+        sender = '0x' + 'a' * 40
+        policy = {'schema': 'eastsea.personal-test/1', 'mode': 'personal-test', 'owner': sender,
+                  'native_cap': '10000000000000000', 'token_cap': '5000000000000000000',
+                  'initial_allowlist': [sender], 'protocol_fee_bps': 0}
+        for changed in (None, {**policy, 'owner': '0x' + 'b' * 40},
+                        {**policy, 'initial_allowlist': [sender, '0x' + 'b' * 40]},
+                        {**policy, 'protocol_fee_bps': 1}, {**policy, 'native_cap': '0'}):
+            with self.subTest(policy=changed), self.assertRaises(ValueError):
+                bridge.BrowserWallet(sender, '0x30a', network='mainnet', policy=changed)
+
+    def test_mainnet_policy_is_shown_and_over_cap_transaction_is_not_queued(self):
+        sender = '0x' + 'a' * 40
+        policy = {'schema': 'eastsea.personal-test/1', 'mode': 'personal-test', 'owner': sender,
+                  'native_cap': '10', 'token_cap': '5000000000000000000',
+                  'initial_allowlist': [sender], 'protocol_fee_bps': 0}
+        with contextlib.redirect_stderr(io.StringIO()):
+            wallet = bridge.BrowserWallet(sender, '0x30a', network='mainnet', policy=policy)
+        self.addCleanup(wallet.close)
+        policy['native_cap'] = '99999'  # Caller cannot change the bound policy after construction.
+        with urlopen(wallet.origin + '/', timeout=2) as page:
+            html = page.read().decode()
+        self.assertIn('Mainnet uses real native coins', html)
+        self.assertIn('"network":"mainnet"', html)
+        self.assertIn('"native_cap":"10"', html)
+        self.assertNotIn('Test coins only', html)
+        with self.assertRaises(bridge.WalletBridgeError) as caught:
+            wallet.request('eth_sendTransaction', [{'from': sender, 'data': '0x6000', 'value': '0xb'}])
+        self.assertEqual(caught.exception.code, -32602)
+        self.assertIsNone(self.post(wallet)['request'])
+
 
 if __name__ == '__main__':
     unittest.main()

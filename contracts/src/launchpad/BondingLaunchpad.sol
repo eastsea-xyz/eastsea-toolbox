@@ -5,6 +5,7 @@ import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {ReentrancyGuard} from "openzeppelin/utils/ReentrancyGuard.sol";
 import {SimpleBrake} from "src/system/SimpleBrake.sol";
 import {SafeToken} from "src/common/SafeToken.sol";
+import {IPersonalTestPolicy} from "src/common/PersonalTest.sol";
 import {FixedSupplyToken} from "src/token/FixedSupplyToken.sol";
 import {AmmFactory} from "src/amm/AmmFactory.sol";
 import {AmmPair} from "src/amm/AmmPair.sol";
@@ -117,6 +118,8 @@ contract BondingLaunchpad is SimpleBrake, ReentrancyGuard {
             revert InvalidConfig();
         }
         if (cfg.treasury == address(0)) revert InvalidConfig();
+        _requirePersonalTestAccount(cfg.treasury);
+        _requirePersonalTestAccount(address(factory_));
         if (cfg.tokenSupply == 0 || cfg.quoteFloor == 0 || cfg.tokenFloor == 0) revert InvalidConfig();
         if (cfg.graduationTarget == 0) revert InvalidConfig();
         if (cfg.feeBps + cfg.snipeTaxBps > _BPS_MAX) revert InvalidConfig();
@@ -128,14 +131,23 @@ contract BondingLaunchpad is SimpleBrake, ReentrancyGuard {
         quoteFloor = cfg.quoteFloor;
         tokenFloor = cfg.tokenFloor;
         graduationTarget = cfg.graduationTarget;
-        feeBps = cfg.feeBps;
-        snipeTaxBps = cfg.snipeTaxBps;
+        feeBps = personalTestEnabled ? 0 : cfg.feeBps;
+        snipeTaxBps = personalTestEnabled ? 0 : cfg.snipeTaxBps;
         snipeWindow = cfg.snipeWindow;
         perBuyerCap = cfg.perBuyerCap;
         launchTime = block.timestamp;
 
-        curveToken = new FixedSupplyToken(cfg.name, cfg.symbol, cfg.tokenSupply, address(this));
+        if (personalTestEnabled) {
+            bytes memory code = abi.encodePacked(
+                type(FixedSupplyToken).creationCode, abi.encode(cfg.name, cfg.symbol, cfg.tokenSupply, address(this))
+            );
+            curveToken = FixedSupplyToken(IPersonalTestPolicy(personalTestAuthority).deployChild(code, bytes32(0)));
+        } else {
+            curveToken = new FixedSupplyToken(cfg.name, cfg.symbol, cfg.tokenSupply, address(this));
+        }
         if (address(curveToken) == address(quote_)) revert InvalidConfig();
+        _registerPersonalTestToken(address(quote_));
+        _checkPersonalTestTokenCap(address(curveToken));
     }
 
     // ---------------------------------------------------------------- 커브 매매
@@ -144,10 +156,18 @@ contract BondingLaunchpad is SimpleBrake, ReentrancyGuard {
     ///         몫만 가격 산정에 들어간다.
     /// @param quoteIn      지불 quote (pull — 도착량 기준 정산, F-02)
     /// @param minTokensOut 슬리피지 하한
-    function buy(uint256 quoteIn, uint256 minTokensOut) external nonReentrant whenEntryOpen notClosed {
+    function buy(uint256 quoteIn, uint256 minTokensOut)
+        external
+        personalTestAccess
+        nonReentrant
+        whenEntryOpen
+        notClosed
+    {
         if (quote.balanceOf(address(this)) >= graduationTarget) revert TargetReached();
         uint256 preQuote = quote.balanceOf(address(this));
+        _checkPersonalTestTokenDeposit(address(quote), quoteIn);
         uint256 delivered = SafeToken.pull(quote, msg.sender, quoteIn);
+        _checkPersonalTestTokenCaps();
         if (delivered == 0) revert InsufficientInput();
 
         (uint256 fee, uint256 snipeTax, uint256 netIn) = _buyTaxes(delivered);
@@ -167,9 +187,11 @@ contract BondingLaunchpad is SimpleBrake, ReentrancyGuard {
     ///         열려 있다 — 탈출 경로는 막지 않는다.
     /// @param tokenIn      판매 토큰량 (pull — 도착량 기준 정산, F-02)
     /// @param minQuoteOut  슬리피지 하한 (수수료 차감 후 수령액 기준)
-    function sell(uint256 tokenIn, uint256 minQuoteOut) external nonReentrant notClosed {
+    function sell(uint256 tokenIn, uint256 minQuoteOut) external personalTestAccess nonReentrant notClosed {
         uint256 preToken = curveToken.balanceOf(address(this));
+        _checkPersonalTestTokenDeposit(address(curveToken), tokenIn);
         uint256 delivered = SafeToken.pull(curveToken, msg.sender, tokenIn);
+        _checkPersonalTestTokenCaps();
         if (delivered == 0) revert InsufficientInput();
 
         uint256 out = _sellQuoteOut(delivered, preToken);
@@ -189,7 +211,7 @@ contract BondingLaunchpad is SimpleBrake, ReentrancyGuard {
     ///         AMM 페어로 옮기고 LP를 dead 주소에 영구 잠근다.
     /// @dev 신규 페어 생성(또는 재사용)은 진입 행위로 분류해 brake에 걸린다.
     ///      brake 중에도 sell은 열려 있으므로 자금이 갇히지 않는다.
-    function graduate() external nonReentrant whenEntryOpen {
+    function graduate() external personalTestAccess nonReentrant whenEntryOpen {
         if (graduated) revert AlreadyGraduated();
         uint256 raised = quote.balanceOf(address(this));
         if (raised < graduationTarget) revert NotGraduable(raised, graduationTarget);
@@ -198,7 +220,7 @@ contract BondingLaunchpad is SimpleBrake, ReentrancyGuard {
         SafeToken.push(quote, address(pair), raised);
         uint256 tokens = curveToken.balanceOf(address(this));
         SafeToken.push(curveToken, address(pair), tokens);
-        uint256 lp = pair.mint(_DEAD); // LP 영구 잠금 — 회수·판매 경로 없음
+        uint256 lp = pair.mint(personalTestEnabled ? personalTestOwner : _DEAD);
 
         graduated = true;
         graduatePair = address(pair);

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {PersonalTest, IPersonalTestPolicy} from "src/common/PersonalTest.sol";
+
 import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
 import {ERC20Permit} from "openzeppelin/token/ERC20/extensions/ERC20Permit.sol";
 
@@ -15,7 +17,7 @@ import {ERC20Permit} from "openzeppelin/token/ERC20/extensions/ERC20Permit.sol";
 ///   - approve는 허용량 슬롯 1개. permit은 논스 슬롯도 1개.
 ///   - Transfer 이벤트 3 토픽(from,to,시그니처) + 32B data(value) = 64+96+32
 ///     = 192 계량 바이트 = 6 units. 실측과 일치 (GAS.md 참조).
-contract FixedSupplyToken is ERC20, ERC20Permit {
+contract FixedSupplyToken is ERC20, ERC20Permit, PersonalTest {
     error ZeroRecipient();
     error ZeroSupply();
 
@@ -29,6 +31,43 @@ contract FixedSupplyToken is ERC20, ERC20Permit {
     {
         if (recipient == address(0)) revert ZeroRecipient();
         if (supply == 0) revert ZeroSupply();
+        _requirePersonalTestAccount(recipient);
+        if (personalTestEnabled && supply > personalTestTokenCap) {
+            revert PersonalTestValueCap(supply, personalTestTokenCap);
+        }
         _mint(recipient, supply);
+    }
+
+    function _update(address from, address to, uint256 value) internal override {
+        // Constructor minting runs before runtime code exists; later every inherited
+        // transfer entry point checks the real caller, sender and recipient.
+        if (address(this).code.length != 0) _requirePersonalTestAccount(msg.sender);
+        if (from != address(0)) _requirePersonalTestAccount(from);
+        if (to != address(0)) _requirePersonalTestAccount(to);
+        super._update(from, to, value);
+        if (personalTestEnabled && to != address(this) && to.code.length != 0) {
+            // Only verified copies implement the receipt hook. Explicitly allowed
+            // wallets/contract accounts are ordinary recipients and need no hook.
+            (bool ok, bytes memory data) =
+                personalTestAuthority.staticcall(abi.encodeCall(IPersonalTestPolicy.isPersonalTestInstance, (to)));
+            if (ok && data.length == 32 && abi.decode(data, (bool))) {
+                IPersonalTestPolicy(to).checkPersonalTestTokenReceipt(address(this));
+            }
+        }
+    }
+
+    function _approve(address owner, address spender, uint256 value, bool emitEvent) internal override {
+        _requirePersonalTestAccount(msg.sender);
+        _requirePersonalTestAccount(owner);
+        if (value != 0) _requirePersonalTestAccount(spender);
+        super._approve(owner, spender, value, emitEvent);
+    }
+
+    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
+        public
+        override
+        personalTestAccess
+    {
+        super.permit(owner, spender, value, deadline, v, r, s);
     }
 }

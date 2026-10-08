@@ -16,7 +16,11 @@ script = "script"
 out = "out"
 cache_path = "cache"
 libs = ["../contracts/lib"]
-remappings = ["forge-std/=../contracts/lib/forge-std/src/"]
+remappings = [
+    "forge-std/=../contracts/lib/forge-std/src/",
+    "openzeppelin/=../contracts/lib/openzeppelin-contracts/contracts/",
+    "toolbox-personal/=../contracts/src/common/",
+]
 solc_version = "0.8.31"
 evm_version = "osaka"
 optimizer = true

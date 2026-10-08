@@ -87,6 +87,7 @@ contract AgentVending is SimpleBrake, ReentrancyGuard {
         if (price_ == 0) revert ZeroPrice();
         if (fulfilWindow_ == 0) revert ZeroWindow();
         if (agent_ == address(0)) revert NotAgent(address(0));
+        _requirePersonalTestAccount(agent_);
 
         agent = agent_;
         price = price_;
@@ -94,7 +95,7 @@ contract AgentVending is SimpleBrake, ReentrancyGuard {
     }
 
     /// @dev 지불은 order(specHash) 로만 — 밖 송금 거부
-    receive() external payable {
+    receive() external payable personalTestAccess {
         revert PaymentNotAllowed();
     }
 
@@ -102,7 +103,8 @@ contract AgentVending is SimpleBrake, ReentrancyGuard {
 
     /// @notice 정가로 작업을 주문한다. specHash 는 주문 명세의
     ///         커밋(해시) — 로그에만 남는다.
-    function order(bytes32 specHash) external payable whenEntryOpen returns (uint256 id) {
+    function order(bytes32 specHash) external payable personalTestAccess whenEntryOpen returns (uint256 id) {
+        _checkPersonalTestNativeCap();
         if (msg.value != price) revert WrongPrice(msg.value, price);
 
         id = ++orderCount;
@@ -114,7 +116,7 @@ contract AgentVending is SimpleBrake, ReentrancyGuard {
 
     /// @notice 기한 내 결과물 해시를 등록해 정산받는다 — agent 전용.
     ///         심사는 없다: 등록이 곧 정산이다.
-    function deliver(uint256 id, bytes32 resultHash) external nonReentrant {
+    function deliver(uint256 id, bytes32 resultHash) external personalTestAccess nonReentrant {
         if (msg.sender != agent) revert NotAgent(msg.sender);
         Order memory o = orders[id];
         if (o.buyer == address(0)) revert UnknownOrder(id);
@@ -131,7 +133,7 @@ contract AgentVending is SimpleBrake, ReentrancyGuard {
 
     /// @notice 기한이 지나도 배달이 없으면 전액을 돌려받는다 —
     ///         주문자 전용. 누구도 잠적한 에이전트를 기다리지 않는다.
-    function refund(uint256 id) external nonReentrant {
+    function refund(uint256 id) external personalTestAccess nonReentrant {
         Order memory o = orders[id];
         if (o.buyer == address(0)) revert UnknownOrder(id);
         if (msg.sender != o.buyer) revert NotBuyer(msg.sender);

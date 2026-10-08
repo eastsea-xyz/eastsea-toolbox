@@ -12,6 +12,8 @@ import {ExactToken, IERC20Min} from "../../common/src/ExactToken.sol";
 ///         beneficiary (or anyone paying the fee) calls `claim` whenever they
 ///         want the earned part. There is no cancellation, clawback, schedule
 ///         edit, admin, fee or upgrade. The final payout deletes the grant.
+///         Personal instances restrict funders and beneficiaries to the
+///         deploying wallet's accounts and cap aggregate new funding.
 /// @dev Design: native/streams/DESIGN.md. Two words per live grant:
 ///        S0 = beneficiary(160) | start(32) | cliff(32) | end(32)
 ///        S1 = total(128) | released(128)
@@ -80,27 +82,31 @@ contract GrantLedger is NativeBrake, TransientLock {
         if (token_.code.length == 0) revert TokenHasNoCode();
         token = token_;
         tokenCodeHash = token_.codehash;
+        _registerPersonalTestToken(token_);
         _meta.nextId = 1;
     }
 
     // ------------------------------------------------------------------ entry
 
     /// @notice Fund one grant exactly. The caller keeps no authority over it.
-    function create(GrantParams calldata p) external lock returns (uint256 id) {
+    function create(GrantParams calldata p) external personalTestAccess lock returns (uint256 id) {
         _requireEntryOpen();
         Meta memory m = _meta;
         id = m.nextId; // < 2^64-1: the brake predicate closes entry at the max
         _store(id, p);
         uint256 owed = uint256(m.outstanding) + p.total;
         if (owed > type(uint128).max) revert OutstandingOverflow();
+        _checkPersonalTestNativeCap();
+        _checkPersonalTestTokenDeposit(token, p.total);
         // Casts are bounded: id < 2^64-1 (entry brake) and owed checked above.
         // forge-lint: disable-next-line(unsafe-typecast)
         _meta = Meta({nextId: uint64(id + 1), brakeSince: m.brakeSince, outstanding: uint128(owed)});
         ExactToken.pullExact(token, msg.sender, p.total);
+        _checkPersonalTestTokenCaps();
     }
 
     /// @notice Fund up to eight grants with one exact pull of their sum.
-    function createBatch(GrantParams[] calldata ps) external lock returns (uint256 firstId) {
+    function createBatch(GrantParams[] calldata ps) external personalTestAccess lock returns (uint256 firstId) {
         _requireEntryOpen();
         uint256 n = ps.length;
         if (n == 0 || n > MAX_BATCH) revert BadBatchSize(n);
@@ -114,10 +120,13 @@ contract GrantLedger is NativeBrake, TransientLock {
         }
         uint256 owed = uint256(m.outstanding) + sum;
         if (owed > type(uint128).max) revert OutstandingOverflow();
+        _checkPersonalTestNativeCap();
+        _checkPersonalTestTokenDeposit(token, sum);
         // Casts are bounded by the two checks above.
         // forge-lint: disable-next-line(unsafe-typecast)
         _meta = Meta({nextId: uint64(firstId + n), brakeSince: m.brakeSince, outstanding: uint128(owed)});
         ExactToken.pullExact(token, msg.sender, sum);
+        _checkPersonalTestTokenCaps();
     }
 
     // ------------------------------------------------------------------- exit
@@ -126,10 +135,11 @@ contract GrantLedger is NativeBrake, TransientLock {
     ///         Anyone may call (and pay the fee); the money only goes to the
     ///         beneficiary. Reverts when nothing is payable, so a successful
     ///         call always moved money.
-    function claim(uint256 id) external lock returns (uint256 amount) {
+    function claim(uint256 id) external personalTestAccess lock returns (uint256 amount) {
         Grant storage g = _grants[id];
         address to = g.beneficiary;
         if (to == address(0)) revert UnknownGrant(id);
+        _requirePersonalTestAccount(to);
         uint128 total = g.total;
         uint128 released = g.released;
         amount = _earned(total, g.cliff, g.end, block.timestamp) - released;
@@ -184,6 +194,7 @@ contract GrantLedger is NativeBrake, TransientLock {
 
     function _store(uint256 id, GrantParams calldata p) private {
         if (p.beneficiary == address(0) || p.beneficiary == address(this)) revert BadBeneficiary();
+        _requirePersonalTestAccount(p.beneficiary);
         if (p.total == 0) revert ZeroAmount();
         if (!(p.start <= p.cliff && p.cliff < p.end)) revert BadSchedule(p.start, p.cliff, p.end);
         _grants[id] = Grant({
