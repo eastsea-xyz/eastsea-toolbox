@@ -6,18 +6,18 @@
   "version": "1.0.0",
   "name": "Coral Senate",
   "subtitle": "Token-weighted DAO",
-  "description": "Example 11 — hash-committed proposals, off-chain weighted vote signatures (zero state per vote), quorum-checked execution behind a timelock window.",
-  "long_description": "Minimal governance for a token-weighted community. Proposals commit only the keccak256 hash of the action they intend to execute — full calldata lives off-chain, and execution re-derives and matches the hash. Voting happens off-chain entirely: holders sign the proposal hash and a relayer submits the sorted bundle; recovered addresses are strictly ascending so duplicates and invalid signatures are rejected in one rule. Vote weight is balanceOf at execution time — a documented trade-off that avoids per-account checkpoint state. After the voting period a timelock window gives dissenters time to exit before anyone may execute. Proposals cost two state slots, each vote costs zero, and executions reuse the existing packed slot: participating at scale costs the state of the proposals alone.",
+  "description": "Example 11 — hash-committed proposals, EIP-712 EOA/ERC-1271 weighted votes or direct account votes, and quorum-checked execution behind a timelock window.",
+  "long_description": "Minimal governance for a token-weighted community. Proposals commit only the keccak256 hash of the action to execute; execution re-derives and matches the hash. OpenZeppelin SignatureChecker verifies EOA signatures or calls a code-bearing voter's ERC-1271 isValidSignature, including EastSea v2 P-256 accounts. EIP-712 v2 binds the current chainId, DAO address, proposalId nonce, action hash, voting end and execution expiry. A relayer submits sorted unique voter addresses paired with signatures. A wallet without off-chain message signing calls vote before voting ends and supplies an empty signature at execution; direct and signed votes can be mixed without double counting. Weight remains balanceOf at execution time. A timelock delays execution, and expired or executed proposals cannot execute. Proposals cost two state slots; off-chain votes add no state, while direct votes add one slot per voter and proposal. Executions reuse the proposal's existing packed slot.",
   "localized": {
     "ko": {
       "name": "코랄 센에이트",
       "subtitle": "토큰 가중 DAO",
-      "description": "예제 11 — 해시로 커밋한 제안, 오프체인 가중 서명 투표(표당 상태 0), 타임락 창구 뒤의 쿼럼 실행."
+      "description": "예제 11 — 해시 커밋 제안, EIP-712 EOA/ERC-1271 가중 서명 또는 계정 직접 vote, 타임락 뒤 쿼럼 실행. 서명 투표는 상태 0, 직접 투표는 유권자·제안당 1슬롯이다."
     }
   },
   "locales": ["en", "ko"],
   "category": "tools",
-  "tags": ["dao", "governance", "voting", "timelock", "off-chain-signatures"],
+  "tags": ["dao", "governance", "voting", "timelock", "erc1271"],
   "icon": "icon.png",
   "entry": "index.html",
   "bundle": {

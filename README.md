@@ -3,7 +3,7 @@
 실제 제품까지 갈 수 있는 스마트 컨트랙트 예제 모음. **폴더 하나를 통째로
 복사해 배포하는 제3자 빌더를 위한 툴박스다.**
 
-17개 예제 · Foundry 테스트 280개 · 각 예제마다 가스/상태 비용 문서,
+17개 예제 · Foundry 테스트 349개 · 각 예제마다 가스/상태 비용 문서,
 보안 문서(F-01…F-08 매핑), 앱 레지스트리 manifest, 정적 프론트엔드.
 
 > [!WARNING]
@@ -22,10 +22,10 @@
 | 5 | 본딩 커브 런치패드 | `examples/launchpad` | Tidepool Launchpad | 스나이핑 방지 세금, 인당 한도, AMM(예제 4)으로 졸업 |
 | 6 | 선형 스테이킹 보상 | `examples/rewards` | Driftwood Staking | 스폰서 예치 풀, Synthetix 전량언스테이크 보상 손실 수정 |
 | 7 | 토큰 락 | `examples/lock` | Harbor Lock | 배치 타임락 + 자체 에스크로 그랜트, 베스팅 |
-| 8 | K-of-N 멀티시그 | `examples/multisig` | Tidal Council | 오프체인 서명 수집 — execute 1회 = 상태 1슬롯 |
+| 8 | K-of-N 멀티시그 | `examples/multisig` | Tidal Council | EOA/ERC-1271 서명 또는 계정 직접 승인 — 서명 경로 실행 1슬롯 |
 | 9 | 마일스톤 에스크로 | `examples/escrow` | Sea Chest | 구매자 예치·승인 릴리즈·언제든 잔액 환불 |
 | 10 | 구독 | `examples/subscription` | Tide Pass | 초당 정가 시간 판매, 일부 환불 cancel, 만료 정산 |
-| 11 | 해시 커밋 DAO | `examples/dao` | Coral Senate | 오프체인 가중 투표 서명(투표 상태 0슬롯) |
+| 11 | 해시 커밋 DAO | `examples/dao` | Coral Senate | EOA/ERC-1271 가중 투표 또는 계정 직접 vote — 서명 투표 상태 0슬롯 |
 | 12 | 올오어낫씽 크라우드펀드 | `examples/crowdfund` | Lighthouse Fund | 성공 시 permissionless 일괄 지급, 실패 시 자기청구 환불 |
 | 13 | 머클 에어드랍 | `examples/airdrop` | Pearl Drop | 32바이트 루트가 전체 명단, 증명 청구, 마감 스윕 |
 | 14 | 커밋-리빌 래플 | `examples/raffle` | Tidal Draw | 호스트 시드 커밋 → 참가 → 리빌 혼합 추첨, 무시드 폴백 |
@@ -39,6 +39,27 @@
 - `SECURITY.md` — F-01…F-08 위협 클래스별 회피 근거, 불변식, 고유 위험
 - `GAS.md` — gas·상태 units(≈u) 측정, 대량 시나리오, 누적 경로 분석
 - `manifest.json` — `eastsea-app/1` 스키마 앱 등록 원고 (0x0 플레이스홀더)
+
+DAO와 멀티시그의 서명 검증은 OpenZeppelin `SignatureChecker`를 쓴다.
+코드가 있는 계정(7702 포함)은 ERC-1271 `isValidSignature(bytes32,bytes)`,
+EOA는 low-s ECDSA로 검증하므로 EastSea v2의 P-256 Secure Enclave 계정도
+투표·공동 서명할 수 있다. 명시적 signer 주소와 서명을 주소 오름차순으로
+짝지어 `executeWithSigners`에 제출한다. 오프체인 메시지 서명이 없는 지갑은
+자기 계정에서 `approve`(멀티시그) 또는 `vote`(DAO)를 호출하고, relayer는
+해당 signer의 서명을 빈 바이트 `0x`로 제출한다. 직접 승인은 건당 유료 상태
+1슬롯을 추가하며, 서명·직접 승인을 섞어도 각 주소는 한 번만 센다.
+
+서명 해시는 EIP-712 v2 typed data로 바뀌었다. 기존 `execute` ABI는 유지하지만
+이전 `personal_sign` 서명은 다시 수집해야 한다. 도메인은 현재 chainId와
+컨트랙트 주소, 메시지는 nonce(DAO는 proposalId)와 실행 내용·기한을 포함한다.
+멀티시그의 deadline 없는 호환 함수는 `uint256` 최대값을 사용하므로 만료를
+원하면 deadline 오버로드를 쓴다. DAO는 제안의 투표 종료·실행 만료를 해시에
+묶고 실행 시 타임락·만료를 검사한다. EastSea 서명은 툴박스 digest를 계정의
+`signatureMessage`로 감싼 뒤 SHA-256/P-256으로 서명한 128바이트
+`r || s || x || y`이며, 그 정책은 계정의 ERC-1271 구현이 검증한다.
+원본·클론 트랙은 수정하지 않았다. 두 예제의 실제 트랜잭션 journey 등록은
+[proof/onchain](proof/onchain/README.md)에 있다. 이 변경은 로컬 Foundry 검증이며
+실제 체인 실행·배포·메인넷 gate 통과를 주장하지 않는다.
 
 ## 빠른 시작
 

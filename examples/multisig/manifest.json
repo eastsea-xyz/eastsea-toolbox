@@ -6,18 +6,18 @@
   "version": "1.0.0",
   "name": "Tidal Council",
   "subtitle": "Threshold multisig",
-  "description": "Example 8 — K-of-N multisig with off-chain signature collection. One execute leaves a single state slot; domain separation blocks replay across chains and instances.",
-  "long_description": "A minimal threshold wallet. Owners collect signatures off-chain (personal_sign over a domain-separated hash) and anyone relays the bundled execute transaction. Strictly ascending owner signatures reject duplicates, invalid sigs and unsorted bundles in one comparison; replay is blocked three ways — executed-hash ledger, chainId in the domain, and contract address in the domain. Static owner set: no upgrade or owner-change surface to attack. Failed target calls revert the whole execution with the return data.",
+  "description": "Example 8 — K-of-N multisig with EIP-712 EOA/ERC-1271 signatures or direct account approvals; signed execution uses one slot, approvals add slots.",
+  "long_description": "A minimal threshold wallet for EOAs and EastSea v2 P-256 accounts. OpenZeppelin SignatureChecker verifies EOA signatures or calls a code-bearing owner's ERC-1271 isValidSignature. A relayer submits strictly ascending, unique owner addresses paired with signatures to executeWithSigners. Owners without off-chain message signing call approve from their account; the corresponding empty signature uses that approval, and signed/direct confirmations can be mixed without counting an owner twice. EIP-712 v2 binds the current chainId, contract address, destination, value, calldata, nonce and deadline. Deadline-free compatibility calls use the maximum uint256 deadline. The executed-hash ledger prevents replay. The owner set is static; direct approvals persist without a revocation API. Failed target calls revert the whole execution.",
   "localized": {
     "ko": {
       "name": "타이달 카운슬",
       "subtitle": "임계치 멀티시그",
-      "description": "예제 8 — 서명을 오프체인에서 수집하는 K-of-N 멀티시그. 실행 트랜잭션 하나가 체인에 남기는 상태는 슬롯 1개뿐이다."
+      "description": "예제 8 — EIP-712 EOA/ERC-1271 서명 또는 계정 직접 승인으로 실행하는 K-of-N 멀티시그. 서명 경로는 실행 1슬롯, 직접 승인은 소유자·작업당 1슬롯을 추가한다."
     }
   },
   "locales": ["en", "ko"],
   "category": "tools",
-  "tags": ["multisig", "threshold", "signatures", "wallet", "governance-lite"],
+  "tags": ["multisig", "threshold", "signatures", "erc1271", "wallet"],
   "icon": "icon.png",
   "entry": "index.html",
   "bundle": {

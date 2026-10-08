@@ -3,17 +3,20 @@ pragma solidity ^0.8.24;
 
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {ReentrancyGuard} from "openzeppelin/utils/ReentrancyGuard.sol";
+import {ECDSA} from "openzeppelin/utils/cryptography/ECDSA.sol";
+import {EIP712} from "openzeppelin/utils/cryptography/EIP712.sol";
+import {SignatureChecker} from "openzeppelin/utils/cryptography/SignatureChecker.sol";
 import {SimpleBrake} from "src/system/SimpleBrake.sol";
 
 /// @title 예제 11 — 단순 DAO (가중 투표 + 타임락 실행)
 /// @notice 투표권 토큰 보유량을 무게로 하는 제안-실행 거버넌스.
-///         투표는 오프체인 서명으로 수집하고, 쿼럼을 넘은 제안은
-///         타임락 창구가 열리면 누구나 실행한다.
+///         EIP-712 서명(EOA/ERC-1271) 또는 계정의 직접 vote로 승인하고,
+///         쿼럼을 넘은 제안은 타임락 창구가 열리면 누구나 실행한다.
 /// @dev
-///  설계 결정 — 투표 1건당 상태 0슬롯:
-///   - 투표를 온체인에 기록하지 않는다. 유권자는 제안 해시에 서명해
-///     오프체인으로 전달하고, 실행자가 서명 묶음을 execute 한 번에
-///     제출한다. 체인에 남는 것은 제안 2슬롯뿐이다.
+///  설계 결정 — 서명 투표 1건당 상태 0슬롯:
+///   - 유권자는 EIP-712 제안 해시에 서명해 오프체인으로 전달하고,
+///     실행자가 서명 묶음을 한 번에 제출한다. 서명 경로는 제안
+///     2슬롯만 남기며, 직접 vote 경로는 유권자·제안당 1슬롯을 쓴다.
 ///   - 온체인 투표 모델(Governor 계열)은 유권자당 1슬롯씩 쌓는다 —
 ///     참여 1만 명이면 100만 units. 유료 상태 체인에서 그 값은
 ///     국고(모든 보유자)가 낸다. 여기서 서명 수집 비용은 제출자가
@@ -45,11 +48,11 @@ import {SimpleBrake} from "src/system/SimpleBrake.sol";
 ///   F-03: 국고는 native만 직접 받는다(receive 허용 — 기부·자금).
 ///   F-04: state/getVoteHash 상수 시간. 투표 검증은 실행 calldata
 ///         길이에 비례 — 상태 크기와 무관하다.
-///   F-05: 7702 위임 EOA 서명도 ecrecover으로 동일 처리.
+///   F-05: code가 있는 계정은 ERC-1271 정책을 따른다(7702 포함).
 ///   F-06: propose는 누구나(F-07과 구분). quorum·기간은 immutable.
 ///   F-07: Proposed 이벤트 ≠ 유효 제안 — 진실은 proposals 매핑이다.
 ///   F-08: 무작위성 없음.
-contract SimpleDAO is SimpleBrake, ReentrancyGuard {
+contract SimpleDAO is SimpleBrake, ReentrancyGuard, EIP712 {
     /// @custom:member executionHash  keccak256(abi.encode(target, value, data)) — 제안이 커밋한 행동
     /// @custom:member votingEnds     투표 종료 (제안 시각 + votingPeriod)
     /// @custom:member executableFrom 실행 가능 시각 (votingEnds + timelockDelay) — exit 창구 종료
@@ -63,8 +66,9 @@ contract SimpleDAO is SimpleBrake, ReentrancyGuard {
         bool executed;
     }
 
-    /// @dev 투표 서명 내부 해시에 섞는 목적 태그 — 다른 용도 서명과 구분
-    bytes32 private constant VOTE_TAG = keccak256("eastsea-toolbox.dao.vote.v1");
+    /// @dev proposalId가 제안별 nonce다. 실행 내용과 투표/실행 기한도 서명에 묶는다.
+    bytes32 public constant VOTE_TYPEHASH =
+        keccak256("Vote(uint256 proposalId,bytes32 executionHash,uint48 votingEnds,uint48 expires)");
 
     IERC20 public immutable votesToken;
     uint256 public immutable quorum;
@@ -75,6 +79,7 @@ contract SimpleDAO is SimpleBrake, ReentrancyGuard {
     uint256 public nextProposalId = 1; // 0은 미사용 — 존재 검사를 위해
 
     mapping(uint256 => Proposal) public proposals;
+    mapping(uint256 => mapping(address => bool)) public approvedVotes;
 
     error VotesTokenHasNoCode(address token);
     error ZeroQuorum();
@@ -85,6 +90,9 @@ contract SimpleDAO is SimpleBrake, ReentrancyGuard {
     error ProposalExpired(uint256 at, uint256 until);
     error AlreadyExecuted(uint256 proposalId);
     error InvalidSignature();
+    error SignatureCountMismatch();
+    error VotingClosed(uint256 at, uint256 until);
+    error VoteAlreadyApproved(uint256 proposalId, address voter);
     error QuorumNotReached(uint256 got, uint256 needed);
     error InsufficientTreasury(uint256 needed, uint256 have);
     error ExecutionFailed(bytes ret);
@@ -96,6 +104,7 @@ contract SimpleDAO is SimpleBrake, ReentrancyGuard {
         uint48 votingEnds,
         uint48 executableFrom
     );
+    event VoteApproved(uint256 indexed proposalId, address indexed voter);
     event Executed(uint256 indexed proposalId, address indexed target, uint256 value, uint256 weight);
 
     /// @param votesToken_     투표권 ERC-20 (FoT 금지 — 무게 왜곡)
@@ -110,7 +119,7 @@ contract SimpleDAO is SimpleBrake, ReentrancyGuard {
         uint48 votingPeriod_,
         uint48 timelockDelay_,
         uint48 gracePeriod_
-    ) SimpleBrake(guardian) {
+    ) SimpleBrake(guardian) EIP712("EastSeaSimpleDAO", "2") {
         if (address(votesToken_).code.length == 0) {
             revert VotesTokenHasNoCode(address(votesToken_));
         }
@@ -143,9 +152,21 @@ contract SimpleDAO is SimpleBrake, ReentrancyGuard {
         emit Proposed(proposalId, msg.sender, executionHash, ends, ends + timelockDelay);
     }
 
+    /// @notice 오프체인 서명 없이 msg.sender 계정으로 찬성한다.
+    ///         투표 종료 전만 가능하며 무게는 다른 표와 함께 실행 시 읽는다.
+    function vote(uint256 proposalId) external whenEntryOpen {
+        Proposal storage p = proposals[proposalId];
+        if (p.executionHash == bytes32(0)) revert ProposalNotFound(proposalId);
+        if (block.timestamp >= p.votingEnds) revert VotingClosed(block.timestamp, p.votingEnds);
+        if (approvedVotes[proposalId][msg.sender]) revert VoteAlreadyApproved(proposalId, msg.sender);
+
+        approvedVotes[proposalId][msg.sender] = true;
+        emit VoteApproved(proposalId, msg.sender);
+    }
+
     // ---------------------------------------------------------------- 실행 (탈출 — brake 무관)
 
-    /// @notice 쿼럼 서명 묶음으로 제안을 실행한다. 실행자는 누구든.
+    /// @notice 기존 EOA용 ABI — 쿼럼 서명 묶음으로 제안을 실행한다.
     /// @param target    호출 대상 — executionHash의 첫 성분
     /// @param value     함께 보낼 native (국고에서)
     /// @param data      호출 데이터
@@ -157,23 +178,25 @@ contract SimpleDAO is SimpleBrake, ReentrancyGuard {
         bytes calldata data,
         bytes[] calldata signatures
     ) external nonReentrant returns (bytes memory) {
-        Proposal storage p = proposals[proposalId];
-        if (p.executionHash == bytes32(0)) revert ProposalNotFound(proposalId);
-        if (p.executed) revert AlreadyExecuted(proposalId);
-        if (block.timestamp < p.executableFrom) revert NotExecutableYet(block.timestamp, p.executableFrom);
-        if (block.timestamp > p.expires) revert ProposalExpired(block.timestamp, p.expires);
-
-        if (keccak256(abi.encode(target, value, data)) != p.executionHash) revert HashMismatch(p.executionHash);
-        if (address(this).balance < value) revert InsufficientTreasury(value, address(this).balance);
-
+        _validateExecution(proposalId, target, value, data);
         uint256 weight = _checkVotes(proposalId, signatures);
+        return _execute(proposalId, target, value, data, weight);
+    }
 
-        p.executed = true; // CEI: 재진입해도 두 번째는 죽는다
-        emit Executed(proposalId, target, value, weight);
-
-        (bool ok, bytes memory retData) = target.call{value: value}(data);
-        if (!ok) revert ExecutionFailed(retData);
-        return retData;
+    /// @notice EOA·ERC-1271·직접 승인 표를 섞어 실행한다. 실행자는 누구든.
+    /// @param signers 엄격 주소 오름차순의 유권자 주소 — 0·중복 금지
+    /// @param signatures 유권자와 대응하는 서명. 빈 바이트는 기존 vote 승인만 허용.
+    function executeWithSigners(
+        uint256 proposalId,
+        address target,
+        uint256 value,
+        bytes calldata data,
+        address[] calldata signers,
+        bytes[] calldata signatures
+    ) external nonReentrant returns (bytes memory) {
+        _validateExecution(proposalId, target, value, data);
+        uint256 weight = _checkExplicitVotes(proposalId, signers, signatures);
+        return _execute(proposalId, target, value, data, weight);
     }
 
     // ---------------------------------------------------------------- 뷰 (F-04)
@@ -190,41 +213,85 @@ contract SimpleDAO is SimpleBrake, ReentrancyGuard {
         return 3;
     }
 
-    /// @notice 투표 서명 대상 해시 — 지갑에서 personal_sign으로 서명한다.
-    ///         도메인(chainId + 자기 주소)과 제안 id가 들어가 체인 간·
-    ///         제안 간 재생을 차단한다. 서명은 오프체인에만 존재한다.
+    /// @notice EIP-712 투표 digest — EOA는 typed data를, 계정은 ERC-1271 정책으로 서명한다.
+    ///         도메인(chainId + 자기 주소), 제안 id(nonce), 내용, 기한을 묶는다.
     function getVoteHash(uint256 proposalId) public view returns (bytes32) {
-        bytes32 inner = keccak256(abi.encode(block.chainid, address(this), proposalId, VOTE_TAG));
-        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", inner));
+        Proposal storage p = proposals[proposalId];
+        return
+            _hashTypedDataV4(keccak256(abi.encode(VOTE_TYPEHASH, proposalId, p.executionHash, p.votingEnds, p.expires)));
+    }
+
+    /// @notice 현재 chainId를 반영한 EIP-712 도메인 separator.
+    function domainSeparator() external view returns (bytes32) {
+        return _domainSeparatorV4();
     }
 
     // ---------------------------------------------------------------- 내부
 
-    /// @dev 투표 서명 검증 — recovered 주소 엄격 오름차순(중복·무효·
-    ///      미정렬 동시 차단, 예제 8과 동일 규칙). 무게는 실행 시점
-    ///      balanceOf — 서명한 뒤 팔린 토큰은 세지 않는다.
+    function _validateExecution(uint256 proposalId, address target, uint256 value, bytes calldata data) private view {
+        Proposal storage p = proposals[proposalId];
+        if (p.executionHash == bytes32(0)) revert ProposalNotFound(proposalId);
+        if (p.executed) revert AlreadyExecuted(proposalId);
+        if (block.timestamp < p.executableFrom) revert NotExecutableYet(block.timestamp, p.executableFrom);
+        if (block.timestamp > p.expires) revert ProposalExpired(block.timestamp, p.expires);
+        if (keccak256(abi.encode(target, value, data)) != p.executionHash) revert HashMismatch(p.executionHash);
+        if (address(this).balance < value) revert InsufficientTreasury(value, address(this).balance);
+    }
+
+    function _execute(uint256 proposalId, address target, uint256 value, bytes calldata data, uint256 weight)
+        private
+        returns (bytes memory)
+    {
+        proposals[proposalId].executed = true; // CEI: 재진입해도 두 번째는 죽는다
+        emit Executed(proposalId, target, value, weight);
+
+        (bool ok, bytes memory retData) = target.call{value: value}(data);
+        if (!ok) revert ExecutionFailed(retData);
+        return retData;
+    }
+
+    /// @dev 기존 EOA ABI에서도 low-s 검증과 code 계정의 ERC-1271 정책을 강제한다.
     function _checkVotes(uint256 proposalId, bytes[] calldata signatures) private view returns (uint256 weight) {
         bytes32 h = getVoteHash(proposalId);
         address last = address(0);
 
         for (uint256 i; i < signatures.length; ++i) {
             bytes calldata sig = signatures[i];
-            if (sig.length != 65) revert InvalidSignature();
-
-            bytes32 r;
-            bytes32 s;
-            uint8 v;
-            assembly {
-                r := calldataload(sig.offset)
-                s := calldataload(add(sig.offset, 32))
-                v := byte(0, calldataload(add(sig.offset, 64)))
+            (address recovered, ECDSA.RecoverError err,) = ECDSA.tryRecover(h, sig);
+            if (
+                err != ECDSA.RecoverError.NoError || recovered <= last
+                    || !SignatureChecker.isValidSignatureNow(recovered, h, sig)
+            ) {
+                revert InvalidSignature();
             }
-
-            address recovered = ecrecover(h, v, r, s);
-            if (recovered <= last) revert InvalidSignature(); // 0(무효)·중복·미정렬
             last = recovered;
-
             weight += votesToken.balanceOf(recovered); // FoT면 왜곡 — README 요구사항
+        }
+
+        if (weight < quorum) revert QuorumNotReached(weight, quorum);
+    }
+
+    /// @dev 주소별로 딱 한 번 현재 잔액을 합산한다 — 직접 승인·서명 중복 집계 금지.
+    function _checkExplicitVotes(uint256 proposalId, address[] calldata signers, bytes[] calldata signatures)
+        private
+        view
+        returns (uint256 weight)
+    {
+        if (signers.length != signatures.length) revert SignatureCountMismatch();
+        bytes32 h = getVoteHash(proposalId);
+        address last = address(0);
+
+        for (uint256 i; i < signers.length; ++i) {
+            address signer = signers[i];
+            if (signer <= last) revert InvalidSignature();
+            bytes calldata sig = signatures[i];
+            if (sig.length == 0) {
+                if (!approvedVotes[proposalId][signer]) revert InvalidSignature();
+            } else if (!SignatureChecker.isValidSignatureNow(signer, h, sig)) {
+                revert InvalidSignature();
+            }
+            last = signer;
+            weight += votesToken.balanceOf(signer);
         }
 
         if (weight < quorum) revert QuorumNotReached(weight, quorum);
