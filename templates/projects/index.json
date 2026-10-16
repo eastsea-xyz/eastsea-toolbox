@@ -1,0 +1,126 @@
+{
+  "format": "eastsea-template-index/1",
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "notice": "Published AS IS for testing. Not audited. Not ranked or endorsed.",
+  "templates": [
+    {
+      "slug": "airdrop",
+      "name": "Pearl Drop",
+      "summary": "Merkle-root allocation list with proof claims and a closing sweep.",
+      "category": "payments",
+      "tree_sha256": "0x0b7926df8c07a2a5a73f53ef4292250ef5017c9efb19fafd092fa0b8df4bb434"
+    },
+    {
+      "slug": "amm",
+      "name": "Harbor Swap",
+      "summary": "Two-token pool factory and router with LP tokens and a time-weighted oracle.",
+      "category": "defi-trading",
+      "tree_sha256": "0x3931c19cbe8b8c76362ce0ddf7835edfa1cf24a1448e0feca89fbe84c346ab4f"
+    },
+    {
+      "slug": "crowdfund",
+      "name": "Lighthouse Fund",
+      "summary": "All-or-nothing fundraiser: paid out on success, self-claimed refunds otherwise.",
+      "category": "payments",
+      "tree_sha256": "0x8883c49e4ba9dd8d06a83c6792e0714115237c2dbece242b26d144c3e49a9a16"
+    },
+    {
+      "slug": "dao",
+      "name": "Coral Senate",
+      "summary": "Token-weighted proposals with a voting period, timelock and grace period.",
+      "category": "tools",
+      "tree_sha256": "0x23814fa21cee8c4afb3333289bdc07e8b8c93a75baf39eb34acce0f12a30cd6c"
+    },
+    {
+      "slug": "escrow",
+      "name": "Sea Chest",
+      "summary": "Milestone escrow: the buyer deposits, approves releases and can refund the balance.",
+      "category": "payments",
+      "tree_sha256": "0x078997b41ae479fe09e62fac114b0c99838b74f87eaa7edae97556b593c1c689"
+    },
+    {
+      "slug": "invoice",
+      "name": "Tide Ledger",
+      "summary": "Numbered invoices paid in the exact amount; each settled slot is deleted.",
+      "category": "payments",
+      "tree_sha256": "0x590c0a8bd3af07bdd28af9b8adad792c1f865509944eb23cd51f8c6a739e3634"
+    },
+    {
+      "slug": "launchpad",
+      "name": "Tidepool Launchpad",
+      "summary": "Bonding-curve token launch with per-buyer caps that graduates into a pool.",
+      "category": "token-issuance",
+      "tree_sha256": "0x95cf294ff03f5521f957e0d2ef24ac5b16728eef29e146d30fbe1f1bbe03626f"
+    },
+    {
+      "slug": "lock",
+      "name": "Harbor Lock",
+      "summary": "Batch time locks and a linear vesting grant for an ERC-20 token.",
+      "category": "tools",
+      "tree_sha256": "0x0626fdf3c3150cbbbbc73498f4e738ed1de44e41635454049725e8061f8a0d28"
+    },
+    {
+      "slug": "market",
+      "name": "Harbor Market",
+      "summary": "Listing book for NFTs with escrowed listings, royalty splits and pull payouts.",
+      "category": "nft-media",
+      "tree_sha256": "0x42845e0db3a090e66d78915f1131081683e09caffede8cf101e8f8a4d33acfd1"
+    },
+    {
+      "slug": "multisig",
+      "name": "Tidal Council",
+      "summary": "K-of-N shared account approved by owner signatures or direct approvals.",
+      "category": "tools",
+      "tree_sha256": "0x36330d42e86661af2820076b15747a86c5d5c545e094808031861fb80cda7231"
+    },
+    {
+      "slug": "names",
+      "name": "Reef Drop",
+      "summary": "Drop whose eligibility is delegated entirely to the EastSea name service.",
+      "category": "names",
+      "tree_sha256": "0x266efdc4e1732ee458b8c3919f25e83f7245cf74a2616f2897dba1eae7024323"
+    },
+    {
+      "slug": "nft",
+      "name": "Island Folk Studio",
+      "summary": "On-chain metadata ERC-721 collection plus limited ERC-1155 editions.",
+      "category": "nft-media",
+      "tree_sha256": "0xf09721c8f0b69d52146078986cd565e9c6bf79055143847ae1e57449eaa3a8cf"
+    },
+    {
+      "slug": "raffle",
+      "name": "Tidal Draw",
+      "summary": "Commit-reveal draw: host seed commit, entries, then a reveal with a fallback.",
+      "category": "games",
+      "tree_sha256": "0x8872d9d6fa746acb6a5a9264d6649a9265edd658149d341b59c170a96f04f5da"
+    },
+    {
+      "slug": "rewards",
+      "name": "Driftwood Staking",
+      "summary": "Sponsor-funded staking distributor with linear reward streaming.",
+      "category": "defi-trading",
+      "tree_sha256": "0xd54907e8c6553f403ad4c3e3e9f59a4c3ca2228fde2c13380fedbe2297c35542"
+    },
+    {
+      "slug": "subscription",
+      "name": "Tide Pass",
+      "summary": "Time-based access paid per second, with partial refunds on cancel.",
+      "category": "payments",
+      "tree_sha256": "0x21d0b91c428f0a095c1ac89e00cd915f095e97b2572eb69e1f96f945358a5571"
+    },
+    {
+      "slug": "token",
+      "name": "Island Coin",
+      "summary": "Fixed-supply ERC-20 with EIP-2612 permit and no minting.",
+      "category": "token-issuance",
+      "tree_sha256": "0xf9ac404ac3a593fadb5f0cf3a45094f0883240a26b528ac0f3050f87ee12c67d"
+    },
+    {
+      "slug": "vending",
+      "name": "Kelp Kiosk",
+      "summary": "Prepaid orders for agent work: settled on delivery before a deadline, else refunded.",
+      "category": "tools",
+      "tree_sha256": "0xe2d689a38c335a67c9804b4187ed81e2c7f4f57e7e2e05be344424840e98ad8c"
+    }
+  ]
+}

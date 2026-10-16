@@ -1,0 +1,4357 @@
+{
+  "schema": "eastsea-template-specs/1",
+  "common_functions": {
+    "PERSONAL_TEST_MAGIC()": {
+      "description": "Returns the constant identifier that marks a personal-test deployment policy.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    "brakeGuardian()": {
+      "description": "Returns the guardian address that alone may engage the emergency brake, fixed at deployment.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    "brakeSpec()": {
+      "description": "Returns the brake specification URI and its document hash.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    "brakeState()": {
+      "description": "Returns the current brake state (0 normal, 1 new entries blocked, 2 fully paused), the guardian and the time it was engaged.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    "checkPersonalTestTokenReceipt(address)": {
+      "description": "Lets a personal-test token notify this contract of a receipt so the token holding cap is checked; reverts if the cap is exceeded.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    "engageBrake(uint8)": {
+      "description": "Raises the emergency brake to a higher state (1 blocks new entries, 2 pauses more); callable only by the guardian and cannot be lowered.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "1"
+        ]
+      }
+    },
+    "instanceMode()": {
+      "description": "Returns 'personal-test' if deployed under a personal-test policy, otherwise 'testnet'.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    "personalTestAllowed(address)": {
+      "description": "Returns whether an account is on this instance's personal-test allow list.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    "personalTestAuthority()": {
+      "description": "Returns the deployment authority address that vouches for related personal-test instances, or zero when not in personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    "personalTestEnabled()": {
+      "description": "Returns whether this instance runs under a personal-test policy that limits callers and held value.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    "personalTestNativeCap()": {
+      "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or zero otherwise.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    "personalTestOwner()": {
+      "description": "Returns the owner account of the personal-test policy, or zero when not in personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    "personalTestPolicy()": {
+      "description": "Returns the personal-test policy tuple: marker, owner, native coin cap and token cap.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    "personalTestTokenCap()": {
+      "description": "Returns the maximum total raw token units this instance may hold in personal-test mode, or zero otherwise.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    "setPersonalTestAccount(address,bool)": {
+      "description": "Adds or removes an account on the personal-test allow list; callable only by the policy owner, who cannot be removed.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "true"
+        ]
+      }
+    }
+  },
+  "contracts": {
+    "AgentVending": {
+      "source": "src/vending/AgentVending.sol",
+      "constructor": {
+        "guardian": {
+          "label": "Brake guardian",
+          "description": "Address allowed to engage the emergency brake; zero means no brake can be used."
+        },
+        "agent_": {
+          "label": "Agent",
+          "description": "Address that fulfils orders and is paid on delivery."
+        },
+        "price_": {
+          "label": "Price",
+          "description": "Fixed price in wei of one order."
+        },
+        "fulfilWindow_": {
+          "label": "Fulfil window",
+          "description": "Seconds an order has to be delivered before the buyer can refund."
+        }
+      },
+      "functions": {
+        "agent()": {
+          "description": "Returns the address that fulfils orders and receives payment on delivery.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "deliver(uint256,bytes32)": {
+          "description": "Records delivery of an open order before its deadline and pays the order price to the agent; callable only by the agent.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1",
+              "0x1111111111111111111111111111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "fulfilWindow()": {
+          "description": "Returns the seconds an order has to be delivered.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "order(bytes32)": {
+          "description": "Places an order for a specification hash by paying exactly the price; blocked while the brake blocks entries.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111111111111111111111111111"
+            ],
+            "value_wei": "1000000000000000000"
+          }
+        },
+        "orderCount()": {
+          "description": "Returns how many orders have been placed.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "orders(uint256)": {
+          "description": "Returns the buyer and delivery deadline of an open order; zeros once delivered or refunded.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "price()": {
+          "description": "Returns the price of one order in wei.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "refund(uint256)": {
+          "description": "Returns the order price to the buyer after the delivery deadline passed undelivered; callable only by the buyer.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        }
+      }
+    },
+    "AllOrNothingCrowdfund": {
+      "source": "src/crowdfund/AllOrNothingCrowdfund.sol",
+      "constructor": {
+        "guardian": {
+          "label": "Brake guardian",
+          "description": "Address allowed to engage the emergency brake; zero means no brake can be used."
+        },
+        "beneficiary_": {
+          "label": "Beneficiary",
+          "description": "Address that receives all funds if the goal is reached."
+        },
+        "goal_": {
+          "label": "Goal amount",
+          "description": "Target amount in wei that must be raised by the deadline."
+        },
+        "durationSec": {
+          "label": "Duration seconds",
+          "description": "Seconds from deployment until the campaign deadline."
+        }
+      },
+      "functions": {
+        "brakeGuardian()": {
+          "description": "Returns the guardian address that alone may engage the emergency brake, fixed at deployment.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeSpec()": {
+          "description": "Returns the brake specification URI and its document hash.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeState()": {
+          "description": "Returns the current brake state (0 normal, 1 new entries blocked, 2 fully paused), the guardian and the time it was engaged.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "engageBrake(uint8)": {
+          "description": "Raises the emergency brake to a higher state (1 blocks new entries, 2 pauses more); callable only by the guardian and cannot be lowered.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "beneficiary()": {
+          "description": "Returns the address that receives the funds if the goal is reached.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "campaign()": {
+          "description": "Returns the total raised so far and whether the funds were already withdrawn.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "contribute()": {
+          "description": "Contributes the attached native coin to the campaign; rejected after the deadline, once the goal is met, or while the brake blocks entries.",
+          "moves_funds": true,
+          "example": {
+            "args": [],
+            "value_wei": "1000000000000000000"
+          }
+        },
+        "contributions(address)": {
+          "description": "Returns the amount in wei an address has contributed and not yet had refunded.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "deadline()": {
+          "description": "Returns the campaign deadline as a Unix timestamp.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "goal()": {
+          "description": "Returns the funding goal in wei.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "refund()": {
+          "description": "Returns the caller's whole contribution if the deadline passed and the goal was not reached.",
+          "moves_funds": true,
+          "example": {
+            "args": []
+          }
+        },
+        "state()": {
+          "description": "Returns the campaign state: 0 open, 1 goal reached, 2 failed, 3 reached and withdrawn.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "withdraw()": {
+          "description": "Sends all raised funds to the beneficiary once the goal is reached; anyone may call it.",
+          "moves_funds": true,
+          "example": {
+            "args": []
+          }
+        }
+      }
+    },
+    "AmmFactory": {
+      "source": "src/amm/AmmFactory.sol",
+      "constructor": {
+        "guardian": {
+          "label": "Brake guardian",
+          "description": "Address allowed to engage the emergency brake that stops new pair creation."
+        }
+      },
+      "functions": {
+        "brakeGuardian()": {
+          "description": "Returns the guardian address that is allowed to engage the emergency brake.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeSpec()": {
+          "description": "Returns the brake specification URI and its document hash.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeState()": {
+          "description": "Returns the current brake level, the guardian address and the time the brake was last engaged.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "engageBrake(uint8)": {
+          "description": "Raises the emergency brake to a stronger level (1 blocks new entries, 2 blocks everything gated); only the brake guardian may call it and levels can only go up.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "allPairs(uint256)": {
+          "description": "Returns the pair contract address at the given index in the list of created pairs.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0"
+            ]
+          }
+        },
+        "allPairsLength()": {
+          "description": "Returns how many pairs the factory has created.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "createPair(address,address)": {
+          "description": "Deploys a new liquidity pair contract for two distinct token contracts; reverts if the pair already exists. Blocked once the brake is engaged.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "0x2222222222222222222222222222222222222222"
+            ]
+          }
+        },
+        "getPair(address,address)": {
+          "description": "Returns the pair address for two tokens in either order, or zero if none exists.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "0x2222222222222222222222222222222222222222"
+            ]
+          }
+        }
+      }
+    },
+    "AmmRouter": {
+      "source": "src/amm/AmmRouter.sol",
+      "constructor": {
+        "_factory": {
+          "label": "AMM factory",
+          "description": "Address of the AmmFactory contract whose pairs this router uses."
+        }
+      },
+      "functions": {
+        "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)": {
+          "description": "Pulls two tokens from the caller into their pair (creating it if missing) and mints liquidity tokens to the recipient; needs token approvals and reverts below the minimums or after the deadline.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "0x2222222222222222222222222222222222222222",
+              "1000000000000000000",
+              "1000000000000000000",
+              "0",
+              "0",
+              "{{publisher}}",
+              "1900000000"
+            ]
+          }
+        },
+        "factory()": {
+          "description": "Returns the AmmFactory address this router uses.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "getAmountOut(uint256,uint256,uint256)": {
+          "description": "Computes the output amount for a swap given input amount and the two pool reserves, using the constant-product formula with the pool fee.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1000000000000000000",
+              "1000000000000000000000",
+              "1000000000000000000000"
+            ]
+          }
+        },
+        "getAmountsOut(uint256,address[])": {
+          "description": "Computes the output amounts along a swap path of 2 to 4 tokens using current pool reserves.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1000000000000000000",
+              [
+                "0x1111111111111111111111111111111111111111",
+                "0x2222222222222222222222222222222222222222"
+              ]
+            ]
+          }
+        },
+        "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)": {
+          "description": "Burns the caller's liquidity tokens for a pair and sends both underlying tokens to the recipient; needs liquidity token approval and reverts below the minimums or after the deadline.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "0x2222222222222222222222222222222222222222",
+              "1000000000000000000",
+              "0",
+              "0",
+              "{{publisher}}",
+              "1900000000"
+            ]
+          }
+        },
+        "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)": {
+          "description": "Swaps an exact input amount along a token path, pulling it from the caller and sending the output to the recipient; reverts below the minimum output or after the deadline.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1000000000000000000",
+              "0",
+              [
+                "0x1111111111111111111111111111111111111111",
+                "0x2222222222222222222222222222222222222222"
+              ],
+              "{{publisher}}",
+              "1900000000"
+            ]
+          }
+        },
+        "swapSupportingFeeOnTransfer(uint256,uint256,address[],address,uint256)": {
+          "description": "Swaps along a token path measuring actual received amounts, so it works with tokens that take a fee on transfer; reverts below the minimum output or after the deadline.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1000000000000000000",
+              "0",
+              [
+                "0x1111111111111111111111111111111111111111",
+                "0x2222222222222222222222222222222222222222"
+              ],
+              "{{publisher}}",
+              "1900000000"
+            ]
+          }
+        }
+      }
+    },
+    "BondingLaunchpad": {
+      "source": "src/launchpad/BondingLaunchpad.sol",
+      "constructor": {
+        "guardian": {
+          "label": "Brake guardian",
+          "description": "Address allowed to engage the emergency brake that stops new buys and graduation."
+        },
+        "quote_": {
+          "label": "Quote token",
+          "description": "Address of the ERC-20 token that buyers pay with and sellers receive."
+        },
+        "factory_": {
+          "label": "AMM factory",
+          "description": "Address of the AmmFactory used to create the trading pair when the launch graduates."
+        },
+        "cfg": {
+          "label": "Launch config",
+          "description": "Launch settings in order: name, symbol, token supply, quote floor, token floor, graduation target, fee bps, snipe tax bps, snipe window, per-buyer cap, treasury address."
+        }
+      },
+      "functions": {
+        "brakeGuardian()": {
+          "description": "Returns the guardian address that is allowed to engage the emergency brake.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeSpec()": {
+          "description": "Returns the brake specification URI and its document hash.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeState()": {
+          "description": "Returns the current brake level, the guardian address and the time the brake was last engaged.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "engageBrake(uint8)": {
+          "description": "Raises the emergency brake to a stronger level (1 blocks new entries, 2 blocks everything gated); only the brake guardian may call it and levels can only go up.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "buy(uint256,uint256)": {
+          "description": "Pays quote tokens into the bonding curve and receives launch tokens; fees go to the treasury, and it reverts below the minimum output or if the buyer cap or graduation target is hit.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1000000000000000000",
+              "0"
+            ]
+          }
+        },
+        "curveToken()": {
+          "description": "Returns the address of the launch token created by this contract and sold along the curve.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "factory()": {
+          "description": "Returns the AmmFactory address used at graduation.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "feeBps()": {
+          "description": "Returns the trading fee in basis points sent to the treasury on buys and sells.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "getBuyQuoteOut(uint256)": {
+          "description": "Returns the launch token amount a buy of the given quote amount would produce at the current curve state, after fees.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1000000000000000000"
+            ]
+          }
+        },
+        "getSellQuoteOut(uint256)": {
+          "description": "Returns the quote token amount a sale of the given launch token amount would produce at the current curve state, after fees.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1000000000000000000"
+            ]
+          }
+        },
+        "graduate()": {
+          "description": "After the quote balance reaches the graduation target, moves all quote and launch tokens into an AMM pair and locks the liquidity tokens; anyone may call it unless the brake is engaged.",
+          "moves_funds": true,
+          "example": {
+            "args": []
+          }
+        },
+        "graduatePair()": {
+          "description": "Returns the AMM pair created at graduation, or zero before graduation.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "graduated()": {
+          "description": "Returns whether the launch has graduated to the AMM, which closes curve buys and sells.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "graduationTarget()": {
+          "description": "Returns the quote token balance at which the launch can graduate.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "launchTime()": {
+          "description": "Returns the timestamp when this launch was deployed.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "perBuyerCap()": {
+          "description": "Returns the maximum launch tokens one address may hold after a buy, where zero means no cap.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "quote()": {
+          "description": "Returns the address of the quote token used for payment.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "quoteFloor()": {
+          "description": "Returns the virtual quote reserve added to the real balance when pricing along the curve.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "sell(uint256,uint256)": {
+          "description": "Sells launch tokens back to the curve for quote tokens, with a fee sent to the treasury; reverts below the minimum output or after graduation.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1000000000000000000",
+              "0"
+            ]
+          }
+        },
+        "snipeTaxBps()": {
+          "description": "Returns the starting early-buy tax in basis points, which decreases linearly to zero over the snipe window.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "snipeWindow()": {
+          "description": "Returns the duration in seconds after launch during which the early-buy tax applies.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "tokenFloor()": {
+          "description": "Returns the virtual launch token reserve added to the real balance when pricing along the curve.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "treasury()": {
+          "description": "Returns the address that receives trading fees and early-buy tax.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "virtualReserves()": {
+          "description": "Returns the virtual quote and token reserves (real balances plus floors) that define the current curve price.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        }
+      }
+    },
+    "CommitRevealRaffle": {
+      "source": "src/raffle/CommitRevealRaffle.sol",
+      "constructor": {
+        "guardian": {
+          "label": "Brake guardian",
+          "description": "Address allowed to engage the emergency brake; zero means no brake can be used."
+        },
+        "seedCommit_": {
+          "label": "Seed commitment",
+          "description": "keccak256 hash of the organizer's secret seed, committed before entries open."
+        },
+        "ticketPrice_": {
+          "label": "Ticket price",
+          "description": "Price of one ticket in wei."
+        },
+        "enterPeriod_": {
+          "label": "Entry period",
+          "description": "Seconds after deployment during which tickets can be bought."
+        },
+        "revealWindow_": {
+          "label": "Reveal window",
+          "description": "Seconds after entry closes during which the seed may be revealed."
+        }
+      },
+      "functions": {
+        "brakeGuardian()": {
+          "description": "Returns the guardian address that alone may engage the emergency brake, fixed at deployment.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeSpec()": {
+          "description": "Returns the brake specification URI and its document hash.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeState()": {
+          "description": "Returns the current brake state (0 normal, 1 new entries blocked, 2 fully paused), the guardian and the time it was engaged.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "engageBrake(uint8)": {
+          "description": "Raises the emergency brake to a higher state (1 blocks new entries, 2 pauses more); callable only by the guardian and cannot be lowered.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "drawWithoutSeed()": {
+          "description": "After the reveal window closes without a reveal, draws a winner from block randomness alone and pays out the pool; anyone may call it.",
+          "moves_funds": true,
+          "example": {
+            "args": []
+          }
+        },
+        "drawn()": {
+          "description": "Returns whether the draw has happened.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "enter()": {
+          "description": "Buys one ticket for the exact ticket price; rejected after the entry deadline or while the brake blocks entries.",
+          "moves_funds": true,
+          "example": {
+            "args": [],
+            "value_wei": "1000000000000000"
+          }
+        },
+        "enterDeadline()": {
+          "description": "Returns the ticket entry deadline as a Unix timestamp.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "playerCount()": {
+          "description": "Returns the number of tickets sold.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "players(uint256)": {
+          "description": "Returns the address that holds the ticket at the given index.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0"
+            ]
+          }
+        },
+        "reveal(bytes32)": {
+          "description": "After entry closes and before the reveal deadline, submits the committed seed to draw a winner and pay out the pool; anyone with the seed may call it.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "revealDeadline()": {
+          "description": "Returns the reveal deadline as a Unix timestamp.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "seedCommit()": {
+          "description": "Returns the hash of the organizer's committed seed.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "ticketPrice()": {
+          "description": "Returns the price of one ticket in wei.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "winner()": {
+          "description": "Returns the winning address, or zero before the draw.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        }
+      }
+    },
+    "Editions1155": {
+      "source": "src/nft/Editions1155.sol",
+      "constructor": {
+        "brakeGuardian_": {
+          "label": "Brake guardian",
+          "description": "Address allowed to engage the emergency brake that stops new editions and mints."
+        }
+      },
+      "functions": {
+        "brakeGuardian()": {
+          "description": "Returns the guardian address that is allowed to engage the emergency brake.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeSpec()": {
+          "description": "Returns the brake specification URI and its document hash.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeState()": {
+          "description": "Returns the current brake level, the guardian address and the time the brake was last engaged.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "engageBrake(uint8)": {
+          "description": "Raises the emergency brake to a stronger level (1 blocks new entries, 2 blocks everything gated); only the brake guardian may call it and levels can only go up.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "FEE_CAP_BPS()": {
+          "description": "Returns the maximum royalty an edition may set, in basis points (1000 equals 10%).",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "NAME_MAX()": {
+          "description": "Returns the maximum edition name length in bytes (64).",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "balanceOf(address,uint256)": {
+          "description": "Returns how many copies of an edition an account holds.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "{{publisher}}",
+              "1"
+            ]
+          }
+        },
+        "balanceOfBatch(address[],uint256[])": {
+          "description": "Returns the balances for several account and edition id pairs in one call.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              [
+                "{{publisher}}",
+                "0x1111111111111111111111111111111111111111"
+              ],
+              [
+                "1",
+                "2"
+              ]
+            ]
+          }
+        },
+        "createEdition(string,uint256,uint256,uint256,uint16)": {
+          "description": "Creates a new edition with a name, supply cap, per-wallet limit, mint price in wei and royalty basis points; the caller becomes its creator. Blocked once the brake is engaged.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "My Edition",
+              "100",
+              "2",
+              "1000000000000000",
+              "500"
+            ]
+          }
+        },
+        "editionOf(uint256)": {
+          "description": "Returns an edition's creator, name, cap, minted count, per-wallet limit, price and royalty basis points.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "isApprovedForAll(address,address)": {
+          "description": "Returns whether an operator may transfer all of an owner's edition tokens.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "{{publisher}}",
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "mint(uint256)": {
+          "description": "Mints one copy of an edition to the caller; the sent value must equal the edition price exactly, and the edition cap and per-wallet limit apply.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1"
+            ],
+            "value_wei": "1000000000000000"
+          }
+        },
+        "royaltyInfo(uint256,uint256)": {
+          "description": "Returns the edition creator as royalty receiver and the royalty amount for a sale price under ERC-2981.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1",
+              "1000000000000000000"
+            ]
+          }
+        },
+        "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)": {
+          "description": "Transfers several edition ids and amounts between accounts in one call; caller must be the owner or an approved operator.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "{{publisher}}",
+              "0x1111111111111111111111111111111111111111",
+              [
+                "1",
+                "2"
+              ],
+              [
+                "1",
+                "1"
+              ],
+              "0x"
+            ]
+          }
+        },
+        "safeTransferFrom(address,address,uint256,uint256,bytes)": {
+          "description": "Transfers an amount of one edition between accounts; caller must be the owner or an approved operator.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "{{publisher}}",
+              "0x1111111111111111111111111111111111111111",
+              "1",
+              "1",
+              "0x"
+            ]
+          }
+        },
+        "setApprovalForAll(address,bool)": {
+          "description": "Allows or revokes an operator's right to transfer all of the caller's edition tokens.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "true"
+            ]
+          }
+        },
+        "supportsInterface(bytes4)": {
+          "description": "Returns whether the contract implements the given ERC-165 interface id (ERC-1155, ERC-2981 and ERC-165).",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0xd9b67a26"
+            ]
+          }
+        },
+        "uri(uint256)": {
+          "description": "Returns a base64 data URI holding the edition's JSON metadata.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "withdraw(uint256)": {
+          "description": "Sends the mint proceeds not yet withdrawn for an edition to its creator; only the edition creator may call it.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "withdrawable(uint256)": {
+          "description": "Returns the mint proceeds in wei still available for the edition creator to withdraw.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        }
+      }
+    },
+    "FixedPriceMarket": {
+      "source": "src/market/FixedPriceMarket.sol",
+      "constructor": {
+        "brakeGuardian_": {
+          "label": "Brake guardian",
+          "description": "Address allowed to engage the emergency brake that stops new listings and purchases."
+        }
+      },
+      "functions": {
+        "PERSONAL_TEST_MAGIC()": {
+          "description": "Returns the constant identifier that marks the personal-test policy format.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "checkPersonalTestTokenReceipt(address)": {
+          "description": "Personal-test hook that verifies token holdings stay under the cap; only callable by the token itself, and only in personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "instanceMode()": {
+          "description": "Returns 'personal-test' if this copy was deployed in personal-test mode, otherwise 'testnet'.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestAllowed(address)": {
+          "description": "Returns whether an account is on this copy's personal-test allow list.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "personalTestAuthority()": {
+          "description": "Returns the address of the policy authority that vouches for personal-test contract copies, or zero outside that mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestEnabled()": {
+          "description": "Returns true if this copy runs in personal-test mode, which restricts which accounts may interact.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestNativeCap()": {
+          "description": "Returns the maximum native coin balance this copy may hold in personal-test mode, or zero outside that mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestOwner()": {
+          "description": "Returns the owner address of this personal-test copy, or zero outside personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestPolicy()": {
+          "description": "Returns the personal-test policy tuple: magic value, owner, native-coin cap and token cap.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestTokenCap()": {
+          "description": "Returns the maximum token amount this copy may hold in personal-test mode, or zero outside that mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "setPersonalTestAccount(address,bool)": {
+          "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it, and the owner cannot be removed.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "true"
+            ]
+          }
+        },
+        "brakeGuardian()": {
+          "description": "Returns the guardian address that is allowed to engage the emergency brake.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeSpec()": {
+          "description": "Returns the brake specification URI and its document hash.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeState()": {
+          "description": "Returns the current brake level, the guardian address and the time the brake was last engaged.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "engageBrake(uint8)": {
+          "description": "Raises the emergency brake to a stronger level (1 blocks new entries, 2 blocks everything gated); only the brake guardian may call it and levels can only go up.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "buy(uint256)": {
+          "description": "Buys a listed NFT by sending exactly the listing price; the seller's share and any ERC-2981 royalty are credited for later withdrawal and the NFT goes to the buyer.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1"
+            ],
+            "value_wei": "1000000000000000"
+          }
+        },
+        "cancel(uint256)": {
+          "description": "Cancels a listing and returns the escrowed NFT to the seller; only the seller may call it.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "credits(address)": {
+          "description": "Returns the native-coin balance in wei credited to an account from sales and royalties, ready to withdraw.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "{{publisher}}"
+            ]
+          }
+        },
+        "list(address,uint256,uint256)": {
+          "description": "Lists an ERC-721 token at a fixed price in wei and moves it into escrow in this contract; the caller must own it and have approved this market.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "1",
+              "1000000000000000"
+            ]
+          }
+        },
+        "listingOf(uint256)": {
+          "description": "Returns a listing's seller, token contract, token id, price and whether it is still active.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "onERC721Received(address,address,uint256,bytes)": {
+          "description": "ERC-721 receiver hook that lets this contract accept NFTs sent with safeTransferFrom.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "0x2222222222222222222222222222222222222222",
+              "1",
+              "0x"
+            ]
+          }
+        },
+        "withdraw()": {
+          "description": "Sends the caller's entire credited balance of sale proceeds or royalties to the caller.",
+          "moves_funds": true,
+          "example": {
+            "args": []
+          }
+        }
+      }
+    },
+    "FixedSupplyToken": {
+      "source": "src/token/FixedSupplyToken.sol",
+      "constructor": {
+        "name_": {
+          "label": "Token name",
+          "description": "Human-readable name of the ERC-20 token."
+        },
+        "symbol_": {
+          "label": "Token symbol",
+          "description": "Short ticker symbol of the ERC-20 token."
+        },
+        "supply": {
+          "label": "Total supply",
+          "description": "Total token amount in base units (18 decimals), minted once to the recipient; no further minting exists."
+        },
+        "recipient": {
+          "label": "Initial recipient",
+          "description": "Address that receives the entire supply at deployment; must not be the zero address."
+        }
+      },
+      "functions": {
+        "PERSONAL_TEST_MAGIC()": {
+          "description": "Returns the constant identifier that marks the personal-test policy format.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "checkPersonalTestTokenReceipt(address)": {
+          "description": "Personal-test hook that verifies token holdings stay under the cap; only callable by the token itself, and only in personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "instanceMode()": {
+          "description": "Returns 'personal-test' if this copy was deployed in personal-test mode, otherwise 'testnet'.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestAllowed(address)": {
+          "description": "Returns whether an account is on this copy's personal-test allow list.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "personalTestAuthority()": {
+          "description": "Returns the address of the policy authority that vouches for personal-test contract copies, or zero outside that mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestEnabled()": {
+          "description": "Returns true if this copy runs in personal-test mode, which restricts which accounts may interact.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestNativeCap()": {
+          "description": "Returns the maximum native coin balance this copy may hold in personal-test mode, or zero outside that mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestOwner()": {
+          "description": "Returns the owner address of this personal-test copy, or zero outside personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestPolicy()": {
+          "description": "Returns the personal-test policy tuple: magic value, owner, native-coin cap and token cap.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestTokenCap()": {
+          "description": "Returns the maximum token amount this copy may hold in personal-test mode, or zero outside that mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "setPersonalTestAccount(address,bool)": {
+          "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it, and the owner cannot be removed.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "true"
+            ]
+          }
+        },
+        "DOMAIN_SEPARATOR()": {
+          "description": "Returns the EIP-712 domain separator used to verify permit signatures.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "allowance(address,address)": {
+          "description": "Returns how many tokens the spender is currently allowed to move on behalf of the owner.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "{{publisher}}",
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "approve(address,uint256)": {
+          "description": "Sets the amount of the caller's tokens the spender may transfer, replacing any earlier allowance.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "1000000000000000000"
+            ]
+          }
+        },
+        "balanceOf(address)": {
+          "description": "Returns the token balance of an account.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "{{publisher}}"
+            ]
+          }
+        },
+        "decimals()": {
+          "description": "Returns the number of decimals the token uses, which is 18.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "eip712Domain()": {
+          "description": "Returns the EIP-712 domain fields (name, version, chain id, verifying contract) used for permit signatures.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "name()": {
+          "description": "Returns the token name.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "nonces(address)": {
+          "description": "Returns the next permit nonce for an owner address.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "{{publisher}}"
+            ]
+          }
+        },
+        "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)": {
+          "description": "Sets a spender's allowance from the owner's signed EIP-2612 message instead of a transaction by the owner; anyone may submit it before the deadline.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "{{publisher}}",
+              "0x1111111111111111111111111111111111111111",
+              "1000000000000000000",
+              "1900000000",
+              "27",
+              "0x1111111111111111111111111111111111111111111111111111111111111111",
+              "0x2222222222222222222222222222222222222222222222222222222222222222"
+            ]
+          }
+        },
+        "symbol()": {
+          "description": "Returns the token ticker symbol.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "totalSupply()": {
+          "description": "Returns the total token supply, which is fixed at deployment.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "transfer(address,uint256)": {
+          "description": "Moves tokens from the caller's balance to the recipient address.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "1000000000000000000"
+            ]
+          }
+        },
+        "transferFrom(address,address,uint256)": {
+          "description": "Moves tokens from one account to another using the caller's allowance; reverts if the allowance is too low.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "{{publisher}}",
+              "0x1111111111111111111111111111111111111111",
+              "1000000000000000000"
+            ]
+          }
+        }
+      }
+    },
+    "InvoiceBook": {
+      "source": "src/invoice/InvoiceBook.sol",
+      "constructor": {
+        "guardian": {
+          "label": "Brake guardian",
+          "description": "Address allowed to engage the emergency brake; zero means no brake can be used."
+        },
+        "payee_": {
+          "label": "Payee",
+          "description": "Address that issues invoices and receives payments."
+        }
+      },
+      "functions": {
+        "PERSONAL_TEST_MAGIC()": {
+          "description": "Returns the constant identifier that marks a personal-test deployment policy.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "checkPersonalTestTokenReceipt(address)": {
+          "description": "Lets a personal-test token notify this contract of a receipt so the token holding cap is checked; reverts if the cap is exceeded.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "instanceMode()": {
+          "description": "Returns 'personal-test' if deployed under a personal-test policy, otherwise 'testnet'.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestAllowed(address)": {
+          "description": "Returns whether an account is on this instance's personal-test allow list.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "personalTestAuthority()": {
+          "description": "Returns the deployment authority address that vouches for related personal-test instances, or zero when not in personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestEnabled()": {
+          "description": "Returns whether this instance runs under a personal-test policy that limits callers and held value.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestNativeCap()": {
+          "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or zero otherwise.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestOwner()": {
+          "description": "Returns the owner account of the personal-test policy, or zero when not in personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestPolicy()": {
+          "description": "Returns the personal-test policy tuple: marker, owner, native coin cap and token cap.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestTokenCap()": {
+          "description": "Returns the maximum total raw token units this instance may hold in personal-test mode, or zero otherwise.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "setPersonalTestAccount(address,bool)": {
+          "description": "Adds or removes an account on the personal-test allow list; callable only by the policy owner, who cannot be removed.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "true"
+            ]
+          }
+        },
+        "brakeGuardian()": {
+          "description": "Returns the guardian address that alone may engage the emergency brake, fixed at deployment.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeSpec()": {
+          "description": "Returns the brake specification URI and its document hash.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeState()": {
+          "description": "Returns the current brake state (0 normal, 1 new entries blocked, 2 fully paused), the guardian and the time it was engaged.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "engageBrake(uint8)": {
+          "description": "Raises the emergency brake to a higher state (1 blocks new entries, 2 pauses more); callable only by the guardian and cannot be lowered.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "invoiceCount()": {
+          "description": "Returns how many invoices have been issued.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "invoices(uint256)": {
+          "description": "Returns the amount and due time of an open invoice; zeros if settled, voided or purged.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "issue(uint128,uint48,string)": {
+          "description": "Creates an invoice with an amount in wei, seconds until due and a memo; callable only by the payee and blocked while the brake blocks entries.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1000000000000000000",
+              "86400",
+              "Invoice 1"
+            ]
+          }
+        },
+        "payee()": {
+          "description": "Returns the address that issues invoices and receives payments.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "purge(uint256)": {
+          "description": "Deletes an overdue unpaid invoice record; anyone may call it.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "settle(uint256)": {
+          "description": "Pays an open invoice with its exact amount before the due time and forwards the payment to the payee.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1"
+            ],
+            "value_wei": "1000000000000000000"
+          }
+        },
+        "totalSettled()": {
+          "description": "Returns the total amount in wei paid through settled invoices.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "void(uint256)": {
+          "description": "Cancels an open invoice so it can no longer be paid; callable only by the payee.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        }
+      }
+    },
+    "LinearVesting": {
+      "source": "src/lock/LinearVesting.sol",
+      "constructor": {
+        "token_": {
+          "label": "Vesting token",
+          "description": "ERC-20 token address to vest; must be a contract."
+        },
+        "beneficiary_": {
+          "label": "Beneficiary address",
+          "description": "Address that receives the vested tokens."
+        },
+        "amount": {
+          "label": "Grant amount",
+          "description": "Total token amount, in base units, pulled from the deployer at deployment."
+        },
+        "cliffSec": {
+          "label": "Cliff seconds",
+          "description": "Seconds after deployment before any tokens unlock; cannot exceed the duration."
+        },
+        "durationSec": {
+          "label": "Duration seconds",
+          "description": "Seconds after deployment until the whole grant is unlocked; must be above zero."
+        }
+      },
+      "functions": {
+        "PERSONAL_TEST_MAGIC()": {
+          "description": "Returns the constant marker value that identifies personal-test mode in the deploy policy.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "beneficiary()": {
+          "description": "Returns the address that receives vested tokens.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "checkPersonalTestTokenReceipt(address)": {
+          "description": "Lets a registered token report a receipt so the personal-test token cap is checked; only callable by the token itself in personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "claim()": {
+          "description": "Pays the currently unlocked and unclaimed tokens to the beneficiary; anyone may call it but funds always go to the beneficiary.",
+          "moves_funds": true,
+          "example": {
+            "args": []
+          }
+        },
+        "claimable()": {
+          "description": "Returns the amount that a claim would pay out now.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "cliff()": {
+          "description": "Returns the cliff length in seconds from the start time.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "duration()": {
+          "description": "Returns the total vesting duration in seconds from the start time.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "instanceMode()": {
+          "description": "Returns the text 'personal-test' if this instance was deployed under a personal-test policy, otherwise 'testnet'.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestAllowed(address)": {
+          "description": "Returns whether the given account is on the personal-test allow list for this instance.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "personalTestAuthority()": {
+          "description": "Returns the policy authority address used to recognize allowed sibling instances, or zero outside personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestEnabled()": {
+          "description": "Returns true if this instance was deployed in personal-test mode with access and value caps.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestNativeCap()": {
+          "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or 0 if disabled.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestOwner()": {
+          "description": "Returns the owner address of the personal-test policy, or zero if personal-test mode is off.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestPolicy()": {
+          "description": "Returns the personal-test policy tuple: marker, owner address, native cap and token cap.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestTokenCap()": {
+          "description": "Returns the maximum token amount this instance may hold in personal-test mode, or 0 if disabled.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "setPersonalTestAccount(address,bool)": {
+          "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it and the owner cannot be removed.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "true"
+            ]
+          }
+        },
+        "start()": {
+          "description": "Returns the timestamp at which vesting started.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "token()": {
+          "description": "Returns the ERC-20 token address being vested.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "total()": {
+          "description": "Returns the total token amount granted.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "vested()": {
+          "description": "Returns the cumulative amount unlocked so far, zero before the cliff.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        }
+      }
+    },
+    "MerkleAirdrop": {
+      "source": "src/airdrop/MerkleAirdrop.sol",
+      "constructor": {
+        "merkleRoot_": {
+          "label": "Merkle root",
+          "description": "Merkle root committing to the list of (account, amount) claims."
+        },
+        "distributor_": {
+          "label": "Distributor",
+          "description": "Address that receives unclaimed funds after the claim deadline."
+        },
+        "claimPeriod": {
+          "label": "Claim period",
+          "description": "Seconds after deployment during which claims are open."
+        }
+      },
+      "functions": {
+        "PERSONAL_TEST_MAGIC()": {
+          "description": "Returns the constant identifier that marks a personal-test deployment policy.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "checkPersonalTestTokenReceipt(address)": {
+          "description": "Lets a personal-test token notify this contract of a receipt so the token holding cap is checked; reverts if the cap is exceeded.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "instanceMode()": {
+          "description": "Returns 'personal-test' if deployed under a personal-test policy, otherwise 'testnet'.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestAllowed(address)": {
+          "description": "Returns whether an account is on this instance's personal-test allow list.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "personalTestAuthority()": {
+          "description": "Returns the deployment authority address that vouches for related personal-test instances, or zero when not in personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestEnabled()": {
+          "description": "Returns whether this instance runs under a personal-test policy that limits callers and held value.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestNativeCap()": {
+          "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or zero otherwise.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestOwner()": {
+          "description": "Returns the owner account of the personal-test policy, or zero when not in personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestPolicy()": {
+          "description": "Returns the personal-test policy tuple: marker, owner, native coin cap and token cap.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestTokenCap()": {
+          "description": "Returns the maximum total raw token units this instance may hold in personal-test mode, or zero otherwise.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "setPersonalTestAccount(address,bool)": {
+          "description": "Adds or removes an account on the personal-test allow list; callable only by the policy owner, who cannot be removed.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "true"
+            ]
+          }
+        },
+        "claim(uint256,bytes32[])": {
+          "description": "Claims the caller's amount in native coin by supplying a Merkle proof; one claim per address and only before the deadline.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1000000000000000000",
+              [
+                "0x1111111111111111111111111111111111111111111111111111111111111111"
+              ]
+            ]
+          }
+        },
+        "claimed(address)": {
+          "description": "Returns whether an address has already claimed.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "deadline()": {
+          "description": "Returns the claim deadline as a Unix timestamp.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "distributor()": {
+          "description": "Returns the address that receives the remaining balance after the deadline.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "merkleRoot()": {
+          "description": "Returns the Merkle root that defines who may claim and how much.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "sweep()": {
+          "description": "After the deadline, sends the whole remaining balance to the distributor; anyone may call it.",
+          "moves_funds": true,
+          "example": {
+            "args": []
+          }
+        },
+        "totalClaimed()": {
+          "description": "Returns the total amount in wei paid out through claims.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        }
+      }
+    },
+    "MilestoneEscrow": {
+      "source": "src/escrow/MilestoneEscrow.sol",
+      "constructor": {
+        "guardian": {
+          "label": "Guardian address",
+          "description": "Address allowed to engage the brake that blocks new deals."
+        }
+      },
+      "functions": {
+        "PERSONAL_TEST_MAGIC()": {
+          "description": "Returns the constant marker value that identifies personal-test mode in the deploy policy.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "approveMilestone(uint256,uint64,uint256)": {
+          "description": "Lets the deal's buyer approve a milestone index for an amount of the deposit, making it withdrawable by the seller; irreversible and no funds move yet.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1",
+              "0",
+              "1000000000000000000"
+            ]
+          }
+        },
+        "brakeGuardian()": {
+          "description": "Returns the guardian address that may engage the brake.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeSpec()": {
+          "description": "Returns the URI and document hash that describe the brake policy.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeState()": {
+          "description": "Returns the current brake level, the guardian address and the timestamp when the brake last changed.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "buyerRefund(uint256)": {
+          "description": "Returns the unapproved part of the deposit to the deal's buyer in native coin; only the buyer may call it.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "checkPersonalTestTokenReceipt(address)": {
+          "description": "Lets a registered token report a receipt so the personal-test token cap is checked; only callable by the token itself in personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "createDeal(address,uint64)": {
+          "description": "Opens a deal with the seller and a fixed milestone count and holds the native coin sent with the call as the deposit; needs open brake.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "3"
+            ],
+            "value_wei": "1000000000000000000"
+          }
+        },
+        "dealInfo(uint256)": {
+          "description": "Returns the deal's buyer, seller, refundable amount and seller-withdrawable amount.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "deals(uint256)": {
+          "description": "Returns the raw deal record: buyer, seller, deposited, approved total, withdrawn total and milestone count.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "engageBrake(uint8)": {
+          "description": "Raises the brake to a stronger level (1 or 2) to block new entries; only the guardian may call it and it cannot be lowered.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "instanceMode()": {
+          "description": "Returns the text 'personal-test' if this instance was deployed under a personal-test policy, otherwise 'testnet'.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "milestoneApproved(bytes32)": {
+          "description": "Returns whether the milestone identified by the key hash has been approved.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "nextDealId()": {
+          "description": "Returns the id that the next created deal will receive.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestAllowed(address)": {
+          "description": "Returns whether the given account is on the personal-test allow list for this instance.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "personalTestAuthority()": {
+          "description": "Returns the policy authority address used to recognize allowed sibling instances, or zero outside personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestEnabled()": {
+          "description": "Returns true if this instance was deployed in personal-test mode with access and value caps.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestNativeCap()": {
+          "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or 0 if disabled.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestOwner()": {
+          "description": "Returns the owner address of the personal-test policy, or zero if personal-test mode is off.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestPolicy()": {
+          "description": "Returns the personal-test policy tuple: marker, owner address, native cap and token cap.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestTokenCap()": {
+          "description": "Returns the maximum token amount this instance may hold in personal-test mode, or 0 if disabled.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "sellerWithdraw(uint256)": {
+          "description": "Pays the seller the approved amount not yet withdrawn in native coin; only the deal's seller may call it.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "setPersonalTestAccount(address,bool)": {
+          "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it and the owner cannot be removed.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "true"
+            ]
+          }
+        }
+      }
+    },
+    "NameGatedDrop": {
+      "source": "src/names/NameGatedDrop.sol",
+      "constructor": {
+        "names_": {
+          "label": "Names registry",
+          "description": "Address of the EastSea names registry used to check primary names."
+        },
+        "distributor_": {
+          "label": "Distributor",
+          "description": "Address that receives unclaimed funds after the claim deadline."
+        },
+        "dropAmount_": {
+          "label": "Drop amount",
+          "description": "Amount in wei each eligible address can claim."
+        },
+        "claimPeriod": {
+          "label": "Claim period",
+          "description": "Seconds after deployment during which claims are open."
+        }
+      },
+      "functions": {
+        "PERSONAL_TEST_MAGIC()": {
+          "description": "Returns the constant identifier that marks a personal-test deployment policy.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "checkPersonalTestTokenReceipt(address)": {
+          "description": "Lets a personal-test token notify this contract of a receipt so the token holding cap is checked; reverts if the cap is exceeded.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "instanceMode()": {
+          "description": "Returns 'personal-test' if deployed under a personal-test policy, otherwise 'testnet'.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestAllowed(address)": {
+          "description": "Returns whether an account is on this instance's personal-test allow list.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "personalTestAuthority()": {
+          "description": "Returns the deployment authority address that vouches for related personal-test instances, or zero when not in personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestEnabled()": {
+          "description": "Returns whether this instance runs under a personal-test policy that limits callers and held value.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestNativeCap()": {
+          "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or zero otherwise.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestOwner()": {
+          "description": "Returns the owner account of the personal-test policy, or zero when not in personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestPolicy()": {
+          "description": "Returns the personal-test policy tuple: marker, owner, native coin cap and token cap.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestTokenCap()": {
+          "description": "Returns the maximum total raw token units this instance may hold in personal-test mode, or zero otherwise.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "setPersonalTestAccount(address,bool)": {
+          "description": "Adds or removes an account on the personal-test allow list; callable only by the policy owner, who cannot be removed.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "true"
+            ]
+          }
+        },
+        "claim()": {
+          "description": "Pays the drop amount to the caller if they have a primary name and have not claimed, before the deadline.",
+          "moves_funds": true,
+          "example": {
+            "args": []
+          }
+        },
+        "claimCount()": {
+          "description": "Returns the number of claims made.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "claimed(address)": {
+          "description": "Returns whether an address has already claimed.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "deadline()": {
+          "description": "Returns the claim deadline as a Unix timestamp.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "distributor()": {
+          "description": "Returns the address that receives the remaining balance after the deadline.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "dropAmount()": {
+          "description": "Returns the amount in wei paid per claim.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "names()": {
+          "description": "Returns the address of the names registry used for eligibility.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "sweep()": {
+          "description": "After the deadline, sends the whole remaining balance to the distributor; anyone may call it.",
+          "moves_funds": true,
+          "example": {
+            "args": []
+          }
+        }
+      }
+    },
+    "OnchainNFT": {
+      "source": "src/nft/OnchainNFT.sol",
+      "constructor": {
+        "name_": {
+          "label": "Collection name",
+          "description": "Name of the NFT collection."
+        },
+        "symbol_": {
+          "label": "Collection symbol",
+          "description": "Short ticker symbol of the NFT collection."
+        },
+        "maxSupply_": {
+          "label": "Max supply",
+          "description": "Maximum number of NFTs that can ever be minted; must be greater than zero."
+        },
+        "royaltyFeeNumerator_": {
+          "label": "Royalty basis points",
+          "description": "Royalty rate in basis points of the sale price (500 means 5%) paid to the creator by marketplaces that honor it."
+        },
+        "brakeGuardian_": {
+          "label": "Brake guardian",
+          "description": "Address allowed to engage the emergency brake that stops new mints."
+        }
+      },
+      "functions": {
+        "PERSONAL_TEST_MAGIC()": {
+          "description": "Returns the constant identifier that marks the personal-test policy format.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "checkPersonalTestTokenReceipt(address)": {
+          "description": "Personal-test hook that verifies token holdings stay under the cap; only callable by the token itself, and only in personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "instanceMode()": {
+          "description": "Returns 'personal-test' if this copy was deployed in personal-test mode, otherwise 'testnet'.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestAllowed(address)": {
+          "description": "Returns whether an account is on this copy's personal-test allow list.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "personalTestAuthority()": {
+          "description": "Returns the address of the policy authority that vouches for personal-test contract copies, or zero outside that mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestEnabled()": {
+          "description": "Returns true if this copy runs in personal-test mode, which restricts which accounts may interact.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestNativeCap()": {
+          "description": "Returns the maximum native coin balance this copy may hold in personal-test mode, or zero outside that mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestOwner()": {
+          "description": "Returns the owner address of this personal-test copy, or zero outside personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestPolicy()": {
+          "description": "Returns the personal-test policy tuple: magic value, owner, native-coin cap and token cap.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestTokenCap()": {
+          "description": "Returns the maximum token amount this copy may hold in personal-test mode, or zero outside that mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "setPersonalTestAccount(address,bool)": {
+          "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it, and the owner cannot be removed.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "true"
+            ]
+          }
+        },
+        "brakeGuardian()": {
+          "description": "Returns the guardian address that is allowed to engage the emergency brake.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeSpec()": {
+          "description": "Returns the brake specification URI and its document hash.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeState()": {
+          "description": "Returns the current brake level, the guardian address and the time the brake was last engaged.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "engageBrake(uint8)": {
+          "description": "Raises the emergency brake to a stronger level (1 blocks new entries, 2 blocks everything gated); only the brake guardian may call it and levels can only go up.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "TRAIT_MAX()": {
+          "description": "Returns the exclusive upper bound for each trait value, so traits range from 0 to 7.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "approve(address,uint256)": {
+          "description": "Lets the given address transfer one specific NFT; callable by the token owner or an approved operator.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "1"
+            ]
+          }
+        },
+        "balanceOf(address)": {
+          "description": "Returns how many NFTs an account owns.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "{{publisher}}"
+            ]
+          }
+        },
+        "burn(uint256)": {
+          "description": "Permanently destroys an NFT and clears its stored traits; only the current owner may call it.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "creator()": {
+          "description": "Returns the creator address, the only account allowed to mint and the royalty receiver.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "getApproved(uint256)": {
+          "description": "Returns the address approved to transfer a specific NFT, or zero if none.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "isApprovedForAll(address,address)": {
+          "description": "Returns whether an operator may transfer all NFTs of an owner.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "{{publisher}}",
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "jsonOf(uint256)": {
+          "description": "Returns the NFT metadata as a JSON string with name, description, embedded SVG image and trait attributes.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "maxSupply()": {
+          "description": "Returns the maximum number of NFTs that can be minted.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "mint(address,uint8,uint8,uint8,uint8)": {
+          "description": "Mints the next NFT to the given address with color, shape, pattern and halo traits (each 0 to 7); only the creator may call it, and it is blocked once the brake is engaged.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "0",
+              "1",
+              "2",
+              "3"
+            ]
+          }
+        },
+        "name()": {
+          "description": "Returns the collection name.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "ownerOf(uint256)": {
+          "description": "Returns the owner of an NFT; reverts if the token does not exist.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "royaltyInfo(uint256,uint256)": {
+          "description": "Returns the royalty receiver and royalty amount for a given token and sale price under ERC-2981.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1",
+              "1000000000000000000"
+            ]
+          }
+        },
+        "safeTransferFrom(address,address,uint256)": {
+          "description": "Transfers an NFT between accounts and checks that a contract recipient can accept it; caller must be the owner or approved.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "{{publisher}}",
+              "0x1111111111111111111111111111111111111111",
+              "1"
+            ]
+          }
+        },
+        "safeTransferFrom(address,address,uint256,bytes)": {
+          "description": "Transfers an NFT with extra data passed to a contract recipient and checks that it can accept it; caller must be the owner or approved.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "{{publisher}}",
+              "0x1111111111111111111111111111111111111111",
+              "1",
+              "0x"
+            ]
+          }
+        },
+        "setApprovalForAll(address,bool)": {
+          "description": "Allows or revokes an operator's right to transfer all of the caller's NFTs.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "true"
+            ]
+          }
+        },
+        "supportsInterface(bytes4)": {
+          "description": "Returns whether the contract implements the given ERC-165 interface id (ERC-721, ERC-2981 and ERC-165).",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x80ac58cd"
+            ]
+          }
+        },
+        "svgOf(uint256)": {
+          "description": "Returns the on-chain SVG image drawn from an NFT's traits.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "symbol()": {
+          "description": "Returns the collection symbol.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "tokenURI(uint256)": {
+          "description": "Returns a base64 data URI holding the NFT's JSON metadata.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "traitsOf(uint256)": {
+          "description": "Returns the color, shape, pattern, halo and mint timestamp stored for an existing NFT.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "transferFrom(address,address,uint256)": {
+          "description": "Transfers an NFT without checking recipient support; caller must be the owner or approved.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "{{publisher}}",
+              "0x1111111111111111111111111111111111111111",
+              "1"
+            ]
+          }
+        }
+      }
+    },
+    "RewardDistributor": {
+      "source": "src/rewards/RewardDistributor.sol",
+      "constructor": {
+        "guardian": {
+          "label": "Guardian address",
+          "description": "Address allowed to engage the brake that blocks new staking and funding."
+        },
+        "stakingToken_": {
+          "label": "Staking token",
+          "description": "ERC-20 token address that users stake; must be a contract."
+        },
+        "rewardToken_": {
+          "label": "Reward token",
+          "description": "ERC-20 token address paid out as rewards; must be a contract."
+        }
+      },
+      "functions": {
+        "PERSONAL_TEST_MAGIC()": {
+          "description": "Returns the constant marker value that identifies personal-test mode in the deploy policy.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeGuardian()": {
+          "description": "Returns the guardian address that may engage the brake.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeSpec()": {
+          "description": "Returns the URI and document hash that describe the brake policy.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeState()": {
+          "description": "Returns the current brake level, the guardian address and the timestamp when the brake last changed.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "checkPersonalTestTokenReceipt(address)": {
+          "description": "Lets a registered token report a receipt so the personal-test token cap is checked; only callable by the token itself in personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "claim()": {
+          "description": "Pays the caller their accrued reward tokens and clears their owed balance.",
+          "moves_funds": true,
+          "example": {
+            "args": []
+          }
+        },
+        "earned(address)": {
+          "description": "Returns the reward amount currently accrued to the given user, including carried-over and in-progress amounts.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "engageBrake(uint8)": {
+          "description": "Raises the brake to a stronger level (1 or 2) to block new entries; only the guardian may call it and it cannot be lowered.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "finishAt()": {
+          "description": "Returns the timestamp at which the current reward emission ends.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "fundRewards(uint256,uint256)": {
+          "description": "Pulls reward tokens from the caller and emits them linearly over the duration, combined with any unemitted balance; needs prior allowance and open brake.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1000000000000000000",
+              "604800"
+            ]
+          }
+        },
+        "instanceMode()": {
+          "description": "Returns the text 'personal-test' if this instance was deployed under a personal-test policy, otherwise 'testnet'.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestAllowed(address)": {
+          "description": "Returns whether the given account is on the personal-test allow list for this instance.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "personalTestAuthority()": {
+          "description": "Returns the policy authority address used to recognize allowed sibling instances, or zero outside personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestEnabled()": {
+          "description": "Returns true if this instance was deployed in personal-test mode with access and value caps.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestNativeCap()": {
+          "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or 0 if disabled.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestOwner()": {
+          "description": "Returns the owner address of the personal-test policy, or zero if personal-test mode is off.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestPolicy()": {
+          "description": "Returns the personal-test policy tuple: marker, owner address, native cap and token cap.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestTokenCap()": {
+          "description": "Returns the maximum token amount this instance may hold in personal-test mode, or 0 if disabled.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "rewardPerToken()": {
+          "description": "Returns the cumulative reward per staked token, scaled by 1e18, up to the current time.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "rewardPerTokenStored()": {
+          "description": "Returns the last stored cumulative reward per staked token, scaled by 1e18.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "rewardRate()": {
+          "description": "Returns the reward tokens emitted per second until the finish time.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "rewardToken()": {
+          "description": "Returns the ERC-20 token address used for rewards.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "setPersonalTestAccount(address,bool)": {
+          "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it and the owner cannot be removed.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "true"
+            ]
+          }
+        },
+        "stake(uint256)": {
+          "description": "Pulls the given amount of staking tokens from the caller and credits what arrived to their stake; needs prior allowance and open brake.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1000000000000000000"
+            ]
+          }
+        },
+        "stakingToken()": {
+          "description": "Returns the ERC-20 token address users stake.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "totalDebt()": {
+          "description": "Returns the total rewards attributed to users but not yet paid out.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "totalStaked()": {
+          "description": "Returns the total amount of staking tokens currently staked.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "unstake(uint256)": {
+          "description": "Returns the given amount of the caller's staked tokens to them; works even when the brake is engaged.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1000000000000000000"
+            ]
+          }
+        },
+        "updatedAt()": {
+          "description": "Returns the timestamp of the last global reward accounting update.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "userOwed(address)": {
+          "description": "Returns the reward amount already checkpointed as owed to the given user.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "userRewardPaid(address)": {
+          "description": "Returns the given user's last recorded reward-per-token snapshot.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "userStaked(address)": {
+          "description": "Returns the amount of staking tokens the given user has staked.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        }
+      }
+    },
+    "SimpleDAO": {
+      "source": "src/dao/SimpleDAO.sol",
+      "constructor": {
+        "guardian": {
+          "label": "Guardian address",
+          "description": "Address allowed to engage the brake that blocks new proposals and votes."
+        },
+        "votesToken_": {
+          "label": "Voting token",
+          "description": "ERC-20 token whose holder balances give voting weight; must be a contract and not fee-on-transfer."
+        },
+        "quorum_": {
+          "label": "Quorum amount",
+          "description": "Total voting-token weight of approving voters required to execute a proposal; above zero."
+        },
+        "votingPeriod_": {
+          "label": "Voting seconds",
+          "description": "Seconds a proposal stays open for votes after it is created; above zero."
+        },
+        "timelockDelay_": {
+          "label": "Timelock seconds",
+          "description": "Seconds to wait after voting ends before a proposal can be executed; above zero."
+        },
+        "gracePeriod_": {
+          "label": "Grace seconds",
+          "description": "Seconds after the timelock during which a proposal can be executed before it expires; above zero."
+        }
+      },
+      "functions": {
+        "PERSONAL_TEST_MAGIC()": {
+          "description": "Returns the constant marker value that identifies personal-test mode in the deploy policy.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "VOTE_TYPEHASH()": {
+          "description": "Returns the EIP-712 type hash used for vote signatures.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "approvedVotes(uint256,address)": {
+          "description": "Returns whether the voter has recorded an on-chain approval for the proposal.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1",
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "brakeGuardian()": {
+          "description": "Returns the guardian address that may engage the brake.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeSpec()": {
+          "description": "Returns the URI and document hash that describe the brake policy.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeState()": {
+          "description": "Returns the current brake level, the guardian address and the timestamp when the brake last changed.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "checkPersonalTestTokenReceipt(address)": {
+          "description": "Lets a registered token report a receipt so the personal-test token cap is checked; only callable by the token itself in personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "domainSeparator()": {
+          "description": "Returns the current EIP-712 domain separator for this DAO and chain.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "eip712Domain()": {
+          "description": "Returns the EIP-712 domain fields: name, version, chain id and verifying contract.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "engageBrake(uint8)": {
+          "description": "Raises the brake to a stronger level (1 or 2) to block new entries; only the guardian may call it and it cannot be lowered.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "execute(uint256,address,uint256,bytes,bytes[])": {
+          "description": "Runs the proposal's committed call from the treasury once its timelock has passed and signers' token weight reaches quorum; may send native coin. Anyone may submit.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1",
+              "0x1111111111111111111111111111111111111111",
+              "1000000000000000000",
+              "0x",
+              []
+            ]
+          }
+        },
+        "executeWithSigners(uint256,address,uint256,bytes,address[],bytes[])": {
+          "description": "Runs the proposal's committed call from the treasury after the timelock, counting signed or on-chain approvals that reach quorum; may send native coin. Anyone may submit.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "1",
+              "0x1111111111111111111111111111111111111111",
+              "1000000000000000000",
+              "0x",
+              [
+                "0x1111111111111111111111111111111111111111",
+                "0x2222222222222222222222222222222222222222"
+              ],
+              [
+                "0x",
+                "0x"
+              ]
+            ]
+          }
+        },
+        "getVoteHash(uint256)": {
+          "description": "Returns the EIP-712 digest voters sign to approve the proposal.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "gracePeriod()": {
+          "description": "Returns the seconds a proposal stays executable after its timelock.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "instanceMode()": {
+          "description": "Returns the text 'personal-test' if this instance was deployed under a personal-test policy, otherwise 'testnet'.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "nextProposalId()": {
+          "description": "Returns the id that the next proposal will receive.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestAllowed(address)": {
+          "description": "Returns whether the given account is on the personal-test allow list for this instance.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "personalTestAuthority()": {
+          "description": "Returns the policy authority address used to recognize allowed sibling instances, or zero outside personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestEnabled()": {
+          "description": "Returns true if this instance was deployed in personal-test mode with access and value caps.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestNativeCap()": {
+          "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or 0 if disabled.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestOwner()": {
+          "description": "Returns the owner address of the personal-test policy, or zero if personal-test mode is off.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestPolicy()": {
+          "description": "Returns the personal-test policy tuple: marker, owner address, native cap and token cap.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestTokenCap()": {
+          "description": "Returns the maximum token amount this instance may hold in personal-test mode, or 0 if disabled.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "proposals(uint256)": {
+          "description": "Returns the proposal record: execution hash, voting end, executable-from time, expiry and executed flag.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "propose(bytes32)": {
+          "description": "Opens a proposal that commits to the hash of target, value and data; anyone may call while the brake is open.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "quorum()": {
+          "description": "Returns the voting-token weight required to execute a proposal.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "setPersonalTestAccount(address,bool)": {
+          "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it and the owner cannot be removed.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "true"
+            ]
+          }
+        },
+        "state(uint256)": {
+          "description": "Returns the proposal state code: 0 none, 1 voting, 2 timelock, 3 executable, 4 executed, 5 expired.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "timelockDelay()": {
+          "description": "Returns the seconds between the end of voting and when execution is allowed.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "vote(uint256)": {
+          "description": "Records the caller's on-chain approval of an open proposal; weight is read from token balances at execution; needs open brake.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "votesToken()": {
+          "description": "Returns the ERC-20 token address that gives voting weight.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "votingPeriod()": {
+          "description": "Returns the seconds a proposal is open for votes.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        }
+      }
+    },
+    "SimpleMultisig": {
+      "source": "src/multisig/SimpleMultisig.sol",
+      "constructor": {
+        "owners_": {
+          "label": "Owner addresses",
+          "description": "List of owner addresses in strictly ascending order with no duplicates or zero address."
+        },
+        "threshold_": {
+          "label": "Approval threshold",
+          "description": "Number of owner approvals required to execute a transaction; between 1 and the owner count."
+        }
+      },
+      "functions": {
+        "PERSONAL_TEST_MAGIC()": {
+          "description": "Returns the constant marker value that identifies personal-test mode in the deploy policy.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "TRANSACTION_TYPEHASH()": {
+          "description": "Returns the EIP-712 type hash used for multisig transactions.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "approvals(bytes32,address)": {
+          "description": "Returns whether the given owner has recorded an on-chain approval for the transaction hash.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111111111111111111111111111",
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "approve(address,uint256,bytes,uint256,uint256)": {
+          "description": "Records the calling owner's on-chain approval of a transaction with a deadline; moves nothing itself but counts toward execution.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "1000000000000000000",
+              "0x",
+              "1",
+              "1893456000"
+            ]
+          }
+        },
+        "approve(address,uint256,bytes,uint256)": {
+          "description": "Records the calling owner's on-chain approval of a transaction with no expiry; moves nothing itself but counts toward execution.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "1000000000000000000",
+              "0x",
+              "1"
+            ]
+          }
+        },
+        "checkPersonalTestTokenReceipt(address)": {
+          "description": "Lets a registered token report a receipt so the personal-test token cap is checked; only callable by the token itself in personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "domainSeparator()": {
+          "description": "Returns the current EIP-712 domain separator for this multisig and chain.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "eip712Domain()": {
+          "description": "Returns the EIP-712 domain fields: name, version, chain id and verifying contract.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "execute(address,uint256,bytes,uint256,bytes[])": {
+          "description": "Runs the call (which may send native coin or call a token contract) once enough ascending owner signatures are supplied; anyone may submit, each hash runs once.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "1000000000000000000",
+              "0x",
+              "1",
+              []
+            ]
+          }
+        },
+        "executeWithSigners(address,uint256,bytes,uint256,address[],bytes[])": {
+          "description": "Runs the call once enough owner signers are given, using signatures or an empty entry for a prior approval, with no expiry; the call may move funds. Anyone may submit.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "1000000000000000000",
+              "0x",
+              "1",
+              [
+                "0x1111111111111111111111111111111111111111",
+                "0x2222222222222222222222222222222222222222"
+              ],
+              [
+                "0x",
+                "0x"
+              ]
+            ]
+          }
+        },
+        "executeWithSigners(address,uint256,bytes,uint256,uint256,address[],bytes[])": {
+          "description": "Runs the call before its deadline once enough owner signers are given, using signatures or an empty entry for a prior approval; the call may move funds. Anyone may submit.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "1000000000000000000",
+              "0x",
+              "1",
+              "1893456000",
+              [
+                "0x1111111111111111111111111111111111111111",
+                "0x2222222222222222222222222222222222222222"
+              ],
+              [
+                "0x",
+                "0x"
+              ]
+            ]
+          }
+        },
+        "executed(bytes32)": {
+          "description": "Returns whether the transaction with this hash has already been executed.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "getTransactionHash(address,uint256,bytes,uint256,uint256)": {
+          "description": "Returns the EIP-712 hash of a transaction with the given deadline that owners sign or approve.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "1000000000000000000",
+              "0x",
+              "1",
+              "1893456000"
+            ]
+          }
+        },
+        "getTransactionHash(address,uint256,bytes,uint256)": {
+          "description": "Returns the EIP-712 hash of a transaction with no expiry that owners sign or approve.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "1000000000000000000",
+              "0x",
+              "1"
+            ]
+          }
+        },
+        "instanceMode()": {
+          "description": "Returns the text 'personal-test' if this instance was deployed under a personal-test policy, otherwise 'testnet'.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "isOwner(address)": {
+          "description": "Returns whether the address is an owner of this multisig.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "personalTestAllowed(address)": {
+          "description": "Returns whether the given account is on the personal-test allow list for this instance.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "personalTestAuthority()": {
+          "description": "Returns the policy authority address used to recognize allowed sibling instances, or zero outside personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestEnabled()": {
+          "description": "Returns true if this instance was deployed in personal-test mode with access and value caps.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestNativeCap()": {
+          "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or 0 if disabled.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestOwner()": {
+          "description": "Returns the owner address of the personal-test policy, or zero if personal-test mode is off.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestPolicy()": {
+          "description": "Returns the personal-test policy tuple: marker, owner address, native cap and token cap.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestTokenCap()": {
+          "description": "Returns the maximum token amount this instance may hold in personal-test mode, or 0 if disabled.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "setPersonalTestAccount(address,bool)": {
+          "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it and the owner cannot be removed.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "true"
+            ]
+          }
+        },
+        "threshold()": {
+          "description": "Returns the number of owner confirmations required to execute.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        }
+      }
+    },
+    "SubscriptionManager": {
+      "source": "src/subscription/SubscriptionManager.sol",
+      "constructor": {
+        "guardian": {
+          "label": "Guardian address",
+          "description": "Address allowed to engage the brake that blocks new subscriptions."
+        },
+        "payee_": {
+          "label": "Revenue payee",
+          "description": "Address that receives consumed subscription revenue; cannot be zero."
+        },
+        "ratePerSecond_": {
+          "label": "Rate per second",
+          "description": "Price in wei charged per second of subscription; fixed at deployment and above zero."
+        }
+      },
+      "functions": {
+        "PERSONAL_TEST_MAGIC()": {
+          "description": "Returns the constant marker value that identifies personal-test mode in the deploy policy.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeGuardian()": {
+          "description": "Returns the guardian address that may engage the brake.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeSpec()": {
+          "description": "Returns the URI and document hash that describe the brake policy.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeState()": {
+          "description": "Returns the current brake level, the guardian address and the timestamp when the brake last changed.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "cancel()": {
+          "description": "Ends the caller's active subscription and refunds the remaining seconds at the fixed rate in native coin.",
+          "moves_funds": true,
+          "example": {
+            "args": []
+          }
+        },
+        "checkPersonalTestTokenReceipt(address)": {
+          "description": "Lets a registered token report a receipt so the personal-test token cap is checked; only callable by the token itself in personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "claimRevenue()": {
+          "description": "Sends the balance not reserved for refunds to the payee in native coin; anyone may trigger it.",
+          "moves_funds": true,
+          "example": {
+            "args": []
+          }
+        },
+        "claimableRevenue()": {
+          "description": "Returns the balance that could currently be sent to the payee, being balance minus refund reserve.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "engageBrake(uint8)": {
+          "description": "Raises the brake to a stronger level (1 or 2) to block new entries; only the guardian may call it and it cannot be lowered.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "instanceMode()": {
+          "description": "Returns the text 'personal-test' if this instance was deployed under a personal-test policy, otherwise 'testnet'.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "isSubscribed(address)": {
+          "description": "Returns whether the address has an unexpired subscription.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "payee()": {
+          "description": "Returns the address that receives subscription revenue.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestAllowed(address)": {
+          "description": "Returns whether the given account is on the personal-test allow list for this instance.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "personalTestAuthority()": {
+          "description": "Returns the policy authority address used to recognize allowed sibling instances, or zero outside personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestEnabled()": {
+          "description": "Returns true if this instance was deployed in personal-test mode with access and value caps.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestNativeCap()": {
+          "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or 0 if disabled.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestOwner()": {
+          "description": "Returns the owner address of the personal-test policy, or zero if personal-test mode is off.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestPolicy()": {
+          "description": "Returns the personal-test policy tuple: marker, owner address, native cap and token cap.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestTokenCap()": {
+          "description": "Returns the maximum token amount this instance may hold in personal-test mode, or 0 if disabled.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "ratePerSecond()": {
+          "description": "Returns the price in wei per second of subscription.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "refundReserve()": {
+          "description": "Returns the sum of active subscribers' paid amounts held back for possible refunds.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "setPersonalTestAccount(address,bool)": {
+          "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it and the owner cannot be removed.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "true"
+            ]
+          }
+        },
+        "settleExpired(address)": {
+          "description": "Releases an expired subscriber's paid amount from the refund reserve so it counts as revenue; anyone may call and no funds move.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "subscribe()": {
+          "description": "Extends the caller's subscription by the seconds the sent native coin buys at the fixed rate; needs open brake.",
+          "moves_funds": true,
+          "example": {
+            "args": [],
+            "value_wei": "1000000000000000"
+          }
+        },
+        "subscribers(address)": {
+          "description": "Returns the subscriber record: expiry timestamp and amount contributed in the current streak.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        }
+      }
+    },
+    "TokenTimeLock": {
+      "source": "src/lock/TokenTimeLock.sol",
+      "constructor": {
+        "guardian": {
+          "label": "Guardian address",
+          "description": "Address allowed to engage the brake that blocks new locks."
+        },
+        "token_": {
+          "label": "Lock token",
+          "description": "ERC-20 token address held in locks; must be a contract."
+        }
+      },
+      "functions": {
+        "PERSONAL_TEST_MAGIC()": {
+          "description": "Returns the constant marker value that identifies personal-test mode in the deploy policy.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeGuardian()": {
+          "description": "Returns the guardian address that may engage the brake.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeSpec()": {
+          "description": "Returns the URI and document hash that describe the brake policy.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "brakeState()": {
+          "description": "Returns the current brake level, the guardian address and the timestamp when the brake last changed.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "checkPersonalTestTokenReceipt(address)": {
+          "description": "Lets a registered token report a receipt so the personal-test token cap is checked; only callable by the token itself in personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "engageBrake(uint8)": {
+          "description": "Raises the brake to a stronger level (1 or 2) to block new entries; only the guardian may call it and it cannot be lowered.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "1"
+            ]
+          }
+        },
+        "instanceMode()": {
+          "description": "Returns the text 'personal-test' if this instance was deployed under a personal-test policy, otherwise 'testnet'.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "lockFor(address,uint256,uint256,uint256)": {
+          "description": "Pulls tokens from the caller and creates a cliff and linear unlock schedule for the beneficiary; one active lock per beneficiary, needs allowance and open brake.",
+          "moves_funds": true,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "1000000000000000000",
+              "2592000",
+              "31536000"
+            ]
+          }
+        },
+        "locks(address)": {
+          "description": "Returns the beneficiary's lock record: amount, released, start, cliff and duration.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "personalTestAllowed(address)": {
+          "description": "Returns whether the given account is on the personal-test allow list for this instance.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "personalTestAuthority()": {
+          "description": "Returns the policy authority address used to recognize allowed sibling instances, or zero outside personal-test mode.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestEnabled()": {
+          "description": "Returns true if this instance was deployed in personal-test mode with access and value caps.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestNativeCap()": {
+          "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or 0 if disabled.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestOwner()": {
+          "description": "Returns the owner address of the personal-test policy, or zero if personal-test mode is off.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestPolicy()": {
+          "description": "Returns the personal-test policy tuple: marker, owner address, native cap and token cap.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "personalTestTokenCap()": {
+          "description": "Returns the maximum token amount this instance may hold in personal-test mode, or 0 if disabled.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "releasable(address)": {
+          "description": "Returns how many tokens the beneficiary could release right now.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        },
+        "release()": {
+          "description": "Pays the caller's unlocked and not yet released tokens to them; only a beneficiary with a lock gets a payout.",
+          "moves_funds": true,
+          "example": {
+            "args": []
+          }
+        },
+        "setPersonalTestAccount(address,bool)": {
+          "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it and the owner cannot be removed.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111",
+              "true"
+            ]
+          }
+        },
+        "token()": {
+          "description": "Returns the ERC-20 token address held by the locks.",
+          "moves_funds": false,
+          "example": {
+            "args": []
+          }
+        },
+        "vested(address)": {
+          "description": "Returns the cumulative amount unlocked so far for the beneficiary, zero before the cliff.",
+          "moves_funds": false,
+          "example": {
+            "args": [
+              "0x1111111111111111111111111111111111111111"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "templates": {
+    "airdrop": {
+      "summary": "Merkle-root allocation list with proof claims and a closing sweep.",
+      "steps": [
+        {
+          "id": "MerkleAirdrop",
+          "manifest_label": "MerkleAirdrop",
+          "contract": "MerkleAirdrop",
+          "args": [
+            "0x6eccd973173d387cb322c6881c52ba49d644a34069b573a78b0de002e071db3f",
+            "{{publisher}}",
+            "86400"
+          ]
+        }
+      ],
+      "check_call": {
+        "contract": "MerkleAirdrop",
+        "function": "merkleRoot()"
+      }
+    },
+    "amm": {
+      "summary": "Two-token pool factory and router with LP tokens and a time-weighted oracle.",
+      "steps": [
+        {
+          "id": "AmmFactory",
+          "manifest_label": "AmmFactory",
+          "contract": "AmmFactory",
+          "args": [
+            "{{publisher}}"
+          ]
+        },
+        {
+          "id": "AmmRouter",
+          "manifest_label": "AmmRouter",
+          "contract": "AmmRouter",
+          "args": [
+            "{{address:AmmFactory}}"
+          ]
+        }
+      ],
+      "check_call": {
+        "contract": "AmmFactory",
+        "function": "allPairsLength()"
+      }
+    },
+    "crowdfund": {
+      "summary": "All-or-nothing fundraiser: paid out on success, self-claimed refunds otherwise.",
+      "steps": [
+        {
+          "id": "AllOrNothingCrowdfund",
+          "manifest_label": "AllOrNothingCrowdfund",
+          "contract": "AllOrNothingCrowdfund",
+          "args": [
+            "{{publisher}}",
+            "{{publisher}}",
+            "10000000000000000000",
+            "86400"
+          ]
+        }
+      ],
+      "check_call": {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "goal()"
+      }
+    },
+    "dao": {
+      "summary": "Token-weighted proposals with a voting period, timelock and grace period.",
+      "steps": [
+        {
+          "id": "TestToken",
+          "contract": "FixedSupplyToken",
+          "args": [
+            "Toolbox Test Coin",
+            "TEST",
+            "1000000000000000000000000",
+            "{{publisher}}"
+          ]
+        },
+        {
+          "id": "SimpleDAO",
+          "manifest_label": "SimpleDAO",
+          "contract": "SimpleDAO",
+          "args": [
+            "{{publisher}}",
+            "{{address:TestToken}}",
+            "1000000000000000000",
+            "3600",
+            "3600",
+            "86400"
+          ]
+        }
+      ],
+      "check_call": {
+        "contract": "SimpleDAO",
+        "function": "quorum()"
+      }
+    },
+    "escrow": {
+      "summary": "Milestone escrow: the buyer deposits, approves releases and can refund the balance.",
+      "steps": [
+        {
+          "id": "MilestoneEscrow",
+          "manifest_label": "MilestoneEscrow",
+          "contract": "MilestoneEscrow",
+          "args": [
+            "{{publisher}}"
+          ]
+        }
+      ],
+      "check_call": {
+        "contract": "MilestoneEscrow",
+        "function": "brakeGuardian()"
+      }
+    },
+    "invoice": {
+      "summary": "Numbered invoices paid in the exact amount; each settled slot is deleted.",
+      "steps": [
+        {
+          "id": "InvoiceBook",
+          "manifest_label": "InvoiceBook",
+          "contract": "InvoiceBook",
+          "args": [
+            "{{publisher}}",
+            "{{publisher}}"
+          ]
+        }
+      ],
+      "check_call": {
+        "contract": "InvoiceBook",
+        "function": "payee()"
+      }
+    },
+    "launchpad": {
+      "summary": "Bonding-curve token launch with per-buyer caps that graduates into a pool.",
+      "steps": [
+        {
+          "id": "TestToken",
+          "contract": "FixedSupplyToken",
+          "args": [
+            "Toolbox Test Coin",
+            "TEST",
+            "1000000000000000000000000",
+            "{{publisher}}"
+          ]
+        },
+        {
+          "id": "AmmFactory",
+          "contract": "AmmFactory",
+          "args": [
+            "{{publisher}}"
+          ]
+        },
+        {
+          "id": "BondingLaunchpad",
+          "manifest_label": "BondingLaunchpad",
+          "contract": "BondingLaunchpad",
+          "args": [
+            "{{publisher}}",
+            "{{address:TestToken}}",
+            "{{address:AmmFactory}}",
+            [
+              "Tide Test Token",
+              "TIDE",
+              "1000000000000000000000000",
+              "100000000000000000000",
+              "10000000000000000000000",
+              "1000000000000000000000",
+              "30",
+              "0",
+              "0",
+              "0",
+              "{{publisher}}"
+            ]
+          ]
+        }
+      ],
+      "check_call": {
+        "contract": "BondingLaunchpad",
+        "function": "graduationTarget()"
+      }
+    },
+    "lock": {
+      "summary": "Batch time locks and a linear vesting grant for an ERC-20 token.",
+      "steps": [
+        {
+          "id": "TestToken",
+          "contract": "FixedSupplyToken",
+          "args": [
+            "Toolbox Test Coin",
+            "TEST",
+            "1000000000000000000000000",
+            "{{publisher}}"
+          ]
+        },
+        {
+          "id": "TokenTimeLock",
+          "manifest_label": "TokenTimeLock",
+          "contract": "TokenTimeLock",
+          "args": [
+            "{{publisher}}",
+            "{{address:TestToken}}"
+          ]
+        },
+        {
+          "call": "TestToken",
+          "function": "approve(address,uint256)",
+          "args": [
+            "{{address:LinearVesting}}",
+            "1000000000000000000"
+          ]
+        },
+        {
+          "id": "LinearVesting",
+          "manifest_label": "LinearVesting",
+          "contract": "LinearVesting",
+          "args": [
+            "{{address:TestToken}}",
+            "{{publisher}}",
+            "1000000000000000000",
+            "0",
+            "86400"
+          ]
+        }
+      ],
+      "check_call": {
+        "contract": "TokenTimeLock",
+        "function": "token()"
+      }
+    },
+    "market": {
+      "summary": "Listing book for NFTs with escrowed listings, royalty splits and pull payouts.",
+      "steps": [
+        {
+          "id": "FixedPriceMarket",
+          "manifest_label": "FixedPriceMarket",
+          "contract": "FixedPriceMarket",
+          "args": [
+            "{{publisher}}"
+          ]
+        }
+      ],
+      "check_call": {
+        "contract": "FixedPriceMarket",
+        "function": "brakeGuardian()"
+      }
+    },
+    "multisig": {
+      "summary": "K-of-N shared account approved by owner signatures or direct approvals.",
+      "steps": [
+        {
+          "id": "SimpleMultisig",
+          "manifest_label": "SimpleMultisig",
+          "contract": "SimpleMultisig",
+          "args": [
+            [
+              "{{publisher}}"
+            ],
+            "1"
+          ]
+        }
+      ],
+      "check_call": {
+        "contract": "SimpleMultisig",
+        "function": "threshold()"
+      }
+    },
+    "names": {
+      "summary": "Drop whose eligibility is delegated entirely to the EastSea name service.",
+      "steps": [
+        {
+          "id": "NameGatedDrop",
+          "manifest_label": "NameGatedDrop",
+          "contract": "NameGatedDrop",
+          "args": [
+            "{{system:names}}",
+            "{{publisher}}",
+            "1000000000000000000",
+            "86400"
+          ]
+        }
+      ],
+      "check_call": {
+        "contract": "NameGatedDrop",
+        "function": "dropAmount()"
+      }
+    },
+    "nft": {
+      "summary": "On-chain metadata ERC-721 collection plus limited ERC-1155 editions.",
+      "steps": [
+        {
+          "id": "OnchainNFT",
+          "manifest_label": "OnchainNFT 721",
+          "contract": "OnchainNFT",
+          "args": [
+            "Island Folk",
+            "FOLK",
+            "1000",
+            "500",
+            "{{publisher}}"
+          ]
+        },
+        {
+          "id": "Editions1155",
+          "manifest_label": "Editions1155 sales",
+          "contract": "Editions1155",
+          "args": [
+            "{{publisher}}"
+          ]
+        }
+      ],
+      "check_call": {
+        "contract": "OnchainNFT",
+        "function": "maxSupply()"
+      }
+    },
+    "raffle": {
+      "summary": "Commit-reveal draw: host seed commit, entries, then a reveal with a fallback.",
+      "steps": [
+        {
+          "id": "CommitRevealRaffle",
+          "manifest_label": "CommitRevealRaffle",
+          "contract": "CommitRevealRaffle",
+          "args": [
+            "{{publisher}}",
+            "0xc32a1917505b67d0afdc716acf8569c5712be96b5d3fb036a2158fd80d20b79d",
+            "1000000000000000",
+            "86400",
+            "3600"
+          ]
+        }
+      ],
+      "check_call": {
+        "contract": "CommitRevealRaffle",
+        "function": "ticketPrice()"
+      }
+    },
+    "rewards": {
+      "summary": "Sponsor-funded staking distributor with linear reward streaming.",
+      "steps": [
+        {
+          "id": "TestToken",
+          "contract": "FixedSupplyToken",
+          "args": [
+            "Toolbox Test Coin",
+            "TEST",
+            "1000000000000000000000000",
+            "{{publisher}}"
+          ]
+        },
+        {
+          "id": "RewardDistributor",
+          "manifest_label": "RewardDistributor",
+          "contract": "RewardDistributor",
+          "args": [
+            "{{publisher}}",
+            "{{address:TestToken}}",
+            "{{address:TestToken}}"
+          ]
+        }
+      ],
+      "check_call": {
+        "contract": "RewardDistributor",
+        "function": "rewardRate()"
+      }
+    },
+    "subscription": {
+      "summary": "Time-based access paid per second, with partial refunds on cancel.",
+      "steps": [
+        {
+          "id": "SubscriptionManager",
+          "manifest_label": "SubscriptionManager",
+          "contract": "SubscriptionManager",
+          "args": [
+            "{{publisher}}",
+            "{{publisher}}",
+            "1000000000000"
+          ]
+        }
+      ],
+      "check_call": {
+        "contract": "SubscriptionManager",
+        "function": "ratePerSecond()"
+      }
+    },
+    "token": {
+      "summary": "Fixed-supply ERC-20 with EIP-2612 permit and no minting.",
+      "steps": [
+        {
+          "id": "IslandCoin",
+          "manifest_label": "IslandCoin token",
+          "contract": "FixedSupplyToken",
+          "args": [
+            "Island Test Coin",
+            "ISLE",
+            "1000000000000000000000000",
+            "{{publisher}}"
+          ]
+        }
+      ],
+      "check_call": {
+        "contract": "IslandCoin",
+        "function": "totalSupply()"
+      }
+    },
+    "vending": {
+      "summary": "Prepaid orders for agent work: settled on delivery before a deadline, else refunded.",
+      "steps": [
+        {
+          "id": "AgentVending",
+          "manifest_label": "AgentVending",
+          "contract": "AgentVending",
+          "args": [
+            "{{publisher}}",
+            "{{publisher}}",
+            "1000000000000000",
+            "3600"
+          ]
+        }
+      ],
+      "check_call": {
+        "contract": "AgentVending",
+        "function": "fulfilWindow()"
+      }
+    }
+  }
+}

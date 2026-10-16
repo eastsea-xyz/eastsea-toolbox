@@ -1,0 +1,572 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Harbor Swap",
+  "subtitle": "Constant-product AMM",
+  "description": "Example 4 — Uniswap-V2-style AMM: factory, pairs, LP tokens, TWAP, router swaps up to 4 hops. Fee-on-transfer safe by balance-delta accounting.",
+  "long_description": "Three-layer constant-product AMM. The factory holds the brake (new pairs, deposits and swaps stop under brake 1; removals stay open). Pairs enforce the k invariant themselves with fee-adjusted balance checks, measure every inflow by actual balance delta so fee-on-transfer tokens never strand funds, and maintain cumulative TWAP prices. The router is stateless: optimal-ratio liquidity provisioning, deadline-enforced swaps, and an observed-input variant for fee-on-transfer paths. Swap traffic costs ~32 state units per trade - no new slots.",
+  "localized": {
+    "ko": {
+      "name": "하버 스왑",
+      "subtitle": "상수곱 AMM",
+      "description": "예제 4 — 팩토리·페어·LP·TWAP·라우터 스왑. 잔액 차이 정산으로 fee-on-transfer 안전."
+    }
+  },
+  "locales": [
+    "en",
+    "ko"
+  ],
+  "category": "defi-trading",
+  "tags": [
+    "amm",
+    "swap",
+    "liquidity",
+    "twap",
+    "erc20"
+  ],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "AmmFactory",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "AmmRouter",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": [
+    "accounts",
+    "send",
+    "approve-tokens"
+  ],
+  "payees": [],
+  "age_rating": "4+",
+  "commerce": "none",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/amm",
+  "x-toolbox-tests": "contracts/test/amm/",
+  "x-toolbox-legal": "defi-trading is a restricted category in the app registry - review docs/legal-notes.md before publishing",
+  "x-eastsea-template": {
+    "format": "eastsea-template/1",
+    "slug": "amm",
+    "summary": "Two-token pool factory and router with LP tokens and a time-weighted oracle.",
+    "web": "web",
+    "compiler": {
+      "solc": "0.8.24",
+      "evm_version": "paris",
+      "optimizer_runs": 200
+    },
+    "contracts": [
+      {
+        "id": "AmmFactory",
+        "contract": "AmmFactory",
+        "source": "contracts/AmmFactory.sol",
+        "manifest_label": "AmmFactory",
+        "constructor": [
+          {
+            "name": "guardian",
+            "type": "address",
+            "label": "Brake guardian",
+            "description": "Address allowed to engage the emergency brake that stops new pair creation.",
+            "value": "{{publisher}}"
+          }
+        ]
+      },
+      {
+        "id": "AmmRouter",
+        "contract": "AmmRouter",
+        "source": "contracts/AmmRouter.sol",
+        "manifest_label": "AmmRouter",
+        "constructor": [
+          {
+            "name": "_factory",
+            "type": "address",
+            "label": "AMM factory",
+            "description": "Address of the AmmFactory contract whose pairs this router uses.",
+            "value": "{{address:AmmFactory}}"
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "deploy": "AmmFactory"
+      },
+      {
+        "deploy": "AmmRouter"
+      }
+    ],
+    "placeholders": [
+      "{{address:AmmFactory}}",
+      "{{address:AmmRouter}}",
+      "{{app_id}}",
+      "{{chain_id}}",
+      "{{native_decimals}}",
+      "{{native_symbol}}",
+      "{{publisher}}"
+    ],
+    "interface": [
+      {
+        "contract": "AmmFactory",
+        "function": "PERSONAL_TEST_MAGIC()",
+        "mutability": "view",
+        "description": "Returns the constant identifier that marks a personal-test deployment policy.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "allPairs(uint256)",
+        "mutability": "view",
+        "description": "Returns the pair contract address at the given index in the list of created pairs.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0"
+          ]
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "allPairsLength()",
+        "mutability": "view",
+        "description": "Returns how many pairs the factory has created.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "brakeGuardian()",
+        "mutability": "view",
+        "description": "Returns the guardian address that is allowed to engage the emergency brake.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "brakeSpec()",
+        "mutability": "pure",
+        "description": "Returns the brake specification URI and its document hash.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "brakeState()",
+        "mutability": "view",
+        "description": "Returns the current brake level, the guardian address and the time the brake was last engaged.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "checkPersonalTestTokenReceipt(address)",
+        "mutability": "nonpayable",
+        "description": "Lets a personal-test token notify this contract of a receipt so the token holding cap is checked; reverts if the cap is exceeded.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "createPair(address,address)",
+        "mutability": "nonpayable",
+        "description": "Deploys a new liquidity pair contract for two distinct token contracts; reverts if the pair already exists. Blocked once the brake is engaged.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "0x2222222222222222222222222222222222222222"
+          ]
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "engageBrake(uint8)",
+        "mutability": "nonpayable",
+        "description": "Raises the emergency brake to a stronger level (1 blocks new entries, 2 blocks everything gated); only the brake guardian may call it and levels can only go up.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "getPair(address,address)",
+        "mutability": "view",
+        "description": "Returns the pair address for two tokens in either order, or zero if none exists.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "0x2222222222222222222222222222222222222222"
+          ]
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "instanceMode()",
+        "mutability": "view",
+        "description": "Returns 'personal-test' if deployed under a personal-test policy, otherwise 'testnet'.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "personalTestAllowed(address)",
+        "mutability": "view",
+        "description": "Returns whether an account is on this instance's personal-test allow list.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "personalTestAuthority()",
+        "mutability": "view",
+        "description": "Returns the deployment authority address that vouches for related personal-test instances, or zero when not in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "personalTestEnabled()",
+        "mutability": "view",
+        "description": "Returns whether this instance runs under a personal-test policy that limits callers and held value.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "personalTestNativeCap()",
+        "mutability": "view",
+        "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or zero otherwise.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "personalTestOwner()",
+        "mutability": "view",
+        "description": "Returns the owner account of the personal-test policy, or zero when not in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "personalTestPolicy()",
+        "mutability": "view",
+        "description": "Returns the personal-test policy tuple: marker, owner, native coin cap and token cap.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "personalTestTokenCap()",
+        "mutability": "view",
+        "description": "Returns the maximum total raw token units this instance may hold in personal-test mode, or zero otherwise.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "setPersonalTestAccount(address,bool)",
+        "mutability": "nonpayable",
+        "description": "Adds or removes an account on the personal-test allow list; callable only by the policy owner, who cannot be removed.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "true"
+          ]
+        }
+      },
+      {
+        "contract": "AmmRouter",
+        "function": "PERSONAL_TEST_MAGIC()",
+        "mutability": "view",
+        "description": "Returns the constant identifier that marks a personal-test deployment policy.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmRouter",
+        "function": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+        "mutability": "nonpayable",
+        "description": "Pulls two tokens from the caller into their pair (creating it if missing) and mints liquidity tokens to the recipient; needs token approvals and reverts below the minimums or after the deadline.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "0x2222222222222222222222222222222222222222",
+            "1000000000000000000",
+            "1000000000000000000",
+            "0",
+            "0",
+            "{{publisher}}",
+            "1900000000"
+          ]
+        }
+      },
+      {
+        "contract": "AmmRouter",
+        "function": "checkPersonalTestTokenReceipt(address)",
+        "mutability": "nonpayable",
+        "description": "Lets a personal-test token notify this contract of a receipt so the token holding cap is checked; reverts if the cap is exceeded.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "AmmRouter",
+        "function": "factory()",
+        "mutability": "view",
+        "description": "Returns the AmmFactory address this router uses.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmRouter",
+        "function": "getAmountOut(uint256,uint256,uint256)",
+        "mutability": "view",
+        "description": "Computes the output amount for a swap given input amount and the two pool reserves, using the constant-product formula with the pool fee.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1000000000000000000",
+            "1000000000000000000000",
+            "1000000000000000000000"
+          ]
+        }
+      },
+      {
+        "contract": "AmmRouter",
+        "function": "getAmountsOut(uint256,address[])",
+        "mutability": "view",
+        "description": "Computes the output amounts along a swap path of 2 to 4 tokens using current pool reserves.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1000000000000000000",
+            [
+              "0x1111111111111111111111111111111111111111",
+              "0x2222222222222222222222222222222222222222"
+            ]
+          ]
+        }
+      },
+      {
+        "contract": "AmmRouter",
+        "function": "instanceMode()",
+        "mutability": "view",
+        "description": "Returns 'personal-test' if deployed under a personal-test policy, otherwise 'testnet'.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmRouter",
+        "function": "personalTestAllowed(address)",
+        "mutability": "view",
+        "description": "Returns whether an account is on this instance's personal-test allow list.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "AmmRouter",
+        "function": "personalTestAuthority()",
+        "mutability": "view",
+        "description": "Returns the deployment authority address that vouches for related personal-test instances, or zero when not in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmRouter",
+        "function": "personalTestEnabled()",
+        "mutability": "view",
+        "description": "Returns whether this instance runs under a personal-test policy that limits callers and held value.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmRouter",
+        "function": "personalTestNativeCap()",
+        "mutability": "view",
+        "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or zero otherwise.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmRouter",
+        "function": "personalTestOwner()",
+        "mutability": "view",
+        "description": "Returns the owner account of the personal-test policy, or zero when not in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmRouter",
+        "function": "personalTestPolicy()",
+        "mutability": "view",
+        "description": "Returns the personal-test policy tuple: marker, owner, native coin cap and token cap.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmRouter",
+        "function": "personalTestTokenCap()",
+        "mutability": "view",
+        "description": "Returns the maximum total raw token units this instance may hold in personal-test mode, or zero otherwise.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmRouter",
+        "function": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+        "mutability": "nonpayable",
+        "description": "Burns the caller's liquidity tokens for a pair and sends both underlying tokens to the recipient; needs liquidity token approval and reverts below the minimums or after the deadline.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "0x2222222222222222222222222222222222222222",
+            "1000000000000000000",
+            "0",
+            "0",
+            "{{publisher}}",
+            "1900000000"
+          ]
+        }
+      },
+      {
+        "contract": "AmmRouter",
+        "function": "setPersonalTestAccount(address,bool)",
+        "mutability": "nonpayable",
+        "description": "Adds or removes an account on the personal-test allow list; callable only by the policy owner, who cannot be removed.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "true"
+          ]
+        }
+      },
+      {
+        "contract": "AmmRouter",
+        "function": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+        "mutability": "nonpayable",
+        "description": "Swaps an exact input amount along a token path, pulling it from the caller and sending the output to the recipient; reverts below the minimum output or after the deadline.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "1000000000000000000",
+            "0",
+            [
+              "0x1111111111111111111111111111111111111111",
+              "0x2222222222222222222222222222222222222222"
+            ],
+            "{{publisher}}",
+            "1900000000"
+          ]
+        }
+      },
+      {
+        "contract": "AmmRouter",
+        "function": "swapSupportingFeeOnTransfer(uint256,uint256,address[],address,uint256)",
+        "mutability": "nonpayable",
+        "description": "Swaps along a token path measuring actual received amounts, so it works with tokens that take a fee on transfer; reverts below the minimum output or after the deadline.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "1000000000000000000",
+            "0",
+            [
+              "0x1111111111111111111111111111111111111111",
+              "0x2222222222222222222222222222222222222222"
+            ],
+            "{{publisher}}",
+            "1900000000"
+          ]
+        }
+      }
+    ],
+    "check_call": {
+      "contract": "AmmFactory",
+      "function": "allPairsLength()"
+    },
+    "web_sha256": "0xc1804a173bc18706d70882af4cbe74b6af837cf20d9b90786597b9716cff0056"
+  }
+}

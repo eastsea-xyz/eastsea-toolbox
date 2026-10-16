@@ -1,0 +1,964 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Island Folk Studio",
+  "subtitle": "Onchain NFTs and editions",
+  "description": "Example 2 — onchain-metadata ERC-721 plus finite-edition ERC-1155 sales. No IPFS, no external image gateways.",
+  "long_description": "Two contracts, one pattern: keep the art on the chain. OnchainNFT packs four traits into a single storage slot per token and assembles JSON+SVG data URIs in view calls, so metadata never rots. Editions1155 lets a creator open a finite edition (cap, per-wallet limit, price, royalty bps); buyers pay the exact price and the creator withdraws proceeds — guarded by reentrancy protection, a solvency invariant, and an entry-only brake that never blocks withdrawals.",
+  "localized": {
+    "ko": {
+      "name": "아일랜드 포크 스튜디오",
+      "subtitle": "온체인 NFT와 에디션",
+      "description": "예제 2 — 온체인 메타데이터 ERC-721 + 유한 에디션 ERC-1155 판매. IPFS·외부 게이트웨이 없음."
+    }
+  },
+  "locales": [
+    "en",
+    "ko"
+  ],
+  "category": "nft-media",
+  "tags": [
+    "erc721",
+    "erc1155",
+    "onchain",
+    "editions"
+  ],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "OnchainNFT 721",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "Editions1155 sales",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": [
+    "accounts",
+    "send",
+    "approve-tokens"
+  ],
+  "payees": [],
+  "age_rating": "4+",
+  "commerce": "digital",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/nft",
+  "x-toolbox-tests": "contracts/test/nft/",
+  "x-eastsea-template": {
+    "format": "eastsea-template/1",
+    "slug": "nft",
+    "summary": "On-chain metadata ERC-721 collection plus limited ERC-1155 editions.",
+    "web": "web",
+    "compiler": {
+      "solc": "0.8.24",
+      "evm_version": "paris",
+      "optimizer_runs": 200
+    },
+    "contracts": [
+      {
+        "id": "OnchainNFT",
+        "contract": "OnchainNFT",
+        "source": "contracts/OnchainNFT.sol",
+        "manifest_label": "OnchainNFT 721",
+        "constructor": [
+          {
+            "name": "name_",
+            "type": "string",
+            "label": "Collection name",
+            "description": "Name of the NFT collection.",
+            "value": "Island Folk"
+          },
+          {
+            "name": "symbol_",
+            "type": "string",
+            "label": "Collection symbol",
+            "description": "Short ticker symbol of the NFT collection.",
+            "value": "FOLK"
+          },
+          {
+            "name": "maxSupply_",
+            "type": "uint256",
+            "label": "Max supply",
+            "description": "Maximum number of NFTs that can ever be minted; must be greater than zero.",
+            "value": "1000"
+          },
+          {
+            "name": "royaltyFeeNumerator_",
+            "type": "uint96",
+            "label": "Royalty basis points",
+            "description": "Royalty rate in basis points of the sale price (500 means 5%) paid to the creator by marketplaces that honor it.",
+            "value": "500"
+          },
+          {
+            "name": "brakeGuardian_",
+            "type": "address",
+            "label": "Brake guardian",
+            "description": "Address allowed to engage the emergency brake that stops new mints.",
+            "value": "{{publisher}}"
+          }
+        ]
+      },
+      {
+        "id": "Editions1155",
+        "contract": "Editions1155",
+        "source": "contracts/Editions1155.sol",
+        "manifest_label": "Editions1155 sales",
+        "constructor": [
+          {
+            "name": "brakeGuardian_",
+            "type": "address",
+            "label": "Brake guardian",
+            "description": "Address allowed to engage the emergency brake that stops new editions and mints.",
+            "value": "{{publisher}}"
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "deploy": "OnchainNFT"
+      },
+      {
+        "deploy": "Editions1155"
+      }
+    ],
+    "placeholders": [
+      "{{address:Editions1155}}",
+      "{{address:OnchainNFT}}",
+      "{{app_id}}",
+      "{{chain_id}}",
+      "{{native_decimals}}",
+      "{{native_symbol}}",
+      "{{publisher}}"
+    ],
+    "interface": [
+      {
+        "contract": "OnchainNFT",
+        "function": "PERSONAL_TEST_MAGIC()",
+        "mutability": "view",
+        "description": "Returns the constant identifier that marks the personal-test policy format.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "TRAIT_MAX()",
+        "mutability": "view",
+        "description": "Returns the exclusive upper bound for each trait value, so traits range from 0 to 7.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "approve(address,uint256)",
+        "mutability": "nonpayable",
+        "description": "Lets the given address transfer one specific NFT; callable by the token owner or an approved operator.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "balanceOf(address)",
+        "mutability": "view",
+        "description": "Returns how many NFTs an account owns.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "{{publisher}}"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "brakeGuardian()",
+        "mutability": "view",
+        "description": "Returns the guardian address that is allowed to engage the emergency brake.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "brakeSpec()",
+        "mutability": "pure",
+        "description": "Returns the brake specification URI and its document hash.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "brakeState()",
+        "mutability": "view",
+        "description": "Returns the current brake level, the guardian address and the time the brake was last engaged.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "burn(uint256)",
+        "mutability": "nonpayable",
+        "description": "Permanently destroys an NFT and clears its stored traits; only the current owner may call it.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "checkPersonalTestTokenReceipt(address)",
+        "mutability": "nonpayable",
+        "description": "Personal-test hook that verifies token holdings stay under the cap; only callable by the token itself, and only in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "creator()",
+        "mutability": "view",
+        "description": "Returns the creator address, the only account allowed to mint and the royalty receiver.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "engageBrake(uint8)",
+        "mutability": "nonpayable",
+        "description": "Raises the emergency brake to a stronger level (1 blocks new entries, 2 blocks everything gated); only the brake guardian may call it and levels can only go up.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "getApproved(uint256)",
+        "mutability": "view",
+        "description": "Returns the address approved to transfer a specific NFT, or zero if none.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "instanceMode()",
+        "mutability": "view",
+        "description": "Returns 'personal-test' if this copy was deployed in personal-test mode, otherwise 'testnet'.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "isApprovedForAll(address,address)",
+        "mutability": "view",
+        "description": "Returns whether an operator may transfer all NFTs of an owner.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "{{publisher}}",
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "jsonOf(uint256)",
+        "mutability": "view",
+        "description": "Returns the NFT metadata as a JSON string with name, description, embedded SVG image and trait attributes.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "maxSupply()",
+        "mutability": "view",
+        "description": "Returns the maximum number of NFTs that can be minted.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "mint(address,uint8,uint8,uint8,uint8)",
+        "mutability": "nonpayable",
+        "description": "Mints the next NFT to the given address with color, shape, pattern and halo traits (each 0 to 7); only the creator may call it, and it is blocked once the brake is engaged.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "0",
+            "1",
+            "2",
+            "3"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "name()",
+        "mutability": "view",
+        "description": "Returns the collection name.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "ownerOf(uint256)",
+        "mutability": "view",
+        "description": "Returns the owner of an NFT; reverts if the token does not exist.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "personalTestAllowed(address)",
+        "mutability": "view",
+        "description": "Returns whether an account is on this copy's personal-test allow list.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "personalTestAuthority()",
+        "mutability": "view",
+        "description": "Returns the address of the policy authority that vouches for personal-test contract copies, or zero outside that mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "personalTestEnabled()",
+        "mutability": "view",
+        "description": "Returns true if this copy runs in personal-test mode, which restricts which accounts may interact.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "personalTestNativeCap()",
+        "mutability": "view",
+        "description": "Returns the maximum native coin balance this copy may hold in personal-test mode, or zero outside that mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "personalTestOwner()",
+        "mutability": "view",
+        "description": "Returns the owner address of this personal-test copy, or zero outside personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "personalTestPolicy()",
+        "mutability": "view",
+        "description": "Returns the personal-test policy tuple: magic value, owner, native-coin cap and token cap.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "personalTestTokenCap()",
+        "mutability": "view",
+        "description": "Returns the maximum token amount this copy may hold in personal-test mode, or zero outside that mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "royaltyInfo(uint256,uint256)",
+        "mutability": "view",
+        "description": "Returns the royalty receiver and royalty amount for a given token and sale price under ERC-2981.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1",
+            "1000000000000000000"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "safeTransferFrom(address,address,uint256)",
+        "mutability": "nonpayable",
+        "description": "Transfers an NFT between accounts and checks that a contract recipient can accept it; caller must be the owner or approved.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "{{publisher}}",
+            "0x1111111111111111111111111111111111111111",
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "safeTransferFrom(address,address,uint256,bytes)",
+        "mutability": "nonpayable",
+        "description": "Transfers an NFT with extra data passed to a contract recipient and checks that it can accept it; caller must be the owner or approved.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "{{publisher}}",
+            "0x1111111111111111111111111111111111111111",
+            "1",
+            "0x"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "setApprovalForAll(address,bool)",
+        "mutability": "nonpayable",
+        "description": "Allows or revokes an operator's right to transfer all of the caller's NFTs.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "true"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "setPersonalTestAccount(address,bool)",
+        "mutability": "nonpayable",
+        "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it, and the owner cannot be removed.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "true"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "supportsInterface(bytes4)",
+        "mutability": "view",
+        "description": "Returns whether the contract implements the given ERC-165 interface id (ERC-721, ERC-2981 and ERC-165).",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x80ac58cd"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "svgOf(uint256)",
+        "mutability": "view",
+        "description": "Returns the on-chain SVG image drawn from an NFT's traits.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "symbol()",
+        "mutability": "view",
+        "description": "Returns the collection symbol.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "tokenURI(uint256)",
+        "mutability": "view",
+        "description": "Returns a base64 data URI holding the NFT's JSON metadata.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "traitsOf(uint256)",
+        "mutability": "view",
+        "description": "Returns the color, shape, pattern, halo and mint timestamp stored for an existing NFT.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "OnchainNFT",
+        "function": "transferFrom(address,address,uint256)",
+        "mutability": "nonpayable",
+        "description": "Transfers an NFT without checking recipient support; caller must be the owner or approved.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "{{publisher}}",
+            "0x1111111111111111111111111111111111111111",
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "FEE_CAP_BPS()",
+        "mutability": "view",
+        "description": "Returns the maximum royalty an edition may set, in basis points (1000 equals 10%).",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "NAME_MAX()",
+        "mutability": "view",
+        "description": "Returns the maximum edition name length in bytes (64).",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "PERSONAL_TEST_MAGIC()",
+        "mutability": "view",
+        "description": "Returns the constant identifier that marks a personal-test deployment policy.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "balanceOf(address,uint256)",
+        "mutability": "view",
+        "description": "Returns how many copies of an edition an account holds.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "{{publisher}}",
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "balanceOfBatch(address[],uint256[])",
+        "mutability": "view",
+        "description": "Returns the balances for several account and edition id pairs in one call.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            [
+              "{{publisher}}",
+              "0x1111111111111111111111111111111111111111"
+            ],
+            [
+              "1",
+              "2"
+            ]
+          ]
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "brakeGuardian()",
+        "mutability": "view",
+        "description": "Returns the guardian address that is allowed to engage the emergency brake.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "brakeSpec()",
+        "mutability": "pure",
+        "description": "Returns the brake specification URI and its document hash.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "brakeState()",
+        "mutability": "view",
+        "description": "Returns the current brake level, the guardian address and the time the brake was last engaged.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "checkPersonalTestTokenReceipt(address)",
+        "mutability": "nonpayable",
+        "description": "Lets a personal-test token notify this contract of a receipt so the token holding cap is checked; reverts if the cap is exceeded.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "createEdition(string,uint256,uint256,uint256,uint16)",
+        "mutability": "nonpayable",
+        "description": "Creates a new edition with a name, supply cap, per-wallet limit, mint price in wei and royalty basis points; the caller becomes its creator. Blocked once the brake is engaged.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "My Edition",
+            "100",
+            "2",
+            "1000000000000000",
+            "500"
+          ]
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "editionOf(uint256)",
+        "mutability": "view",
+        "description": "Returns an edition's creator, name, cap, minted count, per-wallet limit, price and royalty basis points.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "engageBrake(uint8)",
+        "mutability": "nonpayable",
+        "description": "Raises the emergency brake to a stronger level (1 blocks new entries, 2 blocks everything gated); only the brake guardian may call it and levels can only go up.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "instanceMode()",
+        "mutability": "view",
+        "description": "Returns 'personal-test' if deployed under a personal-test policy, otherwise 'testnet'.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "isApprovedForAll(address,address)",
+        "mutability": "view",
+        "description": "Returns whether an operator may transfer all of an owner's edition tokens.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "{{publisher}}",
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "mint(uint256)",
+        "mutability": "payable",
+        "description": "Mints one copy of an edition to the caller; the sent value must equal the edition price exactly, and the edition cap and per-wallet limit apply.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "1"
+          ],
+          "value_wei": "1000000000000000"
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "personalTestAllowed(address)",
+        "mutability": "view",
+        "description": "Returns whether an account is on this instance's personal-test allow list.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "personalTestAuthority()",
+        "mutability": "view",
+        "description": "Returns the deployment authority address that vouches for related personal-test instances, or zero when not in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "personalTestEnabled()",
+        "mutability": "view",
+        "description": "Returns whether this instance runs under a personal-test policy that limits callers and held value.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "personalTestNativeCap()",
+        "mutability": "view",
+        "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or zero otherwise.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "personalTestOwner()",
+        "mutability": "view",
+        "description": "Returns the owner account of the personal-test policy, or zero when not in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "personalTestPolicy()",
+        "mutability": "view",
+        "description": "Returns the personal-test policy tuple: marker, owner, native coin cap and token cap.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "personalTestTokenCap()",
+        "mutability": "view",
+        "description": "Returns the maximum total raw token units this instance may hold in personal-test mode, or zero otherwise.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "royaltyInfo(uint256,uint256)",
+        "mutability": "view",
+        "description": "Returns the edition creator as royalty receiver and the royalty amount for a sale price under ERC-2981.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1",
+            "1000000000000000000"
+          ]
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)",
+        "mutability": "nonpayable",
+        "description": "Transfers several edition ids and amounts between accounts in one call; caller must be the owner or an approved operator.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "{{publisher}}",
+            "0x1111111111111111111111111111111111111111",
+            [
+              "1",
+              "2"
+            ],
+            [
+              "1",
+              "1"
+            ],
+            "0x"
+          ]
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "safeTransferFrom(address,address,uint256,uint256,bytes)",
+        "mutability": "nonpayable",
+        "description": "Transfers an amount of one edition between accounts; caller must be the owner or an approved operator.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "{{publisher}}",
+            "0x1111111111111111111111111111111111111111",
+            "1",
+            "1",
+            "0x"
+          ]
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "setApprovalForAll(address,bool)",
+        "mutability": "nonpayable",
+        "description": "Allows or revokes an operator's right to transfer all of the caller's edition tokens.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "true"
+          ]
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "setPersonalTestAccount(address,bool)",
+        "mutability": "nonpayable",
+        "description": "Adds or removes an account on the personal-test allow list; callable only by the policy owner, who cannot be removed.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "true"
+          ]
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "supportsInterface(bytes4)",
+        "mutability": "view",
+        "description": "Returns whether the contract implements the given ERC-165 interface id (ERC-1155, ERC-2981 and ERC-165).",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0xd9b67a26"
+          ]
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "uri(uint256)",
+        "mutability": "view",
+        "description": "Returns a base64 data URI holding the edition's JSON metadata.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "withdraw(uint256)",
+        "mutability": "nonpayable",
+        "description": "Sends the mint proceeds not yet withdrawn for an edition to its creator; only the edition creator may call it.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "Editions1155",
+        "function": "withdrawable(uint256)",
+        "mutability": "view",
+        "description": "Returns the mint proceeds in wei still available for the edition creator to withdraw.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      }
+    ],
+    "check_call": {
+      "contract": "OnchainNFT",
+      "function": "maxSupply()"
+    },
+    "web_sha256": "0x33514511f950df0dee6ad9ee1e26e5e96ccca5ef69efdb8680dcf7ead1621498"
+  }
+}

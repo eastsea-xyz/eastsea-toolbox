@@ -1,0 +1,497 @@
+{
+  "format": "eastsea-agent-interface/1",
+  "app_id": "{{app_id}}",
+  "name": "Harbor Swap",
+  "category": "defi-trading",
+  "summary": "Two-token pool factory and router with LP tokens and a time-weighted oracle.",
+  "contracts": [
+    {
+      "id": "AmmFactory",
+      "contract": "AmmFactory",
+      "address": "{{address:AmmFactory}}"
+    },
+    {
+      "id": "AmmRouter",
+      "contract": "AmmRouter",
+      "address": "{{address:AmmRouter}}"
+    }
+  ],
+  "functions": [
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "PERSONAL_TEST_MAGIC()",
+      "mutability": "view",
+      "description": "Returns the constant identifier that marks a personal-test deployment policy.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "allPairs(uint256)",
+      "mutability": "view",
+      "description": "Returns the pair contract address at the given index in the list of created pairs.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0"
+        ]
+      }
+    },
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "allPairsLength()",
+      "mutability": "view",
+      "description": "Returns how many pairs the factory has created.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "brakeGuardian()",
+      "mutability": "view",
+      "description": "Returns the guardian address that is allowed to engage the emergency brake.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "brakeSpec()",
+      "mutability": "pure",
+      "description": "Returns the brake specification URI and its document hash.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "brakeState()",
+      "mutability": "view",
+      "description": "Returns the current brake level, the guardian address and the time the brake was last engaged.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "checkPersonalTestTokenReceipt(address)",
+      "mutability": "nonpayable",
+      "description": "Lets a personal-test token notify this contract of a receipt so the token holding cap is checked; reverts if the cap is exceeded.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "createPair(address,address)",
+      "mutability": "nonpayable",
+      "description": "Deploys a new liquidity pair contract for two distinct token contracts; reverts if the pair already exists. Blocked once the brake is engaged.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "0x2222222222222222222222222222222222222222"
+        ]
+      }
+    },
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "engageBrake(uint8)",
+      "mutability": "nonpayable",
+      "description": "Raises the emergency brake to a stronger level (1 blocks new entries, 2 blocks everything gated); only the brake guardian may call it and levels can only go up.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "1"
+        ]
+      }
+    },
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "getPair(address,address)",
+      "mutability": "view",
+      "description": "Returns the pair address for two tokens in either order, or zero if none exists.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "0x2222222222222222222222222222222222222222"
+        ]
+      }
+    },
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "instanceMode()",
+      "mutability": "view",
+      "description": "Returns 'personal-test' if deployed under a personal-test policy, otherwise 'testnet'.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "personalTestAllowed(address)",
+      "mutability": "view",
+      "description": "Returns whether an account is on this instance's personal-test allow list.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "personalTestAuthority()",
+      "mutability": "view",
+      "description": "Returns the deployment authority address that vouches for related personal-test instances, or zero when not in personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "personalTestEnabled()",
+      "mutability": "view",
+      "description": "Returns whether this instance runs under a personal-test policy that limits callers and held value.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "personalTestNativeCap()",
+      "mutability": "view",
+      "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or zero otherwise.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "personalTestOwner()",
+      "mutability": "view",
+      "description": "Returns the owner account of the personal-test policy, or zero when not in personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "personalTestPolicy()",
+      "mutability": "view",
+      "description": "Returns the personal-test policy tuple: marker, owner, native coin cap and token cap.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "personalTestTokenCap()",
+      "mutability": "view",
+      "description": "Returns the maximum total raw token units this instance may hold in personal-test mode, or zero otherwise.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmFactory",
+      "address": "{{address:AmmFactory}}",
+      "function": "setPersonalTestAccount(address,bool)",
+      "mutability": "nonpayable",
+      "description": "Adds or removes an account on the personal-test allow list; callable only by the policy owner, who cannot be removed.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "true"
+        ]
+      }
+    },
+    {
+      "id": "AmmRouter",
+      "address": "{{address:AmmRouter}}",
+      "function": "PERSONAL_TEST_MAGIC()",
+      "mutability": "view",
+      "description": "Returns the constant identifier that marks a personal-test deployment policy.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmRouter",
+      "address": "{{address:AmmRouter}}",
+      "function": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "mutability": "nonpayable",
+      "description": "Pulls two tokens from the caller into their pair (creating it if missing) and mints liquidity tokens to the recipient; needs token approvals and reverts below the minimums or after the deadline.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "0x2222222222222222222222222222222222222222",
+          "1000000000000000000",
+          "1000000000000000000",
+          "0",
+          "0",
+          "{{publisher}}",
+          "1900000000"
+        ]
+      }
+    },
+    {
+      "id": "AmmRouter",
+      "address": "{{address:AmmRouter}}",
+      "function": "checkPersonalTestTokenReceipt(address)",
+      "mutability": "nonpayable",
+      "description": "Lets a personal-test token notify this contract of a receipt so the token holding cap is checked; reverts if the cap is exceeded.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "AmmRouter",
+      "address": "{{address:AmmRouter}}",
+      "function": "factory()",
+      "mutability": "view",
+      "description": "Returns the AmmFactory address this router uses.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmRouter",
+      "address": "{{address:AmmRouter}}",
+      "function": "getAmountOut(uint256,uint256,uint256)",
+      "mutability": "view",
+      "description": "Computes the output amount for a swap given input amount and the two pool reserves, using the constant-product formula with the pool fee.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "1000000000000000000",
+          "1000000000000000000000",
+          "1000000000000000000000"
+        ]
+      }
+    },
+    {
+      "id": "AmmRouter",
+      "address": "{{address:AmmRouter}}",
+      "function": "getAmountsOut(uint256,address[])",
+      "mutability": "view",
+      "description": "Computes the output amounts along a swap path of 2 to 4 tokens using current pool reserves.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "1000000000000000000",
+          [
+            "0x1111111111111111111111111111111111111111",
+            "0x2222222222222222222222222222222222222222"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "AmmRouter",
+      "address": "{{address:AmmRouter}}",
+      "function": "instanceMode()",
+      "mutability": "view",
+      "description": "Returns 'personal-test' if deployed under a personal-test policy, otherwise 'testnet'.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmRouter",
+      "address": "{{address:AmmRouter}}",
+      "function": "personalTestAllowed(address)",
+      "mutability": "view",
+      "description": "Returns whether an account is on this instance's personal-test allow list.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "AmmRouter",
+      "address": "{{address:AmmRouter}}",
+      "function": "personalTestAuthority()",
+      "mutability": "view",
+      "description": "Returns the deployment authority address that vouches for related personal-test instances, or zero when not in personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmRouter",
+      "address": "{{address:AmmRouter}}",
+      "function": "personalTestEnabled()",
+      "mutability": "view",
+      "description": "Returns whether this instance runs under a personal-test policy that limits callers and held value.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmRouter",
+      "address": "{{address:AmmRouter}}",
+      "function": "personalTestNativeCap()",
+      "mutability": "view",
+      "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or zero otherwise.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmRouter",
+      "address": "{{address:AmmRouter}}",
+      "function": "personalTestOwner()",
+      "mutability": "view",
+      "description": "Returns the owner account of the personal-test policy, or zero when not in personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmRouter",
+      "address": "{{address:AmmRouter}}",
+      "function": "personalTestPolicy()",
+      "mutability": "view",
+      "description": "Returns the personal-test policy tuple: marker, owner, native coin cap and token cap.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmRouter",
+      "address": "{{address:AmmRouter}}",
+      "function": "personalTestTokenCap()",
+      "mutability": "view",
+      "description": "Returns the maximum total raw token units this instance may hold in personal-test mode, or zero otherwise.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "AmmRouter",
+      "address": "{{address:AmmRouter}}",
+      "function": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "mutability": "nonpayable",
+      "description": "Burns the caller's liquidity tokens for a pair and sends both underlying tokens to the recipient; needs liquidity token approval and reverts below the minimums or after the deadline.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "0x2222222222222222222222222222222222222222",
+          "1000000000000000000",
+          "0",
+          "0",
+          "{{publisher}}",
+          "1900000000"
+        ]
+      }
+    },
+    {
+      "id": "AmmRouter",
+      "address": "{{address:AmmRouter}}",
+      "function": "setPersonalTestAccount(address,bool)",
+      "mutability": "nonpayable",
+      "description": "Adds or removes an account on the personal-test allow list; callable only by the policy owner, who cannot be removed.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "true"
+        ]
+      }
+    },
+    {
+      "id": "AmmRouter",
+      "address": "{{address:AmmRouter}}",
+      "function": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "mutability": "nonpayable",
+      "description": "Swaps an exact input amount along a token path, pulling it from the caller and sending the output to the recipient; reverts below the minimum output or after the deadline.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "1000000000000000000",
+          "0",
+          [
+            "0x1111111111111111111111111111111111111111",
+            "0x2222222222222222222222222222222222222222"
+          ],
+          "{{publisher}}",
+          "1900000000"
+        ]
+      }
+    },
+    {
+      "id": "AmmRouter",
+      "address": "{{address:AmmRouter}}",
+      "function": "swapSupportingFeeOnTransfer(uint256,uint256,address[],address,uint256)",
+      "mutability": "nonpayable",
+      "description": "Swaps along a token path measuring actual received amounts, so it works with tokens that take a fee on transfer; reverts below the minimum output or after the deadline.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "1000000000000000000",
+          "0",
+          [
+            "0x1111111111111111111111111111111111111111",
+            "0x2222222222222222222222222222222222222222"
+          ],
+          "{{publisher}}",
+          "1900000000"
+        ]
+      }
+    }
+  ]
+}

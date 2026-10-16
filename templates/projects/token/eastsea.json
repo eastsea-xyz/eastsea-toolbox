@@ -1,0 +1,399 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh). Category token-issuance is restricted: hidden from ranked/featured lists and iOS.",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Island Coin",
+  "subtitle": "Fixed-supply community token",
+  "description": "Example 1 — a fixed-supply ERC-20 with EIP-2612 permit. No mint entry point exists after launch.",
+  "long_description": "A community point / game currency base shape. The whole supply is minted once to the recipient at deployment; no mint path exists afterwards, so inflation risk is removed by construction. Includes EIP-2612 permit so users can approve with a signature instead of a transaction. Copy contracts/src/token/FixedSupplyToken.sol, deploy with your name/symbol/supply/recipient, and fill this manifest with real addresses before publishing.",
+  "localized": {
+    "ko": {
+      "name": "아일랜드 코인",
+      "subtitle": "고정 공급 커뮤니티 토큰",
+      "description": "예제 1 — 출시 후 mint 경로가 없는 고정 공급 ERC-20 (EIP-2612 permit 포함)."
+    }
+  },
+  "locales": [
+    "en",
+    "ko"
+  ],
+  "category": "token-issuance",
+  "tags": [
+    "erc20",
+    "permit",
+    "fixed-supply"
+  ],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "IslandCoin token",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "none"
+    }
+  ],
+  "connect": [],
+  "permissions": [
+    "accounts",
+    "send",
+    "sign-typed",
+    "approve-tokens"
+  ],
+  "payees": [],
+  "age_rating": "4+",
+  "commerce": "none",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/token",
+  "x-toolbox-tests": "contracts/test/token/FixedSupplyToken.t.sol",
+  "x-eastsea-template": {
+    "format": "eastsea-template/1",
+    "slug": "token",
+    "summary": "Fixed-supply ERC-20 with EIP-2612 permit and no minting.",
+    "web": "web",
+    "compiler": {
+      "solc": "0.8.24",
+      "evm_version": "paris",
+      "optimizer_runs": 200
+    },
+    "contracts": [
+      {
+        "id": "IslandCoin",
+        "contract": "FixedSupplyToken",
+        "source": "contracts/FixedSupplyToken.sol",
+        "manifest_label": "IslandCoin token",
+        "constructor": [
+          {
+            "name": "name_",
+            "type": "string",
+            "label": "Token name",
+            "description": "Human-readable name of the ERC-20 token.",
+            "value": "Island Test Coin"
+          },
+          {
+            "name": "symbol_",
+            "type": "string",
+            "label": "Token symbol",
+            "description": "Short ticker symbol of the ERC-20 token.",
+            "value": "ISLE"
+          },
+          {
+            "name": "supply",
+            "type": "uint256",
+            "label": "Total supply",
+            "description": "Total token amount in base units (18 decimals), minted once to the recipient; no further minting exists.",
+            "value": "1000000000000000000000000"
+          },
+          {
+            "name": "recipient",
+            "type": "address",
+            "label": "Initial recipient",
+            "description": "Address that receives the entire supply at deployment; must not be the zero address.",
+            "value": "{{publisher}}"
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "deploy": "IslandCoin"
+      }
+    ],
+    "placeholders": [
+      "{{address:IslandCoin}}",
+      "{{app_id}}",
+      "{{chain_id}}",
+      "{{native_decimals}}",
+      "{{native_symbol}}",
+      "{{publisher}}"
+    ],
+    "interface": [
+      {
+        "contract": "IslandCoin",
+        "function": "DOMAIN_SEPARATOR()",
+        "mutability": "view",
+        "description": "Returns the EIP-712 domain separator used to verify permit signatures.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "PERSONAL_TEST_MAGIC()",
+        "mutability": "view",
+        "description": "Returns the constant identifier that marks the personal-test policy format.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "allowance(address,address)",
+        "mutability": "view",
+        "description": "Returns how many tokens the spender is currently allowed to move on behalf of the owner.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "{{publisher}}",
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "approve(address,uint256)",
+        "mutability": "nonpayable",
+        "description": "Sets the amount of the caller's tokens the spender may transfer, replacing any earlier allowance.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "1000000000000000000"
+          ]
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "balanceOf(address)",
+        "mutability": "view",
+        "description": "Returns the token balance of an account.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "{{publisher}}"
+          ]
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "checkPersonalTestTokenReceipt(address)",
+        "mutability": "nonpayable",
+        "description": "Personal-test hook that verifies token holdings stay under the cap; only callable by the token itself, and only in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "decimals()",
+        "mutability": "view",
+        "description": "Returns the number of decimals the token uses, which is 18.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "eip712Domain()",
+        "mutability": "view",
+        "description": "Returns the EIP-712 domain fields (name, version, chain id, verifying contract) used for permit signatures.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "instanceMode()",
+        "mutability": "view",
+        "description": "Returns 'personal-test' if this copy was deployed in personal-test mode, otherwise 'testnet'.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "name()",
+        "mutability": "view",
+        "description": "Returns the token name.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "nonces(address)",
+        "mutability": "view",
+        "description": "Returns the next permit nonce for an owner address.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "{{publisher}}"
+          ]
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+        "mutability": "nonpayable",
+        "description": "Sets a spender's allowance from the owner's signed EIP-2612 message instead of a transaction by the owner; anyone may submit it before the deadline.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "{{publisher}}",
+            "0x1111111111111111111111111111111111111111",
+            "1000000000000000000",
+            "1900000000",
+            "27",
+            "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "0x2222222222222222222222222222222222222222222222222222222222222222"
+          ]
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "personalTestAllowed(address)",
+        "mutability": "view",
+        "description": "Returns whether an account is on this copy's personal-test allow list.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "personalTestAuthority()",
+        "mutability": "view",
+        "description": "Returns the address of the policy authority that vouches for personal-test contract copies, or zero outside that mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "personalTestEnabled()",
+        "mutability": "view",
+        "description": "Returns true if this copy runs in personal-test mode, which restricts which accounts may interact.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "personalTestNativeCap()",
+        "mutability": "view",
+        "description": "Returns the maximum native coin balance this copy may hold in personal-test mode, or zero outside that mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "personalTestOwner()",
+        "mutability": "view",
+        "description": "Returns the owner address of this personal-test copy, or zero outside personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "personalTestPolicy()",
+        "mutability": "view",
+        "description": "Returns the personal-test policy tuple: magic value, owner, native-coin cap and token cap.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "personalTestTokenCap()",
+        "mutability": "view",
+        "description": "Returns the maximum token amount this copy may hold in personal-test mode, or zero outside that mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "setPersonalTestAccount(address,bool)",
+        "mutability": "nonpayable",
+        "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it, and the owner cannot be removed.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "true"
+          ]
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "symbol()",
+        "mutability": "view",
+        "description": "Returns the token ticker symbol.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "totalSupply()",
+        "mutability": "view",
+        "description": "Returns the total token supply, which is fixed at deployment.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "transfer(address,uint256)",
+        "mutability": "nonpayable",
+        "description": "Moves tokens from the caller's balance to the recipient address.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "1000000000000000000"
+          ]
+        }
+      },
+      {
+        "contract": "IslandCoin",
+        "function": "transferFrom(address,address,uint256)",
+        "mutability": "nonpayable",
+        "description": "Moves tokens from one account to another using the caller's allowance; reverts if the allowance is too low.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "{{publisher}}",
+            "0x1111111111111111111111111111111111111111",
+            "1000000000000000000"
+          ]
+        }
+      }
+    ],
+    "check_call": {
+      "contract": "IslandCoin",
+      "function": "totalSupply()"
+    },
+    "web_sha256": "0xcd4cfa946cff2c59fdaedd6275e14cc089937852c790e4a79fe6d5e525a3eefa"
+  }
+}

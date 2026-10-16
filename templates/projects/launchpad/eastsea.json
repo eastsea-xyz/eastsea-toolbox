@@ -1,0 +1,1046 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "RESTRICTED CATEGORY — token issuance. Do not submit to the public registry until legal review is complete (docs/legal-notes.md).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Tidepool Launchpad",
+  "subtitle": "Bonding-curve token launchpad",
+  "description": "Example 5 — bonding-curve launchpad with anti-sniping taxes, per-buyer caps, and graduation into the example-4 AMM. LP is permanently locked at graduation.",
+  "long_description": "Launch a new token against an ERC-20 quote on a virtual-reserve constant-product curve. Buys in the first snipeWindow pay a linearly decaying tax to a fixed treasury, and per-buyer caps bound early concentration. When the curve raises graduationTarget, anyone can graduate: all curve assets move into an AMM pair and the LP tokens are locked forever at 0x..dEaD. Curve trades are stateless on the launchpad side (~26 state units each). No yield promises, no referral rewards.",
+  "localized": {
+    "ko": {
+      "name": "타이드풀 런치패드",
+      "subtitle": "본딩 커브 토큰 런치패드",
+      "description": "예제 5 — 안티스나이핑 세금·개인 한도·AMM 졸업을 갖춘 본딩 커브 런치패드. 졸업 시 LP 영구 잠금."
+    }
+  },
+  "locales": [
+    "en",
+    "ko"
+  ],
+  "category": "token-issuance",
+  "tags": [
+    "launchpad",
+    "bonding-curve",
+    "token",
+    "amm-graduation",
+    "anti-sniping"
+  ],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "BondingLaunchpad",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": [
+    "accounts",
+    "send",
+    "approve-tokens"
+  ],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "none",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/launchpad",
+  "x-toolbox-tests": "contracts/test/launchpad/",
+  "x-eastsea-template": {
+    "format": "eastsea-template/1",
+    "slug": "launchpad",
+    "summary": "Bonding-curve token launch with per-buyer caps that graduates into a pool.",
+    "web": "web",
+    "compiler": {
+      "solc": "0.8.24",
+      "evm_version": "paris",
+      "optimizer_runs": 200
+    },
+    "contracts": [
+      {
+        "id": "TestToken",
+        "contract": "FixedSupplyToken",
+        "source": "contracts/FixedSupplyToken.sol",
+        "constructor": [
+          {
+            "name": "name_",
+            "type": "string",
+            "label": "Token name",
+            "description": "Human-readable name of the ERC-20 token.",
+            "value": "Toolbox Test Coin"
+          },
+          {
+            "name": "symbol_",
+            "type": "string",
+            "label": "Token symbol",
+            "description": "Short ticker symbol of the ERC-20 token.",
+            "value": "TEST"
+          },
+          {
+            "name": "supply",
+            "type": "uint256",
+            "label": "Total supply",
+            "description": "Total token amount in base units (18 decimals), minted once to the recipient; no further minting exists.",
+            "value": "1000000000000000000000000"
+          },
+          {
+            "name": "recipient",
+            "type": "address",
+            "label": "Initial recipient",
+            "description": "Address that receives the entire supply at deployment; must not be the zero address.",
+            "value": "{{publisher}}"
+          }
+        ]
+      },
+      {
+        "id": "AmmFactory",
+        "contract": "AmmFactory",
+        "source": "contracts/AmmFactory.sol",
+        "constructor": [
+          {
+            "name": "guardian",
+            "type": "address",
+            "label": "Brake guardian",
+            "description": "Address allowed to engage the emergency brake that stops new pair creation.",
+            "value": "{{publisher}}"
+          }
+        ]
+      },
+      {
+        "id": "BondingLaunchpad",
+        "contract": "BondingLaunchpad",
+        "source": "contracts/BondingLaunchpad.sol",
+        "manifest_label": "BondingLaunchpad",
+        "constructor": [
+          {
+            "name": "guardian",
+            "type": "address",
+            "label": "Brake guardian",
+            "description": "Address allowed to engage the emergency brake that stops new buys and graduation.",
+            "value": "{{publisher}}"
+          },
+          {
+            "name": "quote_",
+            "type": "address",
+            "label": "Quote token",
+            "description": "Address of the ERC-20 token that buyers pay with and sellers receive.",
+            "value": "{{address:TestToken}}"
+          },
+          {
+            "name": "factory_",
+            "type": "address",
+            "label": "AMM factory",
+            "description": "Address of the AmmFactory used to create the trading pair when the launch graduates.",
+            "value": "{{address:AmmFactory}}"
+          },
+          {
+            "name": "cfg",
+            "type": "(string,string,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,address)",
+            "label": "Launch config",
+            "description": "Launch settings in order: name, symbol, token supply, quote floor, token floor, graduation target, fee bps, snipe tax bps, snipe window, per-buyer cap, treasury address.",
+            "value": [
+              "Tide Test Token",
+              "TIDE",
+              "1000000000000000000000000",
+              "100000000000000000000",
+              "10000000000000000000000",
+              "1000000000000000000000",
+              "30",
+              "0",
+              "0",
+              "0",
+              "{{publisher}}"
+            ]
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "deploy": "TestToken"
+      },
+      {
+        "deploy": "AmmFactory"
+      },
+      {
+        "deploy": "BondingLaunchpad"
+      }
+    ],
+    "placeholders": [
+      "{{address:AmmFactory}}",
+      "{{address:BondingLaunchpad}}",
+      "{{address:TestToken}}",
+      "{{app_id}}",
+      "{{chain_id}}",
+      "{{native_decimals}}",
+      "{{native_symbol}}",
+      "{{publisher}}"
+    ],
+    "interface": [
+      {
+        "contract": "TestToken",
+        "function": "DOMAIN_SEPARATOR()",
+        "mutability": "view",
+        "description": "Returns the EIP-712 domain separator used to verify permit signatures.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "PERSONAL_TEST_MAGIC()",
+        "mutability": "view",
+        "description": "Returns the constant identifier that marks the personal-test policy format.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "allowance(address,address)",
+        "mutability": "view",
+        "description": "Returns how many tokens the spender is currently allowed to move on behalf of the owner.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "{{publisher}}",
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "approve(address,uint256)",
+        "mutability": "nonpayable",
+        "description": "Sets the amount of the caller's tokens the spender may transfer, replacing any earlier allowance.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "1000000000000000000"
+          ]
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "balanceOf(address)",
+        "mutability": "view",
+        "description": "Returns the token balance of an account.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "{{publisher}}"
+          ]
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "checkPersonalTestTokenReceipt(address)",
+        "mutability": "nonpayable",
+        "description": "Personal-test hook that verifies token holdings stay under the cap; only callable by the token itself, and only in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "decimals()",
+        "mutability": "view",
+        "description": "Returns the number of decimals the token uses, which is 18.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "eip712Domain()",
+        "mutability": "view",
+        "description": "Returns the EIP-712 domain fields (name, version, chain id, verifying contract) used for permit signatures.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "instanceMode()",
+        "mutability": "view",
+        "description": "Returns 'personal-test' if this copy was deployed in personal-test mode, otherwise 'testnet'.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "name()",
+        "mutability": "view",
+        "description": "Returns the token name.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "nonces(address)",
+        "mutability": "view",
+        "description": "Returns the next permit nonce for an owner address.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "{{publisher}}"
+          ]
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+        "mutability": "nonpayable",
+        "description": "Sets a spender's allowance from the owner's signed EIP-2612 message instead of a transaction by the owner; anyone may submit it before the deadline.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "{{publisher}}",
+            "0x1111111111111111111111111111111111111111",
+            "1000000000000000000",
+            "1900000000",
+            "27",
+            "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "0x2222222222222222222222222222222222222222222222222222222222222222"
+          ]
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "personalTestAllowed(address)",
+        "mutability": "view",
+        "description": "Returns whether an account is on this copy's personal-test allow list.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "personalTestAuthority()",
+        "mutability": "view",
+        "description": "Returns the address of the policy authority that vouches for personal-test contract copies, or zero outside that mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "personalTestEnabled()",
+        "mutability": "view",
+        "description": "Returns true if this copy runs in personal-test mode, which restricts which accounts may interact.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "personalTestNativeCap()",
+        "mutability": "view",
+        "description": "Returns the maximum native coin balance this copy may hold in personal-test mode, or zero outside that mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "personalTestOwner()",
+        "mutability": "view",
+        "description": "Returns the owner address of this personal-test copy, or zero outside personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "personalTestPolicy()",
+        "mutability": "view",
+        "description": "Returns the personal-test policy tuple: magic value, owner, native-coin cap and token cap.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "personalTestTokenCap()",
+        "mutability": "view",
+        "description": "Returns the maximum token amount this copy may hold in personal-test mode, or zero outside that mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "setPersonalTestAccount(address,bool)",
+        "mutability": "nonpayable",
+        "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it, and the owner cannot be removed.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "true"
+          ]
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "symbol()",
+        "mutability": "view",
+        "description": "Returns the token ticker symbol.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "totalSupply()",
+        "mutability": "view",
+        "description": "Returns the total token supply, which is fixed at deployment.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "transfer(address,uint256)",
+        "mutability": "nonpayable",
+        "description": "Moves tokens from the caller's balance to the recipient address.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "1000000000000000000"
+          ]
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "transferFrom(address,address,uint256)",
+        "mutability": "nonpayable",
+        "description": "Moves tokens from one account to another using the caller's allowance; reverts if the allowance is too low.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "{{publisher}}",
+            "0x1111111111111111111111111111111111111111",
+            "1000000000000000000"
+          ]
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "PERSONAL_TEST_MAGIC()",
+        "mutability": "view",
+        "description": "Returns the constant identifier that marks a personal-test deployment policy.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "allPairs(uint256)",
+        "mutability": "view",
+        "description": "Returns the pair contract address at the given index in the list of created pairs.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0"
+          ]
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "allPairsLength()",
+        "mutability": "view",
+        "description": "Returns how many pairs the factory has created.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "brakeGuardian()",
+        "mutability": "view",
+        "description": "Returns the guardian address that is allowed to engage the emergency brake.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "brakeSpec()",
+        "mutability": "pure",
+        "description": "Returns the brake specification URI and its document hash.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "brakeState()",
+        "mutability": "view",
+        "description": "Returns the current brake level, the guardian address and the time the brake was last engaged.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "checkPersonalTestTokenReceipt(address)",
+        "mutability": "nonpayable",
+        "description": "Lets a personal-test token notify this contract of a receipt so the token holding cap is checked; reverts if the cap is exceeded.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "createPair(address,address)",
+        "mutability": "nonpayable",
+        "description": "Deploys a new liquidity pair contract for two distinct token contracts; reverts if the pair already exists. Blocked once the brake is engaged.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "0x2222222222222222222222222222222222222222"
+          ]
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "engageBrake(uint8)",
+        "mutability": "nonpayable",
+        "description": "Raises the emergency brake to a stronger level (1 blocks new entries, 2 blocks everything gated); only the brake guardian may call it and levels can only go up.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "getPair(address,address)",
+        "mutability": "view",
+        "description": "Returns the pair address for two tokens in either order, or zero if none exists.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "0x2222222222222222222222222222222222222222"
+          ]
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "instanceMode()",
+        "mutability": "view",
+        "description": "Returns 'personal-test' if deployed under a personal-test policy, otherwise 'testnet'.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "personalTestAllowed(address)",
+        "mutability": "view",
+        "description": "Returns whether an account is on this instance's personal-test allow list.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "personalTestAuthority()",
+        "mutability": "view",
+        "description": "Returns the deployment authority address that vouches for related personal-test instances, or zero when not in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "personalTestEnabled()",
+        "mutability": "view",
+        "description": "Returns whether this instance runs under a personal-test policy that limits callers and held value.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "personalTestNativeCap()",
+        "mutability": "view",
+        "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or zero otherwise.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "personalTestOwner()",
+        "mutability": "view",
+        "description": "Returns the owner account of the personal-test policy, or zero when not in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "personalTestPolicy()",
+        "mutability": "view",
+        "description": "Returns the personal-test policy tuple: marker, owner, native coin cap and token cap.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "personalTestTokenCap()",
+        "mutability": "view",
+        "description": "Returns the maximum total raw token units this instance may hold in personal-test mode, or zero otherwise.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AmmFactory",
+        "function": "setPersonalTestAccount(address,bool)",
+        "mutability": "nonpayable",
+        "description": "Adds or removes an account on the personal-test allow list; callable only by the policy owner, who cannot be removed.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "true"
+          ]
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "PERSONAL_TEST_MAGIC()",
+        "mutability": "view",
+        "description": "Returns the constant identifier that marks a personal-test deployment policy.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "brakeGuardian()",
+        "mutability": "view",
+        "description": "Returns the guardian address that is allowed to engage the emergency brake.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "brakeSpec()",
+        "mutability": "pure",
+        "description": "Returns the brake specification URI and its document hash.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "brakeState()",
+        "mutability": "view",
+        "description": "Returns the current brake level, the guardian address and the time the brake was last engaged.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "buy(uint256,uint256)",
+        "mutability": "nonpayable",
+        "description": "Pays quote tokens into the bonding curve and receives launch tokens; fees go to the treasury, and it reverts below the minimum output or if the buyer cap or graduation target is hit.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "1000000000000000000",
+            "0"
+          ]
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "checkPersonalTestTokenReceipt(address)",
+        "mutability": "nonpayable",
+        "description": "Lets a personal-test token notify this contract of a receipt so the token holding cap is checked; reverts if the cap is exceeded.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "curveToken()",
+        "mutability": "view",
+        "description": "Returns the address of the launch token created by this contract and sold along the curve.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "engageBrake(uint8)",
+        "mutability": "nonpayable",
+        "description": "Raises the emergency brake to a stronger level (1 blocks new entries, 2 blocks everything gated); only the brake guardian may call it and levels can only go up.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "factory()",
+        "mutability": "view",
+        "description": "Returns the AmmFactory address used at graduation.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "feeBps()",
+        "mutability": "view",
+        "description": "Returns the trading fee in basis points sent to the treasury on buys and sells.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "getBuyQuoteOut(uint256)",
+        "mutability": "view",
+        "description": "Returns the launch token amount a buy of the given quote amount would produce at the current curve state, after fees.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1000000000000000000"
+          ]
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "getSellQuoteOut(uint256)",
+        "mutability": "view",
+        "description": "Returns the quote token amount a sale of the given launch token amount would produce at the current curve state, after fees.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1000000000000000000"
+          ]
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "graduate()",
+        "mutability": "nonpayable",
+        "description": "After the quote balance reaches the graduation target, moves all quote and launch tokens into an AMM pair and locks the liquidity tokens; anyone may call it unless the brake is engaged.",
+        "moves_funds": true,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "graduatePair()",
+        "mutability": "view",
+        "description": "Returns the AMM pair created at graduation, or zero before graduation.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "graduated()",
+        "mutability": "view",
+        "description": "Returns whether the launch has graduated to the AMM, which closes curve buys and sells.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "graduationTarget()",
+        "mutability": "view",
+        "description": "Returns the quote token balance at which the launch can graduate.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "instanceMode()",
+        "mutability": "view",
+        "description": "Returns 'personal-test' if deployed under a personal-test policy, otherwise 'testnet'.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "launchTime()",
+        "mutability": "view",
+        "description": "Returns the timestamp when this launch was deployed.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "perBuyerCap()",
+        "mutability": "view",
+        "description": "Returns the maximum launch tokens one address may hold after a buy, where zero means no cap.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "personalTestAllowed(address)",
+        "mutability": "view",
+        "description": "Returns whether an account is on this instance's personal-test allow list.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "personalTestAuthority()",
+        "mutability": "view",
+        "description": "Returns the deployment authority address that vouches for related personal-test instances, or zero when not in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "personalTestEnabled()",
+        "mutability": "view",
+        "description": "Returns whether this instance runs under a personal-test policy that limits callers and held value.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "personalTestNativeCap()",
+        "mutability": "view",
+        "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or zero otherwise.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "personalTestOwner()",
+        "mutability": "view",
+        "description": "Returns the owner account of the personal-test policy, or zero when not in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "personalTestPolicy()",
+        "mutability": "view",
+        "description": "Returns the personal-test policy tuple: marker, owner, native coin cap and token cap.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "personalTestTokenCap()",
+        "mutability": "view",
+        "description": "Returns the maximum total raw token units this instance may hold in personal-test mode, or zero otherwise.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "quote()",
+        "mutability": "view",
+        "description": "Returns the address of the quote token used for payment.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "quoteFloor()",
+        "mutability": "view",
+        "description": "Returns the virtual quote reserve added to the real balance when pricing along the curve.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "sell(uint256,uint256)",
+        "mutability": "nonpayable",
+        "description": "Sells launch tokens back to the curve for quote tokens, with a fee sent to the treasury; reverts below the minimum output or after graduation.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "1000000000000000000",
+            "0"
+          ]
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "setPersonalTestAccount(address,bool)",
+        "mutability": "nonpayable",
+        "description": "Adds or removes an account on the personal-test allow list; callable only by the policy owner, who cannot be removed.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "true"
+          ]
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "snipeTaxBps()",
+        "mutability": "view",
+        "description": "Returns the starting early-buy tax in basis points, which decreases linearly to zero over the snipe window.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "snipeWindow()",
+        "mutability": "view",
+        "description": "Returns the duration in seconds after launch during which the early-buy tax applies.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "tokenFloor()",
+        "mutability": "view",
+        "description": "Returns the virtual launch token reserve added to the real balance when pricing along the curve.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "treasury()",
+        "mutability": "view",
+        "description": "Returns the address that receives trading fees and early-buy tax.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "BondingLaunchpad",
+        "function": "virtualReserves()",
+        "mutability": "view",
+        "description": "Returns the virtual quote and token reserves (real balances plus floors) that define the current curve price.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      }
+    ],
+    "check_call": {
+      "contract": "BondingLaunchpad",
+      "function": "graduationTarget()"
+    },
+    "web_sha256": "0xff1e0cf2c1f1a580c497d42d1b0d953c2df28ee99373b1a3f62d2722c23438b8"
+  }
+}

@@ -1,0 +1,387 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "CUSTODY ADJACENT — prepaid balances held on-chain may trigger e-money or payment-services regulation depending on jurisdiction. Do not submit to the public registry until legal review is complete (docs/legal-notes.md).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Tide Pass",
+  "subtitle": "Prepaid time subscription",
+  "description": "Example 10 — users buy time at a fixed per-second rate, cancel for a pro-rata refund, and lapsed revenue settles permissionlessly. No operator keys.",
+  "long_description": "Prepaid pass-style subscriptions. Users send value and receive exactly value/rate seconds; renewals stack onto the existing expiry so no residual time is lost. Cancelling refunds the remaining seconds at the same rate — the buy and refund arithmetic are symmetric, so dust stays inside the contract and conservation holds exactly. The design problem solved here is liability accounting without iteration: a single global refund-reserve scalar upper-bounds what all active subscribers could claim, making operator revenue claimable as balance minus reserve in constant time. Revenue claims and lapsed-subscription settlement are permissionless — the payee never needs to act on-chain, and refunds stay open even under the emergency brake.",
+  "localized": {
+    "ko": {
+      "name": "타이드 패스",
+      "subtitle": "선불 시간 구독",
+      "description": "예제 10 — 초당 요율로 시간을 사고, 취소하면 남은 초만큼 비례 환불받는다. 수익 정산은 키 없이 누구나 트리거한다."
+    }
+  },
+  "locales": [
+    "en",
+    "ko"
+  ],
+  "category": "payments",
+  "tags": [
+    "subscription",
+    "prepaid",
+    "time-based",
+    "pass",
+    "keeper"
+  ],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "SubscriptionManager",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": [
+    "accounts",
+    "send"
+  ],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "digital",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/subscription",
+  "x-toolbox-tests": "contracts/test/subscription/",
+  "x-eastsea-template": {
+    "format": "eastsea-template/1",
+    "slug": "subscription",
+    "summary": "Time-based access paid per second, with partial refunds on cancel.",
+    "web": "web",
+    "compiler": {
+      "solc": "0.8.24",
+      "evm_version": "paris",
+      "optimizer_runs": 200
+    },
+    "contracts": [
+      {
+        "id": "SubscriptionManager",
+        "contract": "SubscriptionManager",
+        "source": "contracts/SubscriptionManager.sol",
+        "manifest_label": "SubscriptionManager",
+        "constructor": [
+          {
+            "name": "guardian",
+            "type": "address",
+            "label": "Guardian address",
+            "description": "Address allowed to engage the brake that blocks new subscriptions.",
+            "value": "{{publisher}}"
+          },
+          {
+            "name": "payee_",
+            "type": "address",
+            "label": "Revenue payee",
+            "description": "Address that receives consumed subscription revenue; cannot be zero.",
+            "value": "{{publisher}}"
+          },
+          {
+            "name": "ratePerSecond_",
+            "type": "uint256",
+            "label": "Rate per second",
+            "description": "Price in wei charged per second of subscription; fixed at deployment and above zero.",
+            "value": "1000000000000"
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "deploy": "SubscriptionManager"
+      }
+    ],
+    "placeholders": [
+      "{{address:SubscriptionManager}}",
+      "{{app_id}}",
+      "{{chain_id}}",
+      "{{native_decimals}}",
+      "{{native_symbol}}",
+      "{{publisher}}"
+    ],
+    "interface": [
+      {
+        "contract": "SubscriptionManager",
+        "function": "PERSONAL_TEST_MAGIC()",
+        "mutability": "view",
+        "description": "Returns the constant marker value that identifies personal-test mode in the deploy policy.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "brakeGuardian()",
+        "mutability": "view",
+        "description": "Returns the guardian address that may engage the brake.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "brakeSpec()",
+        "mutability": "pure",
+        "description": "Returns the URI and document hash that describe the brake policy.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "brakeState()",
+        "mutability": "view",
+        "description": "Returns the current brake level, the guardian address and the timestamp when the brake last changed.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "cancel()",
+        "mutability": "nonpayable",
+        "description": "Ends the caller's active subscription and refunds the remaining seconds at the fixed rate in native coin.",
+        "moves_funds": true,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "checkPersonalTestTokenReceipt(address)",
+        "mutability": "nonpayable",
+        "description": "Lets a registered token report a receipt so the personal-test token cap is checked; only callable by the token itself in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "claimRevenue()",
+        "mutability": "nonpayable",
+        "description": "Sends the balance not reserved for refunds to the payee in native coin; anyone may trigger it.",
+        "moves_funds": true,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "claimableRevenue()",
+        "mutability": "view",
+        "description": "Returns the balance that could currently be sent to the payee, being balance minus refund reserve.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "engageBrake(uint8)",
+        "mutability": "nonpayable",
+        "description": "Raises the brake to a stronger level (1 or 2) to block new entries; only the guardian may call it and it cannot be lowered.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "instanceMode()",
+        "mutability": "view",
+        "description": "Returns the text 'personal-test' if this instance was deployed under a personal-test policy, otherwise 'testnet'.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "isSubscribed(address)",
+        "mutability": "view",
+        "description": "Returns whether the address has an unexpired subscription.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "payee()",
+        "mutability": "view",
+        "description": "Returns the address that receives subscription revenue.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "personalTestAllowed(address)",
+        "mutability": "view",
+        "description": "Returns whether the given account is on the personal-test allow list for this instance.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "personalTestAuthority()",
+        "mutability": "view",
+        "description": "Returns the policy authority address used to recognize allowed sibling instances, or zero outside personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "personalTestEnabled()",
+        "mutability": "view",
+        "description": "Returns true if this instance was deployed in personal-test mode with access and value caps.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "personalTestNativeCap()",
+        "mutability": "view",
+        "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or 0 if disabled.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "personalTestOwner()",
+        "mutability": "view",
+        "description": "Returns the owner address of the personal-test policy, or zero if personal-test mode is off.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "personalTestPolicy()",
+        "mutability": "view",
+        "description": "Returns the personal-test policy tuple: marker, owner address, native cap and token cap.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "personalTestTokenCap()",
+        "mutability": "view",
+        "description": "Returns the maximum token amount this instance may hold in personal-test mode, or 0 if disabled.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "ratePerSecond()",
+        "mutability": "view",
+        "description": "Returns the price in wei per second of subscription.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "refundReserve()",
+        "mutability": "view",
+        "description": "Returns the sum of active subscribers' paid amounts held back for possible refunds.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "setPersonalTestAccount(address,bool)",
+        "mutability": "nonpayable",
+        "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it and the owner cannot be removed.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "true"
+          ]
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "settleExpired(address)",
+        "mutability": "nonpayable",
+        "description": "Releases an expired subscriber's paid amount from the refund reserve so it counts as revenue; anyone may call and no funds move.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "subscribe()",
+        "mutability": "payable",
+        "description": "Extends the caller's subscription by the seconds the sent native coin buys at the fixed rate; needs open brake.",
+        "moves_funds": true,
+        "example": {
+          "args": [],
+          "value_wei": "1000000000000000"
+        }
+      },
+      {
+        "contract": "SubscriptionManager",
+        "function": "subscribers(address)",
+        "mutability": "view",
+        "description": "Returns the subscriber record: expiry timestamp and amount contributed in the current streak.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      }
+    ],
+    "check_call": {
+      "contract": "SubscriptionManager",
+      "function": "ratePerSecond()"
+    },
+    "web_sha256": "0xab570bf16a118f49974fd0e34fdac37015506b5ea31708077d1620ccd4fc278b"
+  }
+}

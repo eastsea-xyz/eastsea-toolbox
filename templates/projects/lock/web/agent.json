@@ -1,0 +1,800 @@
+{
+  "format": "eastsea-agent-interface/1",
+  "app_id": "{{app_id}}",
+  "name": "Harbor Lock",
+  "category": "tools",
+  "summary": "Batch time locks and a linear vesting grant for an ERC-20 token.",
+  "contracts": [
+    {
+      "id": "TestToken",
+      "contract": "FixedSupplyToken",
+      "address": "{{address:TestToken}}"
+    },
+    {
+      "id": "TokenTimeLock",
+      "contract": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}"
+    },
+    {
+      "id": "LinearVesting",
+      "contract": "LinearVesting",
+      "address": "{{address:LinearVesting}}"
+    }
+  ],
+  "functions": [
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "DOMAIN_SEPARATOR()",
+      "mutability": "view",
+      "description": "Returns the EIP-712 domain separator used to verify permit signatures.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "PERSONAL_TEST_MAGIC()",
+      "mutability": "view",
+      "description": "Returns the constant identifier that marks the personal-test policy format.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "allowance(address,address)",
+      "mutability": "view",
+      "description": "Returns how many tokens the spender is currently allowed to move on behalf of the owner.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "{{publisher}}",
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "approve(address,uint256)",
+      "mutability": "nonpayable",
+      "description": "Sets the amount of the caller's tokens the spender may transfer, replacing any earlier allowance.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "1000000000000000000"
+        ]
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "balanceOf(address)",
+      "mutability": "view",
+      "description": "Returns the token balance of an account.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "{{publisher}}"
+        ]
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "checkPersonalTestTokenReceipt(address)",
+      "mutability": "nonpayable",
+      "description": "Personal-test hook that verifies token holdings stay under the cap; only callable by the token itself, and only in personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "decimals()",
+      "mutability": "view",
+      "description": "Returns the number of decimals the token uses, which is 18.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "eip712Domain()",
+      "mutability": "view",
+      "description": "Returns the EIP-712 domain fields (name, version, chain id, verifying contract) used for permit signatures.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "instanceMode()",
+      "mutability": "view",
+      "description": "Returns 'personal-test' if this copy was deployed in personal-test mode, otherwise 'testnet'.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "name()",
+      "mutability": "view",
+      "description": "Returns the token name.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "nonces(address)",
+      "mutability": "view",
+      "description": "Returns the next permit nonce for an owner address.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "{{publisher}}"
+        ]
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+      "mutability": "nonpayable",
+      "description": "Sets a spender's allowance from the owner's signed EIP-2612 message instead of a transaction by the owner; anyone may submit it before the deadline.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "{{publisher}}",
+          "0x1111111111111111111111111111111111111111",
+          "1000000000000000000",
+          "1900000000",
+          "27",
+          "0x1111111111111111111111111111111111111111111111111111111111111111",
+          "0x2222222222222222222222222222222222222222222222222222222222222222"
+        ]
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "personalTestAllowed(address)",
+      "mutability": "view",
+      "description": "Returns whether an account is on this copy's personal-test allow list.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "personalTestAuthority()",
+      "mutability": "view",
+      "description": "Returns the address of the policy authority that vouches for personal-test contract copies, or zero outside that mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "personalTestEnabled()",
+      "mutability": "view",
+      "description": "Returns true if this copy runs in personal-test mode, which restricts which accounts may interact.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "personalTestNativeCap()",
+      "mutability": "view",
+      "description": "Returns the maximum native coin balance this copy may hold in personal-test mode, or zero outside that mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "personalTestOwner()",
+      "mutability": "view",
+      "description": "Returns the owner address of this personal-test copy, or zero outside personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "personalTestPolicy()",
+      "mutability": "view",
+      "description": "Returns the personal-test policy tuple: magic value, owner, native-coin cap and token cap.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "personalTestTokenCap()",
+      "mutability": "view",
+      "description": "Returns the maximum token amount this copy may hold in personal-test mode, or zero outside that mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "setPersonalTestAccount(address,bool)",
+      "mutability": "nonpayable",
+      "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it, and the owner cannot be removed.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "true"
+        ]
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "symbol()",
+      "mutability": "view",
+      "description": "Returns the token ticker symbol.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "totalSupply()",
+      "mutability": "view",
+      "description": "Returns the total token supply, which is fixed at deployment.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "transfer(address,uint256)",
+      "mutability": "nonpayable",
+      "description": "Moves tokens from the caller's balance to the recipient address.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "1000000000000000000"
+        ]
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "transferFrom(address,address,uint256)",
+      "mutability": "nonpayable",
+      "description": "Moves tokens from one account to another using the caller's allowance; reverts if the allowance is too low.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "{{publisher}}",
+          "0x1111111111111111111111111111111111111111",
+          "1000000000000000000"
+        ]
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "PERSONAL_TEST_MAGIC()",
+      "mutability": "view",
+      "description": "Returns the constant marker value that identifies personal-test mode in the deploy policy.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "brakeGuardian()",
+      "mutability": "view",
+      "description": "Returns the guardian address that may engage the brake.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "brakeSpec()",
+      "mutability": "pure",
+      "description": "Returns the URI and document hash that describe the brake policy.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "brakeState()",
+      "mutability": "view",
+      "description": "Returns the current brake level, the guardian address and the timestamp when the brake last changed.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "checkPersonalTestTokenReceipt(address)",
+      "mutability": "nonpayable",
+      "description": "Lets a registered token report a receipt so the personal-test token cap is checked; only callable by the token itself in personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "engageBrake(uint8)",
+      "mutability": "nonpayable",
+      "description": "Raises the brake to a stronger level (1 or 2) to block new entries; only the guardian may call it and it cannot be lowered.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "1"
+        ]
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "instanceMode()",
+      "mutability": "view",
+      "description": "Returns the text 'personal-test' if this instance was deployed under a personal-test policy, otherwise 'testnet'.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "lockFor(address,uint256,uint256,uint256)",
+      "mutability": "nonpayable",
+      "description": "Pulls tokens from the caller and creates a cliff and linear unlock schedule for the beneficiary; one active lock per beneficiary, needs allowance and open brake.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "1000000000000000000",
+          "2592000",
+          "31536000"
+        ]
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "locks(address)",
+      "mutability": "view",
+      "description": "Returns the beneficiary's lock record: amount, released, start, cliff and duration.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "personalTestAllowed(address)",
+      "mutability": "view",
+      "description": "Returns whether the given account is on the personal-test allow list for this instance.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "personalTestAuthority()",
+      "mutability": "view",
+      "description": "Returns the policy authority address used to recognize allowed sibling instances, or zero outside personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "personalTestEnabled()",
+      "mutability": "view",
+      "description": "Returns true if this instance was deployed in personal-test mode with access and value caps.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "personalTestNativeCap()",
+      "mutability": "view",
+      "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or 0 if disabled.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "personalTestOwner()",
+      "mutability": "view",
+      "description": "Returns the owner address of the personal-test policy, or zero if personal-test mode is off.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "personalTestPolicy()",
+      "mutability": "view",
+      "description": "Returns the personal-test policy tuple: marker, owner address, native cap and token cap.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "personalTestTokenCap()",
+      "mutability": "view",
+      "description": "Returns the maximum token amount this instance may hold in personal-test mode, or 0 if disabled.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "releasable(address)",
+      "mutability": "view",
+      "description": "Returns how many tokens the beneficiary could release right now.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "release()",
+      "mutability": "nonpayable",
+      "description": "Pays the caller's unlocked and not yet released tokens to them; only a beneficiary with a lock gets a payout.",
+      "moves_funds": true,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "setPersonalTestAccount(address,bool)",
+      "mutability": "nonpayable",
+      "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it and the owner cannot be removed.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "true"
+        ]
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "token()",
+      "mutability": "view",
+      "description": "Returns the ERC-20 token address held by the locks.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TokenTimeLock",
+      "address": "{{address:TokenTimeLock}}",
+      "function": "vested(address)",
+      "mutability": "view",
+      "description": "Returns the cumulative amount unlocked so far for the beneficiary, zero before the cliff.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "PERSONAL_TEST_MAGIC()",
+      "mutability": "view",
+      "description": "Returns the constant marker value that identifies personal-test mode in the deploy policy.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "beneficiary()",
+      "mutability": "view",
+      "description": "Returns the address that receives vested tokens.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "checkPersonalTestTokenReceipt(address)",
+      "mutability": "nonpayable",
+      "description": "Lets a registered token report a receipt so the personal-test token cap is checked; only callable by the token itself in personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "claim()",
+      "mutability": "nonpayable",
+      "description": "Pays the currently unlocked and unclaimed tokens to the beneficiary; anyone may call it but funds always go to the beneficiary.",
+      "moves_funds": true,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "claimable()",
+      "mutability": "view",
+      "description": "Returns the amount that a claim would pay out now.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "cliff()",
+      "mutability": "view",
+      "description": "Returns the cliff length in seconds from the start time.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "duration()",
+      "mutability": "view",
+      "description": "Returns the total vesting duration in seconds from the start time.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "instanceMode()",
+      "mutability": "view",
+      "description": "Returns the text 'personal-test' if this instance was deployed under a personal-test policy, otherwise 'testnet'.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "personalTestAllowed(address)",
+      "mutability": "view",
+      "description": "Returns whether the given account is on the personal-test allow list for this instance.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "personalTestAuthority()",
+      "mutability": "view",
+      "description": "Returns the policy authority address used to recognize allowed sibling instances, or zero outside personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "personalTestEnabled()",
+      "mutability": "view",
+      "description": "Returns true if this instance was deployed in personal-test mode with access and value caps.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "personalTestNativeCap()",
+      "mutability": "view",
+      "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or 0 if disabled.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "personalTestOwner()",
+      "mutability": "view",
+      "description": "Returns the owner address of the personal-test policy, or zero if personal-test mode is off.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "personalTestPolicy()",
+      "mutability": "view",
+      "description": "Returns the personal-test policy tuple: marker, owner address, native cap and token cap.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "personalTestTokenCap()",
+      "mutability": "view",
+      "description": "Returns the maximum token amount this instance may hold in personal-test mode, or 0 if disabled.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "setPersonalTestAccount(address,bool)",
+      "mutability": "nonpayable",
+      "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it and the owner cannot be removed.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "true"
+        ]
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "start()",
+      "mutability": "view",
+      "description": "Returns the timestamp at which vesting started.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "token()",
+      "mutability": "view",
+      "description": "Returns the ERC-20 token address being vested.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "total()",
+      "mutability": "view",
+      "description": "Returns the total token amount granted.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "LinearVesting",
+      "address": "{{address:LinearVesting}}",
+      "function": "vested()",
+      "mutability": "view",
+      "description": "Returns the cumulative amount unlocked so far, zero before the cliff.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    }
+  ]
+}

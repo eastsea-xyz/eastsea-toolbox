@@ -1,0 +1,360 @@
+{
+  "format": "eastsea-agent-interface/1",
+  "app_id": "{{app_id}}",
+  "name": "Tidal Council",
+  "category": "tools",
+  "summary": "K-of-N shared account approved by owner signatures or direct approvals.",
+  "contracts": [
+    {
+      "id": "SimpleMultisig",
+      "contract": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}"
+    }
+  ],
+  "functions": [
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "PERSONAL_TEST_MAGIC()",
+      "mutability": "view",
+      "description": "Returns the constant marker value that identifies personal-test mode in the deploy policy.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "TRANSACTION_TYPEHASH()",
+      "mutability": "view",
+      "description": "Returns the EIP-712 type hash used for multisig transactions.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "approvals(bytes32,address)",
+      "mutability": "view",
+      "description": "Returns whether the given owner has recorded an on-chain approval for the transaction hash.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111111111111111111111111111",
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "approve(address,uint256,bytes,uint256)",
+      "mutability": "nonpayable",
+      "description": "Records the calling owner's on-chain approval of a transaction with no expiry; moves nothing itself but counts toward execution.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "1000000000000000000",
+          "0x",
+          "1"
+        ]
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "approve(address,uint256,bytes,uint256,uint256)",
+      "mutability": "nonpayable",
+      "description": "Records the calling owner's on-chain approval of a transaction with a deadline; moves nothing itself but counts toward execution.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "1000000000000000000",
+          "0x",
+          "1",
+          "1893456000"
+        ]
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "checkPersonalTestTokenReceipt(address)",
+      "mutability": "nonpayable",
+      "description": "Lets a registered token report a receipt so the personal-test token cap is checked; only callable by the token itself in personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "domainSeparator()",
+      "mutability": "view",
+      "description": "Returns the current EIP-712 domain separator for this multisig and chain.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "eip712Domain()",
+      "mutability": "view",
+      "description": "Returns the EIP-712 domain fields: name, version, chain id and verifying contract.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "execute(address,uint256,bytes,uint256,bytes[])",
+      "mutability": "nonpayable",
+      "description": "Runs the call (which may send native coin or call a token contract) once enough ascending owner signatures are supplied; anyone may submit, each hash runs once.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "1000000000000000000",
+          "0x",
+          "1",
+          []
+        ]
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "executeWithSigners(address,uint256,bytes,uint256,address[],bytes[])",
+      "mutability": "nonpayable",
+      "description": "Runs the call once enough owner signers are given, using signatures or an empty entry for a prior approval, with no expiry; the call may move funds. Anyone may submit.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "1000000000000000000",
+          "0x",
+          "1",
+          [
+            "0x1111111111111111111111111111111111111111",
+            "0x2222222222222222222222222222222222222222"
+          ],
+          [
+            "0x",
+            "0x"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "executeWithSigners(address,uint256,bytes,uint256,uint256,address[],bytes[])",
+      "mutability": "nonpayable",
+      "description": "Runs the call before its deadline once enough owner signers are given, using signatures or an empty entry for a prior approval; the call may move funds. Anyone may submit.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "1000000000000000000",
+          "0x",
+          "1",
+          "1893456000",
+          [
+            "0x1111111111111111111111111111111111111111",
+            "0x2222222222222222222222222222222222222222"
+          ],
+          [
+            "0x",
+            "0x"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "executed(bytes32)",
+      "mutability": "view",
+      "description": "Returns whether the transaction with this hash has already been executed.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "getTransactionHash(address,uint256,bytes,uint256)",
+      "mutability": "view",
+      "description": "Returns the EIP-712 hash of a transaction with no expiry that owners sign or approve.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "1000000000000000000",
+          "0x",
+          "1"
+        ]
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "getTransactionHash(address,uint256,bytes,uint256,uint256)",
+      "mutability": "view",
+      "description": "Returns the EIP-712 hash of a transaction with the given deadline that owners sign or approve.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "1000000000000000000",
+          "0x",
+          "1",
+          "1893456000"
+        ]
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "instanceMode()",
+      "mutability": "view",
+      "description": "Returns the text 'personal-test' if this instance was deployed under a personal-test policy, otherwise 'testnet'.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "isOwner(address)",
+      "mutability": "view",
+      "description": "Returns whether the address is an owner of this multisig.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "personalTestAllowed(address)",
+      "mutability": "view",
+      "description": "Returns whether the given account is on the personal-test allow list for this instance.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "personalTestAuthority()",
+      "mutability": "view",
+      "description": "Returns the policy authority address used to recognize allowed sibling instances, or zero outside personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "personalTestEnabled()",
+      "mutability": "view",
+      "description": "Returns true if this instance was deployed in personal-test mode with access and value caps.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "personalTestNativeCap()",
+      "mutability": "view",
+      "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or 0 if disabled.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "personalTestOwner()",
+      "mutability": "view",
+      "description": "Returns the owner address of the personal-test policy, or zero if personal-test mode is off.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "personalTestPolicy()",
+      "mutability": "view",
+      "description": "Returns the personal-test policy tuple: marker, owner address, native cap and token cap.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "personalTestTokenCap()",
+      "mutability": "view",
+      "description": "Returns the maximum token amount this instance may hold in personal-test mode, or 0 if disabled.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "setPersonalTestAccount(address,bool)",
+      "mutability": "nonpayable",
+      "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it and the owner cannot be removed.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "true"
+        ]
+      }
+    },
+    {
+      "id": "SimpleMultisig",
+      "address": "{{address:SimpleMultisig}}",
+      "function": "threshold()",
+      "mutability": "view",
+      "description": "Returns the number of owner confirmations required to execute.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    }
+  ]
+}

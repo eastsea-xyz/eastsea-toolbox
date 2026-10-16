@@ -1,0 +1,26 @@
+{
+  "schema": "toolbox-runtime/1",
+  "app_id": "{{app_id}}",
+  "contracts": [
+    {
+      "address": "{{address:AmmFactory}}",
+      "label": "AmmFactory",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "{{address:AmmFactory}}"
+    },
+    {
+      "address": "{{address:AmmRouter}}",
+      "label": "AmmRouter",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "{{address:AmmFactory}}"
+    }
+  ],
+  "noindex": true,
+  "x-toolbox-chain-id": "{{chain_id}}",
+  "x-toolbox-native-currency": {
+    "symbol": "{{native_symbol}}",
+    "decimals": "{{native_decimals}}"
+  },
+  "x-toolbox-primary-contract": "AmmFactory",
+  "x-toolbox-test-only": true
+}

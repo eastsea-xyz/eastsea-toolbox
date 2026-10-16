@@ -1,0 +1,814 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "GOVERNANCE ADJACENT — voting tokens and an on-chain treasury may be characterized as investment contracts or trigger treasury accounting rules depending on jurisdiction. Do not submit to the public registry until legal review is complete (docs/legal-notes.md).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Coral Senate",
+  "subtitle": "Token-weighted DAO",
+  "description": "Example 11 — hash-committed proposals, EIP-712 EOA/ERC-1271 weighted votes or direct account votes, and quorum-checked execution behind a timelock window.",
+  "long_description": "Minimal governance for a token-weighted community. Proposals commit only the keccak256 hash of the action to execute; execution re-derives and matches the hash. OpenZeppelin SignatureChecker verifies EOA signatures or calls a code-bearing voter's ERC-1271 isValidSignature, including EastSea v2 P-256 accounts. EIP-712 v2 binds the current chainId, DAO address, proposalId nonce, action hash, voting end and execution expiry. A relayer submits sorted unique voter addresses paired with signatures. A wallet without off-chain message signing calls vote before voting ends and supplies an empty signature at execution; direct and signed votes can be mixed without double counting. Weight remains balanceOf at execution time. A timelock delays execution, and expired or executed proposals cannot execute. Proposals cost two state slots; off-chain votes add no state, while direct votes add one slot per voter and proposal. Executions reuse the proposal's existing packed slot.",
+  "localized": {
+    "ko": {
+      "name": "코랄 센에이트",
+      "subtitle": "토큰 가중 DAO",
+      "description": "예제 11 — 해시 커밋 제안, EIP-712 EOA/ERC-1271 가중 서명 또는 계정 직접 vote, 타임락 뒤 쿼럼 실행. 서명 투표는 상태 0, 직접 투표는 유권자·제안당 1슬롯이다."
+    }
+  },
+  "locales": [
+    "en",
+    "ko"
+  ],
+  "category": "tools",
+  "tags": [
+    "dao",
+    "governance",
+    "voting",
+    "timelock",
+    "erc1271"
+  ],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "SimpleDAO",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": [
+    "accounts",
+    "send"
+  ],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "none",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/dao",
+  "x-toolbox-tests": "contracts/test/dao/",
+  "x-eastsea-template": {
+    "format": "eastsea-template/1",
+    "slug": "dao",
+    "summary": "Token-weighted proposals with a voting period, timelock and grace period.",
+    "web": "web",
+    "compiler": {
+      "solc": "0.8.24",
+      "evm_version": "paris",
+      "optimizer_runs": 200
+    },
+    "contracts": [
+      {
+        "id": "TestToken",
+        "contract": "FixedSupplyToken",
+        "source": "contracts/FixedSupplyToken.sol",
+        "constructor": [
+          {
+            "name": "name_",
+            "type": "string",
+            "label": "Token name",
+            "description": "Human-readable name of the ERC-20 token.",
+            "value": "Toolbox Test Coin"
+          },
+          {
+            "name": "symbol_",
+            "type": "string",
+            "label": "Token symbol",
+            "description": "Short ticker symbol of the ERC-20 token.",
+            "value": "TEST"
+          },
+          {
+            "name": "supply",
+            "type": "uint256",
+            "label": "Total supply",
+            "description": "Total token amount in base units (18 decimals), minted once to the recipient; no further minting exists.",
+            "value": "1000000000000000000000000"
+          },
+          {
+            "name": "recipient",
+            "type": "address",
+            "label": "Initial recipient",
+            "description": "Address that receives the entire supply at deployment; must not be the zero address.",
+            "value": "{{publisher}}"
+          }
+        ]
+      },
+      {
+        "id": "SimpleDAO",
+        "contract": "SimpleDAO",
+        "source": "contracts/SimpleDAO.sol",
+        "manifest_label": "SimpleDAO",
+        "constructor": [
+          {
+            "name": "guardian",
+            "type": "address",
+            "label": "Guardian address",
+            "description": "Address allowed to engage the brake that blocks new proposals and votes.",
+            "value": "{{publisher}}"
+          },
+          {
+            "name": "votesToken_",
+            "type": "address",
+            "label": "Voting token",
+            "description": "ERC-20 token whose holder balances give voting weight; must be a contract and not fee-on-transfer.",
+            "value": "{{address:TestToken}}"
+          },
+          {
+            "name": "quorum_",
+            "type": "uint256",
+            "label": "Quorum amount",
+            "description": "Total voting-token weight of approving voters required to execute a proposal; above zero.",
+            "value": "1000000000000000000"
+          },
+          {
+            "name": "votingPeriod_",
+            "type": "uint48",
+            "label": "Voting seconds",
+            "description": "Seconds a proposal stays open for votes after it is created; above zero.",
+            "value": "3600"
+          },
+          {
+            "name": "timelockDelay_",
+            "type": "uint48",
+            "label": "Timelock seconds",
+            "description": "Seconds to wait after voting ends before a proposal can be executed; above zero.",
+            "value": "3600"
+          },
+          {
+            "name": "gracePeriod_",
+            "type": "uint48",
+            "label": "Grace seconds",
+            "description": "Seconds after the timelock during which a proposal can be executed before it expires; above zero.",
+            "value": "86400"
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "deploy": "TestToken"
+      },
+      {
+        "deploy": "SimpleDAO"
+      }
+    ],
+    "placeholders": [
+      "{{address:SimpleDAO}}",
+      "{{address:TestToken}}",
+      "{{app_id}}",
+      "{{chain_id}}",
+      "{{native_decimals}}",
+      "{{native_symbol}}",
+      "{{publisher}}"
+    ],
+    "interface": [
+      {
+        "contract": "TestToken",
+        "function": "DOMAIN_SEPARATOR()",
+        "mutability": "view",
+        "description": "Returns the EIP-712 domain separator used to verify permit signatures.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "PERSONAL_TEST_MAGIC()",
+        "mutability": "view",
+        "description": "Returns the constant identifier that marks the personal-test policy format.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "allowance(address,address)",
+        "mutability": "view",
+        "description": "Returns how many tokens the spender is currently allowed to move on behalf of the owner.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "{{publisher}}",
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "approve(address,uint256)",
+        "mutability": "nonpayable",
+        "description": "Sets the amount of the caller's tokens the spender may transfer, replacing any earlier allowance.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "1000000000000000000"
+          ]
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "balanceOf(address)",
+        "mutability": "view",
+        "description": "Returns the token balance of an account.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "{{publisher}}"
+          ]
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "checkPersonalTestTokenReceipt(address)",
+        "mutability": "nonpayable",
+        "description": "Personal-test hook that verifies token holdings stay under the cap; only callable by the token itself, and only in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "decimals()",
+        "mutability": "view",
+        "description": "Returns the number of decimals the token uses, which is 18.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "eip712Domain()",
+        "mutability": "view",
+        "description": "Returns the EIP-712 domain fields (name, version, chain id, verifying contract) used for permit signatures.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "instanceMode()",
+        "mutability": "view",
+        "description": "Returns 'personal-test' if this copy was deployed in personal-test mode, otherwise 'testnet'.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "name()",
+        "mutability": "view",
+        "description": "Returns the token name.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "nonces(address)",
+        "mutability": "view",
+        "description": "Returns the next permit nonce for an owner address.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "{{publisher}}"
+          ]
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+        "mutability": "nonpayable",
+        "description": "Sets a spender's allowance from the owner's signed EIP-2612 message instead of a transaction by the owner; anyone may submit it before the deadline.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "{{publisher}}",
+            "0x1111111111111111111111111111111111111111",
+            "1000000000000000000",
+            "1900000000",
+            "27",
+            "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "0x2222222222222222222222222222222222222222222222222222222222222222"
+          ]
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "personalTestAllowed(address)",
+        "mutability": "view",
+        "description": "Returns whether an account is on this copy's personal-test allow list.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "personalTestAuthority()",
+        "mutability": "view",
+        "description": "Returns the address of the policy authority that vouches for personal-test contract copies, or zero outside that mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "personalTestEnabled()",
+        "mutability": "view",
+        "description": "Returns true if this copy runs in personal-test mode, which restricts which accounts may interact.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "personalTestNativeCap()",
+        "mutability": "view",
+        "description": "Returns the maximum native coin balance this copy may hold in personal-test mode, or zero outside that mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "personalTestOwner()",
+        "mutability": "view",
+        "description": "Returns the owner address of this personal-test copy, or zero outside personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "personalTestPolicy()",
+        "mutability": "view",
+        "description": "Returns the personal-test policy tuple: magic value, owner, native-coin cap and token cap.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "personalTestTokenCap()",
+        "mutability": "view",
+        "description": "Returns the maximum token amount this copy may hold in personal-test mode, or zero outside that mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "setPersonalTestAccount(address,bool)",
+        "mutability": "nonpayable",
+        "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it, and the owner cannot be removed.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "true"
+          ]
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "symbol()",
+        "mutability": "view",
+        "description": "Returns the token ticker symbol.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "totalSupply()",
+        "mutability": "view",
+        "description": "Returns the total token supply, which is fixed at deployment.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "transfer(address,uint256)",
+        "mutability": "nonpayable",
+        "description": "Moves tokens from the caller's balance to the recipient address.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "1000000000000000000"
+          ]
+        }
+      },
+      {
+        "contract": "TestToken",
+        "function": "transferFrom(address,address,uint256)",
+        "mutability": "nonpayable",
+        "description": "Moves tokens from one account to another using the caller's allowance; reverts if the allowance is too low.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "{{publisher}}",
+            "0x1111111111111111111111111111111111111111",
+            "1000000000000000000"
+          ]
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "PERSONAL_TEST_MAGIC()",
+        "mutability": "view",
+        "description": "Returns the constant marker value that identifies personal-test mode in the deploy policy.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "VOTE_TYPEHASH()",
+        "mutability": "view",
+        "description": "Returns the EIP-712 type hash used for vote signatures.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "approvedVotes(uint256,address)",
+        "mutability": "view",
+        "description": "Returns whether the voter has recorded an on-chain approval for the proposal.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1",
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "brakeGuardian()",
+        "mutability": "view",
+        "description": "Returns the guardian address that may engage the brake.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "brakeSpec()",
+        "mutability": "pure",
+        "description": "Returns the URI and document hash that describe the brake policy.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "brakeState()",
+        "mutability": "view",
+        "description": "Returns the current brake level, the guardian address and the timestamp when the brake last changed.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "checkPersonalTestTokenReceipt(address)",
+        "mutability": "nonpayable",
+        "description": "Lets a registered token report a receipt so the personal-test token cap is checked; only callable by the token itself in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "domainSeparator()",
+        "mutability": "view",
+        "description": "Returns the current EIP-712 domain separator for this DAO and chain.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "eip712Domain()",
+        "mutability": "view",
+        "description": "Returns the EIP-712 domain fields: name, version, chain id and verifying contract.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "engageBrake(uint8)",
+        "mutability": "nonpayable",
+        "description": "Raises the brake to a stronger level (1 or 2) to block new entries; only the guardian may call it and it cannot be lowered.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "execute(uint256,address,uint256,bytes,bytes[])",
+        "mutability": "nonpayable",
+        "description": "Runs the proposal's committed call from the treasury once its timelock has passed and signers' token weight reaches quorum; may send native coin. Anyone may submit.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "1",
+            "0x1111111111111111111111111111111111111111",
+            "1000000000000000000",
+            "0x",
+            []
+          ]
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "executeWithSigners(uint256,address,uint256,bytes,address[],bytes[])",
+        "mutability": "nonpayable",
+        "description": "Runs the proposal's committed call from the treasury after the timelock, counting signed or on-chain approvals that reach quorum; may send native coin. Anyone may submit.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "1",
+            "0x1111111111111111111111111111111111111111",
+            "1000000000000000000",
+            "0x",
+            [
+              "0x1111111111111111111111111111111111111111",
+              "0x2222222222222222222222222222222222222222"
+            ],
+            [
+              "0x",
+              "0x"
+            ]
+          ]
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "getVoteHash(uint256)",
+        "mutability": "view",
+        "description": "Returns the EIP-712 digest voters sign to approve the proposal.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "gracePeriod()",
+        "mutability": "view",
+        "description": "Returns the seconds a proposal stays executable after its timelock.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "instanceMode()",
+        "mutability": "view",
+        "description": "Returns the text 'personal-test' if this instance was deployed under a personal-test policy, otherwise 'testnet'.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "nextProposalId()",
+        "mutability": "view",
+        "description": "Returns the id that the next proposal will receive.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "personalTestAllowed(address)",
+        "mutability": "view",
+        "description": "Returns whether the given account is on the personal-test allow list for this instance.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "personalTestAuthority()",
+        "mutability": "view",
+        "description": "Returns the policy authority address used to recognize allowed sibling instances, or zero outside personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "personalTestEnabled()",
+        "mutability": "view",
+        "description": "Returns true if this instance was deployed in personal-test mode with access and value caps.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "personalTestNativeCap()",
+        "mutability": "view",
+        "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or 0 if disabled.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "personalTestOwner()",
+        "mutability": "view",
+        "description": "Returns the owner address of the personal-test policy, or zero if personal-test mode is off.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "personalTestPolicy()",
+        "mutability": "view",
+        "description": "Returns the personal-test policy tuple: marker, owner address, native cap and token cap.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "personalTestTokenCap()",
+        "mutability": "view",
+        "description": "Returns the maximum token amount this instance may hold in personal-test mode, or 0 if disabled.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "proposals(uint256)",
+        "mutability": "view",
+        "description": "Returns the proposal record: execution hash, voting end, executable-from time, expiry and executed flag.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "propose(bytes32)",
+        "mutability": "nonpayable",
+        "description": "Opens a proposal that commits to the hash of target, value and data; anyone may call while the brake is open.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "quorum()",
+        "mutability": "view",
+        "description": "Returns the voting-token weight required to execute a proposal.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "setPersonalTestAccount(address,bool)",
+        "mutability": "nonpayable",
+        "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it and the owner cannot be removed.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "true"
+          ]
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "state(uint256)",
+        "mutability": "view",
+        "description": "Returns the proposal state code: 0 none, 1 voting, 2 timelock, 3 executable, 4 executed, 5 expired.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "timelockDelay()",
+        "mutability": "view",
+        "description": "Returns the seconds between the end of voting and when execution is allowed.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "vote(uint256)",
+        "mutability": "nonpayable",
+        "description": "Records the caller's on-chain approval of an open proposal; weight is read from token balances at execution; needs open brake.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "votesToken()",
+        "mutability": "view",
+        "description": "Returns the ERC-20 token address that gives voting weight.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "SimpleDAO",
+        "function": "votingPeriod()",
+        "mutability": "view",
+        "description": "Returns the seconds a proposal is open for votes.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      }
+    ],
+    "check_call": {
+      "contract": "SimpleDAO",
+      "function": "quorum()"
+    },
+    "web_sha256": "0x030ca6cd1da220428a1eb85c87d235a808f138d8f9acf2c6f101493ed6fb5f24"
+  }
+}

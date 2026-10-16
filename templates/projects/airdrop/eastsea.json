@@ -1,0 +1,315 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "AIRDROP ADJACENT — free distributions can still trigger marketing, tax, and securities scrutiny depending on selection criteria and prior trading. No referral-coin structures. Do not submit to the public registry until legal review is complete (docs/legal-notes.md).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Pearl Drop",
+  "subtitle": "Merkle airdrop",
+  "description": "Example 13 — a 32-byte Merkle root commits the whole recipient list; claimants prove membership and are paid once before the deadline.",
+  "long_description": "Distribution without a distribution list on chain. The deployer commits an arbitrary-size recipient list as a single Merkle root at deploy time; each recipient later proves membership with a logarithmic-size proof and is paid their exact committed amount, once. Leaves bind address and amount together, so a stolen proof is useless to anyone else. The claim window closes at an immutable deadline, after which a permissionless sweep returns the entire unclaimed remainder to the fixed distributor — a typo'd root or an abandoned drop can never strand funds. State cost per claim is one slot paid by the claimant, not the deployer: the deployer's entire commitment is 32 bytes.",
+  "localized": {
+    "ko": {
+      "name": "펄 드롭",
+      "subtitle": "머클 에어드랍",
+      "description": "예제 13 — 32바이트 머클 루트가 명단 전체를 커밋하고, 수령인이 증명으로 마감 전 1회 청구한다."
+    }
+  },
+  "locales": [
+    "en",
+    "ko"
+  ],
+  "category": "payments",
+  "tags": [
+    "airdrop",
+    "merkle",
+    "distribution",
+    "claims",
+    "proof"
+  ],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "MerkleAirdrop",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": [
+    "accounts",
+    "send"
+  ],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "none",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/airdrop",
+  "x-toolbox-tests": "contracts/test/airdrop/",
+  "x-eastsea-template": {
+    "format": "eastsea-template/1",
+    "slug": "airdrop",
+    "summary": "Merkle-root allocation list with proof claims and a closing sweep.",
+    "web": "web",
+    "compiler": {
+      "solc": "0.8.24",
+      "evm_version": "paris",
+      "optimizer_runs": 200
+    },
+    "contracts": [
+      {
+        "id": "MerkleAirdrop",
+        "contract": "MerkleAirdrop",
+        "source": "contracts/MerkleAirdrop.sol",
+        "manifest_label": "MerkleAirdrop",
+        "constructor": [
+          {
+            "name": "merkleRoot_",
+            "type": "bytes32",
+            "label": "Merkle root",
+            "description": "Merkle root committing to the list of (account, amount) claims.",
+            "value": "0x6eccd973173d387cb322c6881c52ba49d644a34069b573a78b0de002e071db3f"
+          },
+          {
+            "name": "distributor_",
+            "type": "address",
+            "label": "Distributor",
+            "description": "Address that receives unclaimed funds after the claim deadline.",
+            "value": "{{publisher}}"
+          },
+          {
+            "name": "claimPeriod",
+            "type": "uint48",
+            "label": "Claim period",
+            "description": "Seconds after deployment during which claims are open.",
+            "value": "86400"
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "deploy": "MerkleAirdrop"
+      }
+    ],
+    "placeholders": [
+      "{{address:MerkleAirdrop}}",
+      "{{app_id}}",
+      "{{chain_id}}",
+      "{{native_decimals}}",
+      "{{native_symbol}}",
+      "{{publisher}}"
+    ],
+    "interface": [
+      {
+        "contract": "MerkleAirdrop",
+        "function": "PERSONAL_TEST_MAGIC()",
+        "mutability": "view",
+        "description": "Returns the constant identifier that marks a personal-test deployment policy.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MerkleAirdrop",
+        "function": "checkPersonalTestTokenReceipt(address)",
+        "mutability": "nonpayable",
+        "description": "Lets a personal-test token notify this contract of a receipt so the token holding cap is checked; reverts if the cap is exceeded.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "MerkleAirdrop",
+        "function": "claim(uint256,bytes32[])",
+        "mutability": "nonpayable",
+        "description": "Claims the caller's amount in native coin by supplying a Merkle proof; one claim per address and only before the deadline.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "1000000000000000000",
+            [
+              "0x1111111111111111111111111111111111111111111111111111111111111111"
+            ]
+          ]
+        }
+      },
+      {
+        "contract": "MerkleAirdrop",
+        "function": "claimed(address)",
+        "mutability": "view",
+        "description": "Returns whether an address has already claimed.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "MerkleAirdrop",
+        "function": "deadline()",
+        "mutability": "view",
+        "description": "Returns the claim deadline as a Unix timestamp.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MerkleAirdrop",
+        "function": "distributor()",
+        "mutability": "view",
+        "description": "Returns the address that receives the remaining balance after the deadline.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MerkleAirdrop",
+        "function": "instanceMode()",
+        "mutability": "view",
+        "description": "Returns 'personal-test' if deployed under a personal-test policy, otherwise 'testnet'.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MerkleAirdrop",
+        "function": "merkleRoot()",
+        "mutability": "view",
+        "description": "Returns the Merkle root that defines who may claim and how much.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MerkleAirdrop",
+        "function": "personalTestAllowed(address)",
+        "mutability": "view",
+        "description": "Returns whether an account is on this instance's personal-test allow list.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "MerkleAirdrop",
+        "function": "personalTestAuthority()",
+        "mutability": "view",
+        "description": "Returns the deployment authority address that vouches for related personal-test instances, or zero when not in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MerkleAirdrop",
+        "function": "personalTestEnabled()",
+        "mutability": "view",
+        "description": "Returns whether this instance runs under a personal-test policy that limits callers and held value.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MerkleAirdrop",
+        "function": "personalTestNativeCap()",
+        "mutability": "view",
+        "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or zero otherwise.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MerkleAirdrop",
+        "function": "personalTestOwner()",
+        "mutability": "view",
+        "description": "Returns the owner account of the personal-test policy, or zero when not in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MerkleAirdrop",
+        "function": "personalTestPolicy()",
+        "mutability": "view",
+        "description": "Returns the personal-test policy tuple: marker, owner, native coin cap and token cap.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MerkleAirdrop",
+        "function": "personalTestTokenCap()",
+        "mutability": "view",
+        "description": "Returns the maximum total raw token units this instance may hold in personal-test mode, or zero otherwise.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MerkleAirdrop",
+        "function": "setPersonalTestAccount(address,bool)",
+        "mutability": "nonpayable",
+        "description": "Adds or removes an account on the personal-test allow list; callable only by the policy owner, who cannot be removed.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "true"
+          ]
+        }
+      },
+      {
+        "contract": "MerkleAirdrop",
+        "function": "sweep()",
+        "mutability": "nonpayable",
+        "description": "After the deadline, sends the whole remaining balance to the distributor; anyone may call it.",
+        "moves_funds": true,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MerkleAirdrop",
+        "function": "totalClaimed()",
+        "mutability": "view",
+        "description": "Returns the total amount in wei paid out through claims.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      }
+    ],
+    "check_call": {
+      "contract": "MerkleAirdrop",
+      "function": "merkleRoot()"
+    },
+    "web_sha256": "0xc7b44fa4a6a9e583897b062d7b7a32cb8a350d5d1a43f723c90a2aab9c175eee"
+  }
+}

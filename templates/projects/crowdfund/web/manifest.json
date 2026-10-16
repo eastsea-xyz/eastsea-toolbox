@@ -1,0 +1,20 @@
+{
+  "schema": "toolbox-runtime/1",
+  "app_id": "{{app_id}}",
+  "contracts": [
+    {
+      "address": "{{address:AllOrNothingCrowdfund}}",
+      "label": "AllOrNothingCrowdfund",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "{{address:AllOrNothingCrowdfund}}"
+    }
+  ],
+  "noindex": true,
+  "x-toolbox-chain-id": "{{chain_id}}",
+  "x-toolbox-native-currency": {
+    "symbol": "{{native_symbol}}",
+    "decimals": "{{native_decimals}}"
+  },
+  "x-toolbox-primary-contract": "AllOrNothingCrowdfund",
+  "x-toolbox-test-only": true
+}

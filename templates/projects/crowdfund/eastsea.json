@@ -1,0 +1,380 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "FUNDRAISING ADJACENT — collecting money from the public for a beneficiary may trigger charity solicitation, crowdfunding, or securities rules depending on jurisdiction and reward structure. Do not submit to the public registry until legal review is complete (docs/legal-notes.md).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Lighthouse Fund",
+  "subtitle": "All-or-nothing crowdfund",
+  "description": "Example 12 — fixed goal and deadline: permissionless one-shot payout on success, self-claim refunds that erase contributor state on failure.",
+  "long_description": "A single-purpose crowdfunding contract with no middle outcome. Contributors send native funds until the goal scalar is reached or the deadline passes. If the goal is met — even before the deadline — anyone may trigger the single payout to the fixed beneficiary; overfunding in the final contribution is accepted in full as a donation. If the deadline passes below the goal, every contributor self-claims an exact refund, and each refund deletes that contributor's slot: a failed campaign converges to zero permanent state, while a successful one keeps contributor slots as proof-of-origin treasury accounting. Goal, deadline, and beneficiary are immutable at deploy time — no key can change the rules of a running campaign.",
+  "localized": {
+    "ko": {
+      "name": "라이트하우스 펀드",
+      "subtitle": "올오어낫싱 크라우드펀드",
+      "description": "예제 12 — 고정 목표·마감: 성공 시 1회 인도, 실패 시 전액 환불과 기여 슬롯 소거."
+    }
+  },
+  "locales": [
+    "en",
+    "ko"
+  ],
+  "category": "payments",
+  "tags": [
+    "crowdfunding",
+    "fundraiser",
+    "all-or-nothing",
+    "refund",
+    "campaign"
+  ],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "AllOrNothingCrowdfund",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": [
+    "accounts",
+    "send"
+  ],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "none",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/crowdfund",
+  "x-toolbox-tests": "contracts/test/crowdfund/",
+  "x-eastsea-template": {
+    "format": "eastsea-template/1",
+    "slug": "crowdfund",
+    "summary": "All-or-nothing fundraiser: paid out on success, self-claimed refunds otherwise.",
+    "web": "web",
+    "compiler": {
+      "solc": "0.8.24",
+      "evm_version": "paris",
+      "optimizer_runs": 200
+    },
+    "contracts": [
+      {
+        "id": "AllOrNothingCrowdfund",
+        "contract": "AllOrNothingCrowdfund",
+        "source": "contracts/AllOrNothingCrowdfund.sol",
+        "manifest_label": "AllOrNothingCrowdfund",
+        "constructor": [
+          {
+            "name": "guardian",
+            "type": "address",
+            "label": "Brake guardian",
+            "description": "Address allowed to engage the emergency brake; zero means no brake can be used.",
+            "value": "{{publisher}}"
+          },
+          {
+            "name": "beneficiary_",
+            "type": "address",
+            "label": "Beneficiary",
+            "description": "Address that receives all funds if the goal is reached.",
+            "value": "{{publisher}}"
+          },
+          {
+            "name": "goal_",
+            "type": "uint128",
+            "label": "Goal amount",
+            "description": "Target amount in wei that must be raised by the deadline.",
+            "value": "10000000000000000000"
+          },
+          {
+            "name": "durationSec",
+            "type": "uint48",
+            "label": "Duration seconds",
+            "description": "Seconds from deployment until the campaign deadline.",
+            "value": "86400"
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "deploy": "AllOrNothingCrowdfund"
+      }
+    ],
+    "placeholders": [
+      "{{address:AllOrNothingCrowdfund}}",
+      "{{app_id}}",
+      "{{chain_id}}",
+      "{{native_decimals}}",
+      "{{native_symbol}}",
+      "{{publisher}}"
+    ],
+    "interface": [
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "PERSONAL_TEST_MAGIC()",
+        "mutability": "view",
+        "description": "Returns the constant identifier that marks a personal-test deployment policy.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "beneficiary()",
+        "mutability": "view",
+        "description": "Returns the address that receives the funds if the goal is reached.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "brakeGuardian()",
+        "mutability": "view",
+        "description": "Returns the guardian address that alone may engage the emergency brake, fixed at deployment.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "brakeSpec()",
+        "mutability": "pure",
+        "description": "Returns the brake specification URI and its document hash.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "brakeState()",
+        "mutability": "view",
+        "description": "Returns the current brake state (0 normal, 1 new entries blocked, 2 fully paused), the guardian and the time it was engaged.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "campaign()",
+        "mutability": "view",
+        "description": "Returns the total raised so far and whether the funds were already withdrawn.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "checkPersonalTestTokenReceipt(address)",
+        "mutability": "nonpayable",
+        "description": "Lets a personal-test token notify this contract of a receipt so the token holding cap is checked; reverts if the cap is exceeded.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "contribute()",
+        "mutability": "payable",
+        "description": "Contributes the attached native coin to the campaign; rejected after the deadline, once the goal is met, or while the brake blocks entries.",
+        "moves_funds": true,
+        "example": {
+          "args": [],
+          "value_wei": "1000000000000000000"
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "contributions(address)",
+        "mutability": "view",
+        "description": "Returns the amount in wei an address has contributed and not yet had refunded.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "deadline()",
+        "mutability": "view",
+        "description": "Returns the campaign deadline as a Unix timestamp.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "engageBrake(uint8)",
+        "mutability": "nonpayable",
+        "description": "Raises the emergency brake to a higher state (1 blocks new entries, 2 pauses more); callable only by the guardian and cannot be lowered.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "goal()",
+        "mutability": "view",
+        "description": "Returns the funding goal in wei.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "instanceMode()",
+        "mutability": "view",
+        "description": "Returns 'personal-test' if deployed under a personal-test policy, otherwise 'testnet'.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "personalTestAllowed(address)",
+        "mutability": "view",
+        "description": "Returns whether an account is on this instance's personal-test allow list.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "personalTestAuthority()",
+        "mutability": "view",
+        "description": "Returns the deployment authority address that vouches for related personal-test instances, or zero when not in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "personalTestEnabled()",
+        "mutability": "view",
+        "description": "Returns whether this instance runs under a personal-test policy that limits callers and held value.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "personalTestNativeCap()",
+        "mutability": "view",
+        "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or zero otherwise.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "personalTestOwner()",
+        "mutability": "view",
+        "description": "Returns the owner account of the personal-test policy, or zero when not in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "personalTestPolicy()",
+        "mutability": "view",
+        "description": "Returns the personal-test policy tuple: marker, owner, native coin cap and token cap.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "personalTestTokenCap()",
+        "mutability": "view",
+        "description": "Returns the maximum total raw token units this instance may hold in personal-test mode, or zero otherwise.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "refund()",
+        "mutability": "nonpayable",
+        "description": "Returns the caller's whole contribution if the deadline passed and the goal was not reached.",
+        "moves_funds": true,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "setPersonalTestAccount(address,bool)",
+        "mutability": "nonpayable",
+        "description": "Adds or removes an account on the personal-test allow list; callable only by the policy owner, who cannot be removed.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "true"
+          ]
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "state()",
+        "mutability": "view",
+        "description": "Returns the campaign state: 0 open, 1 goal reached, 2 failed, 3 reached and withdrawn.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "AllOrNothingCrowdfund",
+        "function": "withdraw()",
+        "mutability": "nonpayable",
+        "description": "Sends all raised funds to the beneficiary once the goal is reached; anyone may call it.",
+        "moves_funds": true,
+        "example": {
+          "args": []
+        }
+      }
+    ],
+    "check_call": {
+      "contract": "AllOrNothingCrowdfund",
+      "function": "goal()"
+    },
+    "web_sha256": "0xd56c89463f5be548dbe4483836d8f61a0ac6e37b093378264af0577358ce68dd"
+  }
+}

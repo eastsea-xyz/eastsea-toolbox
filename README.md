@@ -170,6 +170,31 @@ dependency is added. Runtime reports identify the binary and available B5 fee
 evidence. All nodes and browsers are stopped through the harness's own process
 handles, with evidence under `./tmp/`; no live testnet is used.
 
+## Template projects (eastsea-template/1)
+
+Every example is also packaged as a self-contained template project under
+`templates/projects/<slug>/`, for the EastSea app and agents
+(`aether-agent template list|new`, `app check`, `app publish --prepare`):
+
+- `eastsea.json` — the example's `eastsea-app/1` manifest plus the
+  `x-eastsea-template` extension ([schema](templates/publish/schema/eastsea-template-1.json)):
+  contracts to deploy with typed, labelled constructor values, ordered steps,
+  the placeholders the web reads, and an agent-readable interface (every
+  public function: one plain line, whether it moves funds, one example call).
+- `contracts/` — one flattened Solidity file per contract (compiles alone).
+- `web/` — the bundle. Addresses come only from `{{placeholders}}` in
+  `web/manifest.json`; `web/agent.json` carries the interface for agents.
+
+`templates/projects/index.json` lists them alphabetically with a tree hash
+each; its sha256 is what aether-agent pins. Listings are neutral: no ranking,
+yield or price words. AS IS, not audited.
+
+```bash
+make templates            # regenerate from examples/, apps/, contracts/src
+make validate-templates   # reproducible tree + schema, compile, interface, placeholders, bundle hash, index
+make test-templates       # tampered copies must be refused
+```
+
 ## 카탈로그
 
 | # | 예제 | 폴더 | 앱 이름 | 다루는 것 |

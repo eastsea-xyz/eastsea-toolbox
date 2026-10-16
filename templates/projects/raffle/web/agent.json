@@ -1,0 +1,316 @@
+{
+  "format": "eastsea-agent-interface/1",
+  "app_id": "{{app_id}}",
+  "name": "Tidal Draw",
+  "category": "games",
+  "summary": "Commit-reveal draw: host seed commit, entries, then a reveal with a fallback.",
+  "contracts": [
+    {
+      "id": "CommitRevealRaffle",
+      "contract": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}"
+    }
+  ],
+  "functions": [
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "PERSONAL_TEST_MAGIC()",
+      "mutability": "view",
+      "description": "Returns the constant identifier that marks a personal-test deployment policy.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "brakeGuardian()",
+      "mutability": "view",
+      "description": "Returns the guardian address that alone may engage the emergency brake, fixed at deployment.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "brakeSpec()",
+      "mutability": "pure",
+      "description": "Returns the brake specification URI and its document hash.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "brakeState()",
+      "mutability": "view",
+      "description": "Returns the current brake state (0 normal, 1 new entries blocked, 2 fully paused), the guardian and the time it was engaged.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "checkPersonalTestTokenReceipt(address)",
+      "mutability": "nonpayable",
+      "description": "Lets a personal-test token notify this contract of a receipt so the token holding cap is checked; reverts if the cap is exceeded.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "drawWithoutSeed()",
+      "mutability": "nonpayable",
+      "description": "After the reveal window closes without a reveal, draws a winner from block randomness alone and pays out the pool; anyone may call it.",
+      "moves_funds": true,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "drawn()",
+      "mutability": "view",
+      "description": "Returns whether the draw has happened.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "engageBrake(uint8)",
+      "mutability": "nonpayable",
+      "description": "Raises the emergency brake to a higher state (1 blocks new entries, 2 pauses more); callable only by the guardian and cannot be lowered.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "1"
+        ]
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "enter()",
+      "mutability": "payable",
+      "description": "Buys one ticket for the exact ticket price; rejected after the entry deadline or while the brake blocks entries.",
+      "moves_funds": true,
+      "example": {
+        "args": [],
+        "value_wei": "1000000000000000"
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "enterDeadline()",
+      "mutability": "view",
+      "description": "Returns the ticket entry deadline as a Unix timestamp.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "instanceMode()",
+      "mutability": "view",
+      "description": "Returns 'personal-test' if deployed under a personal-test policy, otherwise 'testnet'.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "personalTestAllowed(address)",
+      "mutability": "view",
+      "description": "Returns whether an account is on this instance's personal-test allow list.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "personalTestAuthority()",
+      "mutability": "view",
+      "description": "Returns the deployment authority address that vouches for related personal-test instances, or zero when not in personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "personalTestEnabled()",
+      "mutability": "view",
+      "description": "Returns whether this instance runs under a personal-test policy that limits callers and held value.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "personalTestNativeCap()",
+      "mutability": "view",
+      "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or zero otherwise.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "personalTestOwner()",
+      "mutability": "view",
+      "description": "Returns the owner account of the personal-test policy, or zero when not in personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "personalTestPolicy()",
+      "mutability": "view",
+      "description": "Returns the personal-test policy tuple: marker, owner, native coin cap and token cap.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "personalTestTokenCap()",
+      "mutability": "view",
+      "description": "Returns the maximum total raw token units this instance may hold in personal-test mode, or zero otherwise.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "playerCount()",
+      "mutability": "view",
+      "description": "Returns the number of tickets sold.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "players(uint256)",
+      "mutability": "view",
+      "description": "Returns the address that holds the ticket at the given index.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0"
+        ]
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "reveal(bytes32)",
+      "mutability": "nonpayable",
+      "description": "After entry closes and before the reveal deadline, submits the committed seed to draw a winner and pay out the pool; anyone with the seed may call it.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "revealDeadline()",
+      "mutability": "view",
+      "description": "Returns the reveal deadline as a Unix timestamp.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "seedCommit()",
+      "mutability": "view",
+      "description": "Returns the hash of the organizer's committed seed.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "setPersonalTestAccount(address,bool)",
+      "mutability": "nonpayable",
+      "description": "Adds or removes an account on the personal-test allow list; callable only by the policy owner, who cannot be removed.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "true"
+        ]
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "ticketPrice()",
+      "mutability": "view",
+      "description": "Returns the price of one ticket in wei.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "CommitRevealRaffle",
+      "address": "{{address:CommitRevealRaffle}}",
+      "function": "winner()",
+      "mutability": "view",
+      "description": "Returns the winning address, or zero before the draw.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,409 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "GAMBLING ADJACENT — paid-entry winner-take-all draws are lottery/gaming-regulated and illegal without license in many jurisdictions. Do not submit to the public registry until legal review is complete (docs/legal-notes.md).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Tidal Draw",
+  "subtitle": "Commit-reveal raffle",
+  "description": "Example 14 — ticket-pool raffle where the host commits the seed before entries open; the winner index mixes revealed seed and prevrandao.",
+  "long_description": "A paid-entry raffle with no single point of randomness manipulation. Before entries open, the operator commits keccak256 of a secret seed; that hash is immutable at deploy. After the entry deadline, anyone reveals the seed — the winner index is drawn from hash(seed mixed with block.prevrandao), so neither the operator (who cannot choose prevrandao) nor the block proposer (who does not know the seed) can steer the outcome alone. If the operator withholds the seed, a permissionless fallback draw runs on prevrandao alone once the reveal window closes, so the prize always reaches a participant. The contract is single-use: one draw, one deployment — no redraw key exists. State is one slot per ticket and one packed slot for the final draw record.",
+  "localized": {
+    "ko": {
+      "name": "타이달 드로우",
+      "subtitle": "커밋-리빌 래플",
+      "description": "예제 14 — 참가 모집 전 시드를 커밋하는 참가비 풀 래플. 우승 인덱스는 리빌 시드와 prevrandao 혼합."
+    }
+  },
+  "locales": [
+    "en",
+    "ko"
+  ],
+  "category": "games",
+  "tags": [
+    "raffle",
+    "commit-reveal",
+    "randomness",
+    "prize-pool",
+    "lottery"
+  ],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "CommitRevealRaffle",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": [
+    "accounts",
+    "send"
+  ],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "none",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/raffle",
+  "x-toolbox-tests": "contracts/test/raffle/",
+  "x-eastsea-template": {
+    "format": "eastsea-template/1",
+    "slug": "raffle",
+    "summary": "Commit-reveal draw: host seed commit, entries, then a reveal with a fallback.",
+    "web": "web",
+    "compiler": {
+      "solc": "0.8.24",
+      "evm_version": "paris",
+      "optimizer_runs": 200
+    },
+    "contracts": [
+      {
+        "id": "CommitRevealRaffle",
+        "contract": "CommitRevealRaffle",
+        "source": "contracts/CommitRevealRaffle.sol",
+        "manifest_label": "CommitRevealRaffle",
+        "constructor": [
+          {
+            "name": "guardian",
+            "type": "address",
+            "label": "Brake guardian",
+            "description": "Address allowed to engage the emergency brake; zero means no brake can be used.",
+            "value": "{{publisher}}"
+          },
+          {
+            "name": "seedCommit_",
+            "type": "bytes32",
+            "label": "Seed commitment",
+            "description": "keccak256 hash of the organizer's secret seed, committed before entries open.",
+            "value": "0xc32a1917505b67d0afdc716acf8569c5712be96b5d3fb036a2158fd80d20b79d"
+          },
+          {
+            "name": "ticketPrice_",
+            "type": "uint256",
+            "label": "Ticket price",
+            "description": "Price of one ticket in wei.",
+            "value": "1000000000000000"
+          },
+          {
+            "name": "enterPeriod_",
+            "type": "uint48",
+            "label": "Entry period",
+            "description": "Seconds after deployment during which tickets can be bought.",
+            "value": "86400"
+          },
+          {
+            "name": "revealWindow_",
+            "type": "uint48",
+            "label": "Reveal window",
+            "description": "Seconds after entry closes during which the seed may be revealed.",
+            "value": "3600"
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "deploy": "CommitRevealRaffle"
+      }
+    ],
+    "placeholders": [
+      "{{address:CommitRevealRaffle}}",
+      "{{app_id}}",
+      "{{chain_id}}",
+      "{{native_decimals}}",
+      "{{native_symbol}}",
+      "{{publisher}}"
+    ],
+    "interface": [
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "PERSONAL_TEST_MAGIC()",
+        "mutability": "view",
+        "description": "Returns the constant identifier that marks a personal-test deployment policy.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "brakeGuardian()",
+        "mutability": "view",
+        "description": "Returns the guardian address that alone may engage the emergency brake, fixed at deployment.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "brakeSpec()",
+        "mutability": "pure",
+        "description": "Returns the brake specification URI and its document hash.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "brakeState()",
+        "mutability": "view",
+        "description": "Returns the current brake state (0 normal, 1 new entries blocked, 2 fully paused), the guardian and the time it was engaged.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "checkPersonalTestTokenReceipt(address)",
+        "mutability": "nonpayable",
+        "description": "Lets a personal-test token notify this contract of a receipt so the token holding cap is checked; reverts if the cap is exceeded.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "drawWithoutSeed()",
+        "mutability": "nonpayable",
+        "description": "After the reveal window closes without a reveal, draws a winner from block randomness alone and pays out the pool; anyone may call it.",
+        "moves_funds": true,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "drawn()",
+        "mutability": "view",
+        "description": "Returns whether the draw has happened.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "engageBrake(uint8)",
+        "mutability": "nonpayable",
+        "description": "Raises the emergency brake to a higher state (1 blocks new entries, 2 pauses more); callable only by the guardian and cannot be lowered.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "enter()",
+        "mutability": "payable",
+        "description": "Buys one ticket for the exact ticket price; rejected after the entry deadline or while the brake blocks entries.",
+        "moves_funds": true,
+        "example": {
+          "args": [],
+          "value_wei": "1000000000000000"
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "enterDeadline()",
+        "mutability": "view",
+        "description": "Returns the ticket entry deadline as a Unix timestamp.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "instanceMode()",
+        "mutability": "view",
+        "description": "Returns 'personal-test' if deployed under a personal-test policy, otherwise 'testnet'.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "personalTestAllowed(address)",
+        "mutability": "view",
+        "description": "Returns whether an account is on this instance's personal-test allow list.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "personalTestAuthority()",
+        "mutability": "view",
+        "description": "Returns the deployment authority address that vouches for related personal-test instances, or zero when not in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "personalTestEnabled()",
+        "mutability": "view",
+        "description": "Returns whether this instance runs under a personal-test policy that limits callers and held value.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "personalTestNativeCap()",
+        "mutability": "view",
+        "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or zero otherwise.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "personalTestOwner()",
+        "mutability": "view",
+        "description": "Returns the owner account of the personal-test policy, or zero when not in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "personalTestPolicy()",
+        "mutability": "view",
+        "description": "Returns the personal-test policy tuple: marker, owner, native coin cap and token cap.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "personalTestTokenCap()",
+        "mutability": "view",
+        "description": "Returns the maximum total raw token units this instance may hold in personal-test mode, or zero otherwise.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "playerCount()",
+        "mutability": "view",
+        "description": "Returns the number of tickets sold.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "players(uint256)",
+        "mutability": "view",
+        "description": "Returns the address that holds the ticket at the given index.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0"
+          ]
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "reveal(bytes32)",
+        "mutability": "nonpayable",
+        "description": "After entry closes and before the reveal deadline, submits the committed seed to draw a winner and pay out the pool; anyone with the seed may call it.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "revealDeadline()",
+        "mutability": "view",
+        "description": "Returns the reveal deadline as a Unix timestamp.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "seedCommit()",
+        "mutability": "view",
+        "description": "Returns the hash of the organizer's committed seed.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "setPersonalTestAccount(address,bool)",
+        "mutability": "nonpayable",
+        "description": "Adds or removes an account on the personal-test allow list; callable only by the policy owner, who cannot be removed.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "true"
+          ]
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "ticketPrice()",
+        "mutability": "view",
+        "description": "Returns the price of one ticket in wei.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "CommitRevealRaffle",
+        "function": "winner()",
+        "mutability": "view",
+        "description": "Returns the winning address, or zero before the draw.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      }
+    ],
+    "check_call": {
+      "contract": "CommitRevealRaffle",
+      "function": "ticketPrice()"
+    },
+    "web_sha256": "0x658573dab888229424e2b4b531ddd63563011f3a46f42f4dbc143e719fa71ea6"
+  }
+}

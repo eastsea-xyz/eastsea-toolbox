@@ -1,0 +1,693 @@
+{
+  "format": "eastsea-agent-interface/1",
+  "app_id": "{{app_id}}",
+  "name": "Driftwood Staking",
+  "category": "defi-trading",
+  "summary": "Sponsor-funded staking distributor with linear reward streaming.",
+  "contracts": [
+    {
+      "id": "TestToken",
+      "contract": "FixedSupplyToken",
+      "address": "{{address:TestToken}}"
+    },
+    {
+      "id": "RewardDistributor",
+      "contract": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}"
+    }
+  ],
+  "functions": [
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "DOMAIN_SEPARATOR()",
+      "mutability": "view",
+      "description": "Returns the EIP-712 domain separator used to verify permit signatures.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "PERSONAL_TEST_MAGIC()",
+      "mutability": "view",
+      "description": "Returns the constant identifier that marks the personal-test policy format.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "allowance(address,address)",
+      "mutability": "view",
+      "description": "Returns how many tokens the spender is currently allowed to move on behalf of the owner.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "{{publisher}}",
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "approve(address,uint256)",
+      "mutability": "nonpayable",
+      "description": "Sets the amount of the caller's tokens the spender may transfer, replacing any earlier allowance.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "1000000000000000000"
+        ]
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "balanceOf(address)",
+      "mutability": "view",
+      "description": "Returns the token balance of an account.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "{{publisher}}"
+        ]
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "checkPersonalTestTokenReceipt(address)",
+      "mutability": "nonpayable",
+      "description": "Personal-test hook that verifies token holdings stay under the cap; only callable by the token itself, and only in personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "decimals()",
+      "mutability": "view",
+      "description": "Returns the number of decimals the token uses, which is 18.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "eip712Domain()",
+      "mutability": "view",
+      "description": "Returns the EIP-712 domain fields (name, version, chain id, verifying contract) used for permit signatures.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "instanceMode()",
+      "mutability": "view",
+      "description": "Returns 'personal-test' if this copy was deployed in personal-test mode, otherwise 'testnet'.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "name()",
+      "mutability": "view",
+      "description": "Returns the token name.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "nonces(address)",
+      "mutability": "view",
+      "description": "Returns the next permit nonce for an owner address.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "{{publisher}}"
+        ]
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+      "mutability": "nonpayable",
+      "description": "Sets a spender's allowance from the owner's signed EIP-2612 message instead of a transaction by the owner; anyone may submit it before the deadline.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "{{publisher}}",
+          "0x1111111111111111111111111111111111111111",
+          "1000000000000000000",
+          "1900000000",
+          "27",
+          "0x1111111111111111111111111111111111111111111111111111111111111111",
+          "0x2222222222222222222222222222222222222222222222222222222222222222"
+        ]
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "personalTestAllowed(address)",
+      "mutability": "view",
+      "description": "Returns whether an account is on this copy's personal-test allow list.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "personalTestAuthority()",
+      "mutability": "view",
+      "description": "Returns the address of the policy authority that vouches for personal-test contract copies, or zero outside that mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "personalTestEnabled()",
+      "mutability": "view",
+      "description": "Returns true if this copy runs in personal-test mode, which restricts which accounts may interact.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "personalTestNativeCap()",
+      "mutability": "view",
+      "description": "Returns the maximum native coin balance this copy may hold in personal-test mode, or zero outside that mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "personalTestOwner()",
+      "mutability": "view",
+      "description": "Returns the owner address of this personal-test copy, or zero outside personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "personalTestPolicy()",
+      "mutability": "view",
+      "description": "Returns the personal-test policy tuple: magic value, owner, native-coin cap and token cap.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "personalTestTokenCap()",
+      "mutability": "view",
+      "description": "Returns the maximum token amount this copy may hold in personal-test mode, or zero outside that mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "setPersonalTestAccount(address,bool)",
+      "mutability": "nonpayable",
+      "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it, and the owner cannot be removed.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "true"
+        ]
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "symbol()",
+      "mutability": "view",
+      "description": "Returns the token ticker symbol.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "totalSupply()",
+      "mutability": "view",
+      "description": "Returns the total token supply, which is fixed at deployment.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "transfer(address,uint256)",
+      "mutability": "nonpayable",
+      "description": "Moves tokens from the caller's balance to the recipient address.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "1000000000000000000"
+        ]
+      }
+    },
+    {
+      "id": "TestToken",
+      "address": "{{address:TestToken}}",
+      "function": "transferFrom(address,address,uint256)",
+      "mutability": "nonpayable",
+      "description": "Moves tokens from one account to another using the caller's allowance; reverts if the allowance is too low.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "{{publisher}}",
+          "0x1111111111111111111111111111111111111111",
+          "1000000000000000000"
+        ]
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "PERSONAL_TEST_MAGIC()",
+      "mutability": "view",
+      "description": "Returns the constant marker value that identifies personal-test mode in the deploy policy.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "brakeGuardian()",
+      "mutability": "view",
+      "description": "Returns the guardian address that may engage the brake.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "brakeSpec()",
+      "mutability": "pure",
+      "description": "Returns the URI and document hash that describe the brake policy.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "brakeState()",
+      "mutability": "view",
+      "description": "Returns the current brake level, the guardian address and the timestamp when the brake last changed.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "checkPersonalTestTokenReceipt(address)",
+      "mutability": "nonpayable",
+      "description": "Lets a registered token report a receipt so the personal-test token cap is checked; only callable by the token itself in personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "claim()",
+      "mutability": "nonpayable",
+      "description": "Pays the caller their accrued reward tokens and clears their owed balance.",
+      "moves_funds": true,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "earned(address)",
+      "mutability": "view",
+      "description": "Returns the reward amount currently accrued to the given user, including carried-over and in-progress amounts.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "engageBrake(uint8)",
+      "mutability": "nonpayable",
+      "description": "Raises the brake to a stronger level (1 or 2) to block new entries; only the guardian may call it and it cannot be lowered.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "1"
+        ]
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "finishAt()",
+      "mutability": "view",
+      "description": "Returns the timestamp at which the current reward emission ends.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "fundRewards(uint256,uint256)",
+      "mutability": "nonpayable",
+      "description": "Pulls reward tokens from the caller and emits them linearly over the duration, combined with any unemitted balance; needs prior allowance and open brake.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "1000000000000000000",
+          "604800"
+        ]
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "instanceMode()",
+      "mutability": "view",
+      "description": "Returns the text 'personal-test' if this instance was deployed under a personal-test policy, otherwise 'testnet'.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "personalTestAllowed(address)",
+      "mutability": "view",
+      "description": "Returns whether the given account is on the personal-test allow list for this instance.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "personalTestAuthority()",
+      "mutability": "view",
+      "description": "Returns the policy authority address used to recognize allowed sibling instances, or zero outside personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "personalTestEnabled()",
+      "mutability": "view",
+      "description": "Returns true if this instance was deployed in personal-test mode with access and value caps.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "personalTestNativeCap()",
+      "mutability": "view",
+      "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or 0 if disabled.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "personalTestOwner()",
+      "mutability": "view",
+      "description": "Returns the owner address of the personal-test policy, or zero if personal-test mode is off.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "personalTestPolicy()",
+      "mutability": "view",
+      "description": "Returns the personal-test policy tuple: marker, owner address, native cap and token cap.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "personalTestTokenCap()",
+      "mutability": "view",
+      "description": "Returns the maximum token amount this instance may hold in personal-test mode, or 0 if disabled.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "rewardPerToken()",
+      "mutability": "view",
+      "description": "Returns the cumulative reward per staked token, scaled by 1e18, up to the current time.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "rewardPerTokenStored()",
+      "mutability": "view",
+      "description": "Returns the last stored cumulative reward per staked token, scaled by 1e18.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "rewardRate()",
+      "mutability": "view",
+      "description": "Returns the reward tokens emitted per second until the finish time.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "rewardToken()",
+      "mutability": "view",
+      "description": "Returns the ERC-20 token address used for rewards.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "setPersonalTestAccount(address,bool)",
+      "mutability": "nonpayable",
+      "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it and the owner cannot be removed.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "true"
+        ]
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "stake(uint256)",
+      "mutability": "nonpayable",
+      "description": "Pulls the given amount of staking tokens from the caller and credits what arrived to their stake; needs prior allowance and open brake.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "1000000000000000000"
+        ]
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "stakingToken()",
+      "mutability": "view",
+      "description": "Returns the ERC-20 token address users stake.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "totalDebt()",
+      "mutability": "view",
+      "description": "Returns the total rewards attributed to users but not yet paid out.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "totalStaked()",
+      "mutability": "view",
+      "description": "Returns the total amount of staking tokens currently staked.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "unstake(uint256)",
+      "mutability": "nonpayable",
+      "description": "Returns the given amount of the caller's staked tokens to them; works even when the brake is engaged.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "1000000000000000000"
+        ]
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "updatedAt()",
+      "mutability": "view",
+      "description": "Returns the timestamp of the last global reward accounting update.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "userOwed(address)",
+      "mutability": "view",
+      "description": "Returns the reward amount already checkpointed as owed to the given user.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "userRewardPaid(address)",
+      "mutability": "view",
+      "description": "Returns the given user's last recorded reward-per-token snapshot.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "RewardDistributor",
+      "address": "{{address:RewardDistributor}}",
+      "function": "userStaked(address)",
+      "mutability": "view",
+      "description": "Returns the amount of staking tokens the given user has staked.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    }
+  ]
+}

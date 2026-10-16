@@ -1,0 +1,26 @@
+{
+  "schema": "toolbox-runtime/1",
+  "app_id": "{{app_id}}",
+  "contracts": [
+    {
+      "address": "{{address:OnchainNFT}}",
+      "label": "OnchainNFT 721",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "{{address:OnchainNFT}}"
+    },
+    {
+      "address": "{{address:Editions1155}}",
+      "label": "Editions1155 sales",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "{{address:Editions1155}}"
+    }
+  ],
+  "noindex": true,
+  "x-toolbox-chain-id": "{{chain_id}}",
+  "x-toolbox-native-currency": {
+    "symbol": "{{native_symbol}}",
+    "decimals": "{{native_decimals}}"
+  },
+  "x-toolbox-primary-contract": "Editions1155 sales",
+  "x-toolbox-test-only": true
+}

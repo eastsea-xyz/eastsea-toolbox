@@ -1,0 +1,334 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "PROMOTION ADJACENT — gated giveaways can still trigger marketing, tax, and securities scrutiny depending on selection criteria. Eligibility is delegated to the public name service: the app charges nothing and receives nothing (registration fees are burned by the system contract). No referral-coin structures. Do not submit to the public registry until legal review is complete (docs/legal-notes.md).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Reef Drop",
+  "subtitle": "Name-gated drop",
+  "description": "Example 15 — a fixed-amount drop whose eligibility is fully delegated to the .aeth name service: only accounts with an honest primary name can claim.",
+  "long_description": "A giveaway with no on-chain list. The deployer commits to nothing but a fixed amount, a deadline, and the system name service; eligibility is simply reverseOf(claimant) returning a live primary name. The name service's honesty condition does the real work — expired names, names whose address record moved, and stale reverse claims all answer the empty string, so the drop never needs its own expiry or identity logic. Names are never stored in contract state: eligibility is a view call at claim time and the claimed name rides in the event log only, leaving one bit of permanent state per claimant. Anyone may fund the pool; after the immutable deadline a permissionless sweep returns the entire remainder to the fixed distributor, so nothing can be stranded.",
+  "localized": {
+    "ko": {
+      "name": "리프 드롭",
+      "subtitle": "이름 자격 드롭",
+      "description": "예제 15 — 자격 판정을 .aeth 이름 서비스에 위임한 고정액 드롭. 정직한 primary name을 가진 계정만 청구한다."
+    }
+  },
+  "locales": [
+    "en",
+    "ko"
+  ],
+  "category": "names",
+  "tags": [
+    "name-service",
+    "eligibility",
+    "drop",
+    "claims",
+    "identity"
+  ],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "NameGatedDrop",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "EastSeaNames (system)",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": [
+    "accounts",
+    "send"
+  ],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "none",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/names",
+  "x-toolbox-tests": "contracts/test/names/",
+  "x-eastsea-template": {
+    "format": "eastsea-template/1",
+    "slug": "names",
+    "summary": "Drop whose eligibility is delegated entirely to the EastSea name service.",
+    "web": "web",
+    "compiler": {
+      "solc": "0.8.24",
+      "evm_version": "paris",
+      "optimizer_runs": 200
+    },
+    "contracts": [
+      {
+        "id": "NameGatedDrop",
+        "contract": "NameGatedDrop",
+        "source": "contracts/NameGatedDrop.sol",
+        "manifest_label": "NameGatedDrop",
+        "constructor": [
+          {
+            "name": "names_",
+            "type": "address",
+            "label": "Names registry",
+            "description": "Address of the EastSea names registry used to check primary names.",
+            "value": "{{system:names}}"
+          },
+          {
+            "name": "distributor_",
+            "type": "address",
+            "label": "Distributor",
+            "description": "Address that receives unclaimed funds after the claim deadline.",
+            "value": "{{publisher}}"
+          },
+          {
+            "name": "dropAmount_",
+            "type": "uint256",
+            "label": "Drop amount",
+            "description": "Amount in wei each eligible address can claim.",
+            "value": "1000000000000000000"
+          },
+          {
+            "name": "claimPeriod",
+            "type": "uint48",
+            "label": "Claim period",
+            "description": "Seconds after deployment during which claims are open.",
+            "value": "86400"
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "deploy": "NameGatedDrop"
+      }
+    ],
+    "placeholders": [
+      "{{address:NameGatedDrop}}",
+      "{{app_id}}",
+      "{{chain_id}}",
+      "{{native_decimals}}",
+      "{{native_symbol}}",
+      "{{publisher}}",
+      "{{system:names}}"
+    ],
+    "interface": [
+      {
+        "contract": "NameGatedDrop",
+        "function": "PERSONAL_TEST_MAGIC()",
+        "mutability": "view",
+        "description": "Returns the constant identifier that marks a personal-test deployment policy.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "NameGatedDrop",
+        "function": "checkPersonalTestTokenReceipt(address)",
+        "mutability": "nonpayable",
+        "description": "Lets a personal-test token notify this contract of a receipt so the token holding cap is checked; reverts if the cap is exceeded.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "NameGatedDrop",
+        "function": "claim()",
+        "mutability": "nonpayable",
+        "description": "Pays the drop amount to the caller if they have a primary name and have not claimed, before the deadline.",
+        "moves_funds": true,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "NameGatedDrop",
+        "function": "claimCount()",
+        "mutability": "view",
+        "description": "Returns the number of claims made.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "NameGatedDrop",
+        "function": "claimed(address)",
+        "mutability": "view",
+        "description": "Returns whether an address has already claimed.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "NameGatedDrop",
+        "function": "deadline()",
+        "mutability": "view",
+        "description": "Returns the claim deadline as a Unix timestamp.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "NameGatedDrop",
+        "function": "distributor()",
+        "mutability": "view",
+        "description": "Returns the address that receives the remaining balance after the deadline.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "NameGatedDrop",
+        "function": "dropAmount()",
+        "mutability": "view",
+        "description": "Returns the amount in wei paid per claim.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "NameGatedDrop",
+        "function": "instanceMode()",
+        "mutability": "view",
+        "description": "Returns 'personal-test' if deployed under a personal-test policy, otherwise 'testnet'.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "NameGatedDrop",
+        "function": "names()",
+        "mutability": "view",
+        "description": "Returns the address of the names registry used for eligibility.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "NameGatedDrop",
+        "function": "personalTestAllowed(address)",
+        "mutability": "view",
+        "description": "Returns whether an account is on this instance's personal-test allow list.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "NameGatedDrop",
+        "function": "personalTestAuthority()",
+        "mutability": "view",
+        "description": "Returns the deployment authority address that vouches for related personal-test instances, or zero when not in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "NameGatedDrop",
+        "function": "personalTestEnabled()",
+        "mutability": "view",
+        "description": "Returns whether this instance runs under a personal-test policy that limits callers and held value.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "NameGatedDrop",
+        "function": "personalTestNativeCap()",
+        "mutability": "view",
+        "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or zero otherwise.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "NameGatedDrop",
+        "function": "personalTestOwner()",
+        "mutability": "view",
+        "description": "Returns the owner account of the personal-test policy, or zero when not in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "NameGatedDrop",
+        "function": "personalTestPolicy()",
+        "mutability": "view",
+        "description": "Returns the personal-test policy tuple: marker, owner, native coin cap and token cap.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "NameGatedDrop",
+        "function": "personalTestTokenCap()",
+        "mutability": "view",
+        "description": "Returns the maximum total raw token units this instance may hold in personal-test mode, or zero otherwise.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "NameGatedDrop",
+        "function": "setPersonalTestAccount(address,bool)",
+        "mutability": "nonpayable",
+        "description": "Adds or removes an account on the personal-test allow list; callable only by the policy owner, who cannot be removed.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "true"
+          ]
+        }
+      },
+      {
+        "contract": "NameGatedDrop",
+        "function": "sweep()",
+        "mutability": "nonpayable",
+        "description": "After the deadline, sends the whole remaining balance to the distributor; anyone may call it.",
+        "moves_funds": true,
+        "example": {
+          "args": []
+        }
+      }
+    ],
+    "check_call": {
+      "contract": "NameGatedDrop",
+      "function": "dropAmount()"
+    },
+    "web_sha256": "0xae4158c5b392d5dbee0e764bcb588819cc5d7a12cf659f825a9295341dd02e4f"
+  }
+}

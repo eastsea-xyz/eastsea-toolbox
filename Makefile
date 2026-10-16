@@ -1,4 +1,4 @@
-.PHONY: help test test-deep fmt fmt-check manifests bundle apps build clean proof native native-fmt-check publish-testnet publish-personal-mainnet publish-dry-run publish-build test-publisher test-publish-devnet
+.PHONY: help test test-deep fmt fmt-check manifests bundle apps build clean proof native native-fmt-check publish-testnet publish-personal-mainnet publish-dry-run publish-build test-publisher test-publish-devnet templates validate-templates test-templates
 
 export RPC FROM NAME REGISTRY NAMES WALLET_COMMAND WALLET_RPC
 
@@ -18,6 +18,9 @@ help:
 	@echo "publish-build    compile publisher artifacts under tmp/ (honors shared compile gate)"
 	@echo "test-publisher   offline publisher + EIP-1193 + manifest regressions"
 	@echo "test-publish-devnet  owned offline devnet + all 17 Chrome smokes (explicit fixture build)"
+	@echo "templates  regenerate templates/projects (eastsea-template/1) from examples, apps and contracts"
+	@echo "validate-templates  schema, compile, interface, placeholders, bundle hash and index checks"
+	@echo "test-templates  template packaging/validator regressions (tampered copies are refused)"
 
 test:
 	cd contracts && forge test
@@ -75,3 +78,13 @@ test-publisher:
 
 test-publish-devnet:
 	python3 scripts/test-publish-devnet.py --build-fixtures $(DEVNET_ARGS)
+
+templates:
+	python3 scripts/gen-templates.py
+
+validate-templates:
+	python3 scripts/gen-templates.py --check
+	python3 scripts/validate-templates.py
+
+test-templates:
+	PYTHONDONTWRITEBYTECODE=1 python3 tests/test_templates.py -v

@@ -1,0 +1,364 @@
+{
+  "schema": "eastsea-app/1",
+  "x-toolbox-note": "TEMPLATE — replace every 0x000…00 value before publishing. app_id = keccak256(abi.encode(publisher, slug)); bundle.sha256 = sha256 of the canonical bundle index (templates/publish/bundle-hash.sh).",
+  "x-toolbox-legal": "CUSTODY ADJACENT — holding third-party funds in escrow may trigger custody or e-money registration requirements depending on jurisdiction. Do not submit to the public registry until legal review is complete (docs/legal-notes.md).",
+  "app_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "version": "1.0.0",
+  "name": "Sea Chest",
+  "subtitle": "Milestone escrow",
+  "description": "Example 9 — buyer escrows native coin, approves milestones to release seller funds, refunds the rest anytime. Approvals are irreversible; exits cost 5 state units.",
+  "long_description": "Two-sided escrow for milestone work. The buyer deposits once at deal creation; each approveMilestone moves the specified amount into the seller's withdrawable balance. Unapproved remainder is refundable by the buyer at any moment — even under the emergency brake, since refunds and withdrawals are exits. Milestone amounts are specified at approval time instead of a stored array: the chain proves how much was released, the off-chain agreement holds the schedule. Irreversible approvals are what make the accounting race-free.",
+  "localized": {
+    "ko": {
+      "name": "시 체스트",
+      "subtitle": "마일스톤 에스크로",
+      "description": "예제 9 — 구매자가 예치하고 마일스톤 승인으로 판매자에게 인출권을 넘긴다. 미승인 잔여는 언제든 회수 가능하다."
+    }
+  },
+  "locales": [
+    "en",
+    "ko"
+  ],
+  "category": "payments",
+  "tags": [
+    "escrow",
+    "milestones",
+    "freelance",
+    "native-coin",
+    "pull-payments"
+  ],
+  "icon": "icon.png",
+  "entry": "index.html",
+  "bundle": {
+    "format": "eastsea-bundle/1",
+    "sha256": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 1,
+    "files": 1
+  },
+  "contracts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "label": "MilestoneEscrow",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "connect": [],
+  "permissions": [
+    "accounts",
+    "send"
+  ],
+  "payees": [],
+  "age_rating": "18+",
+  "commerce": "p2p",
+  "noindex": false,
+  "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
+  "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example": "examples/escrow",
+  "x-toolbox-tests": "contracts/test/escrow/",
+  "x-eastsea-template": {
+    "format": "eastsea-template/1",
+    "slug": "escrow",
+    "summary": "Milestone escrow: the buyer deposits, approves releases and can refund the balance.",
+    "web": "web",
+    "compiler": {
+      "solc": "0.8.24",
+      "evm_version": "paris",
+      "optimizer_runs": 200
+    },
+    "contracts": [
+      {
+        "id": "MilestoneEscrow",
+        "contract": "MilestoneEscrow",
+        "source": "contracts/MilestoneEscrow.sol",
+        "manifest_label": "MilestoneEscrow",
+        "constructor": [
+          {
+            "name": "guardian",
+            "type": "address",
+            "label": "Guardian address",
+            "description": "Address allowed to engage the brake that blocks new deals.",
+            "value": "{{publisher}}"
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "deploy": "MilestoneEscrow"
+      }
+    ],
+    "placeholders": [
+      "{{address:MilestoneEscrow}}",
+      "{{app_id}}",
+      "{{chain_id}}",
+      "{{native_decimals}}",
+      "{{native_symbol}}",
+      "{{publisher}}"
+    ],
+    "interface": [
+      {
+        "contract": "MilestoneEscrow",
+        "function": "PERSONAL_TEST_MAGIC()",
+        "mutability": "view",
+        "description": "Returns the constant marker value that identifies personal-test mode in the deploy policy.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "approveMilestone(uint256,uint64,uint256)",
+        "mutability": "nonpayable",
+        "description": "Lets the deal's buyer approve a milestone index for an amount of the deposit, making it withdrawable by the seller; irreversible and no funds move yet.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1",
+            "0",
+            "1000000000000000000"
+          ]
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "brakeGuardian()",
+        "mutability": "view",
+        "description": "Returns the guardian address that may engage the brake.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "brakeSpec()",
+        "mutability": "pure",
+        "description": "Returns the URI and document hash that describe the brake policy.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "brakeState()",
+        "mutability": "view",
+        "description": "Returns the current brake level, the guardian address and the timestamp when the brake last changed.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "buyerRefund(uint256)",
+        "mutability": "nonpayable",
+        "description": "Returns the unapproved part of the deposit to the deal's buyer in native coin; only the buyer may call it.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "checkPersonalTestTokenReceipt(address)",
+        "mutability": "nonpayable",
+        "description": "Lets a registered token report a receipt so the personal-test token cap is checked; only callable by the token itself in personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "createDeal(address,uint64)",
+        "mutability": "payable",
+        "description": "Opens a deal with the seller and a fixed milestone count and holds the native coin sent with the call as the deposit; needs open brake.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "3"
+          ],
+          "value_wei": "1000000000000000000"
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "dealInfo(uint256)",
+        "mutability": "view",
+        "description": "Returns the deal's buyer, seller, refundable amount and seller-withdrawable amount.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "deals(uint256)",
+        "mutability": "view",
+        "description": "Returns the raw deal record: buyer, seller, deposited, approved total, withdrawn total and milestone count.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "engageBrake(uint8)",
+        "mutability": "nonpayable",
+        "description": "Raises the brake to a stronger level (1 or 2) to block new entries; only the guardian may call it and it cannot be lowered.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "instanceMode()",
+        "mutability": "view",
+        "description": "Returns the text 'personal-test' if this instance was deployed under a personal-test policy, otherwise 'testnet'.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "milestoneApproved(bytes32)",
+        "mutability": "view",
+        "description": "Returns whether the milestone identified by the key hash has been approved.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "nextDealId()",
+        "mutability": "view",
+        "description": "Returns the id that the next created deal will receive.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "personalTestAllowed(address)",
+        "mutability": "view",
+        "description": "Returns whether the given account is on the personal-test allow list for this instance.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111"
+          ]
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "personalTestAuthority()",
+        "mutability": "view",
+        "description": "Returns the policy authority address used to recognize allowed sibling instances, or zero outside personal-test mode.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "personalTestEnabled()",
+        "mutability": "view",
+        "description": "Returns true if this instance was deployed in personal-test mode with access and value caps.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "personalTestNativeCap()",
+        "mutability": "view",
+        "description": "Returns the maximum native coin balance this instance may hold in personal-test mode, or 0 if disabled.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "personalTestOwner()",
+        "mutability": "view",
+        "description": "Returns the owner address of the personal-test policy, or zero if personal-test mode is off.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "personalTestPolicy()",
+        "mutability": "view",
+        "description": "Returns the personal-test policy tuple: marker, owner address, native cap and token cap.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "personalTestTokenCap()",
+        "mutability": "view",
+        "description": "Returns the maximum token amount this instance may hold in personal-test mode, or 0 if disabled.",
+        "moves_funds": false,
+        "example": {
+          "args": []
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "sellerWithdraw(uint256)",
+        "mutability": "nonpayable",
+        "description": "Pays the seller the approved amount not yet withdrawn in native coin; only the deal's seller may call it.",
+        "moves_funds": true,
+        "example": {
+          "args": [
+            "1"
+          ]
+        }
+      },
+      {
+        "contract": "MilestoneEscrow",
+        "function": "setPersonalTestAccount(address,bool)",
+        "mutability": "nonpayable",
+        "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it and the owner cannot be removed.",
+        "moves_funds": false,
+        "example": {
+          "args": [
+            "0x1111111111111111111111111111111111111111",
+            "true"
+          ]
+        }
+      }
+    ],
+    "check_call": {
+      "contract": "MilestoneEscrow",
+      "function": "brakeGuardian()"
+    },
+    "web_sha256": "0xb9d3840ce1ba03dbabfdd0b3abce8b6c4820e712e4706f6f7b160f76037280d6"
+  }
+}

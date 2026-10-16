@@ -1,0 +1,285 @@
+{
+  "format": "eastsea-agent-interface/1",
+  "app_id": "{{app_id}}",
+  "name": "Harbor Market",
+  "category": "nft-media",
+  "summary": "Listing book for NFTs with escrowed listings, royalty splits and pull payouts.",
+  "contracts": [
+    {
+      "id": "FixedPriceMarket",
+      "contract": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}"
+    }
+  ],
+  "functions": [
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "PERSONAL_TEST_MAGIC()",
+      "mutability": "view",
+      "description": "Returns the constant identifier that marks the personal-test policy format.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "brakeGuardian()",
+      "mutability": "view",
+      "description": "Returns the guardian address that is allowed to engage the emergency brake.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "brakeSpec()",
+      "mutability": "pure",
+      "description": "Returns the brake specification URI and its document hash.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "brakeState()",
+      "mutability": "view",
+      "description": "Returns the current brake level, the guardian address and the time the brake was last engaged.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "buy(uint256)",
+      "mutability": "payable",
+      "description": "Buys a listed NFT by sending exactly the listing price; the seller's share and any ERC-2981 royalty are credited for later withdrawal and the NFT goes to the buyer.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "1"
+        ],
+        "value_wei": "1000000000000000"
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "cancel(uint256)",
+      "mutability": "nonpayable",
+      "description": "Cancels a listing and returns the escrowed NFT to the seller; only the seller may call it.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "1"
+        ]
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "checkPersonalTestTokenReceipt(address)",
+      "mutability": "nonpayable",
+      "description": "Personal-test hook that verifies token holdings stay under the cap; only callable by the token itself, and only in personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "credits(address)",
+      "mutability": "view",
+      "description": "Returns the native-coin balance in wei credited to an account from sales and royalties, ready to withdraw.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "{{publisher}}"
+        ]
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "engageBrake(uint8)",
+      "mutability": "nonpayable",
+      "description": "Raises the emergency brake to a stronger level (1 blocks new entries, 2 blocks everything gated); only the brake guardian may call it and levels can only go up.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "1"
+        ]
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "instanceMode()",
+      "mutability": "view",
+      "description": "Returns 'personal-test' if this copy was deployed in personal-test mode, otherwise 'testnet'.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "list(address,uint256,uint256)",
+      "mutability": "nonpayable",
+      "description": "Lists an ERC-721 token at a fixed price in wei and moves it into escrow in this contract; the caller must own it and have approved this market.",
+      "moves_funds": true,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "1",
+          "1000000000000000"
+        ]
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "listingOf(uint256)",
+      "mutability": "view",
+      "description": "Returns a listing's seller, token contract, token id, price and whether it is still active.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "1"
+        ]
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "onERC721Received(address,address,uint256,bytes)",
+      "mutability": "view",
+      "description": "ERC-721 receiver hook that lets this contract accept NFTs sent with safeTransferFrom.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "0x2222222222222222222222222222222222222222",
+          "1",
+          "0x"
+        ]
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "personalTestAllowed(address)",
+      "mutability": "view",
+      "description": "Returns whether an account is on this copy's personal-test allow list.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111"
+        ]
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "personalTestAuthority()",
+      "mutability": "view",
+      "description": "Returns the address of the policy authority that vouches for personal-test contract copies, or zero outside that mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "personalTestEnabled()",
+      "mutability": "view",
+      "description": "Returns true if this copy runs in personal-test mode, which restricts which accounts may interact.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "personalTestNativeCap()",
+      "mutability": "view",
+      "description": "Returns the maximum native coin balance this copy may hold in personal-test mode, or zero outside that mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "personalTestOwner()",
+      "mutability": "view",
+      "description": "Returns the owner address of this personal-test copy, or zero outside personal-test mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "personalTestPolicy()",
+      "mutability": "view",
+      "description": "Returns the personal-test policy tuple: magic value, owner, native-coin cap and token cap.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "personalTestTokenCap()",
+      "mutability": "view",
+      "description": "Returns the maximum token amount this copy may hold in personal-test mode, or zero outside that mode.",
+      "moves_funds": false,
+      "example": {
+        "args": []
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "setPersonalTestAccount(address,bool)",
+      "mutability": "nonpayable",
+      "description": "Adds or removes an account on the personal-test allow list; only the personal-test owner may call it, and the owner cannot be removed.",
+      "moves_funds": false,
+      "example": {
+        "args": [
+          "0x1111111111111111111111111111111111111111",
+          "true"
+        ]
+      }
+    },
+    {
+      "id": "FixedPriceMarket",
+      "address": "{{address:FixedPriceMarket}}",
+      "function": "withdraw()",
+      "mutability": "nonpayable",
+      "description": "Sends the caller's entire credited balance of sale proceeds or royalties to the caller.",
+      "moves_funds": true,
+      "example": {
+        "args": []
+      }
+    }
+  ]
+}

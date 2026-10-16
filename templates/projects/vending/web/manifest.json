@@ -1,0 +1,20 @@
+{
+  "schema": "toolbox-runtime/1",
+  "app_id": "{{app_id}}",
+  "contracts": [
+    {
+      "address": "{{address:AgentVending}}",
+      "label": "AgentVending",
+      "source_url": "https://github.com/eastsea-xyz/eastsea-toolbox",
+      "brake": "{{address:AgentVending}}"
+    }
+  ],
+  "noindex": true,
+  "x-toolbox-chain-id": "{{chain_id}}",
+  "x-toolbox-native-currency": {
+    "symbol": "{{native_symbol}}",
+    "decimals": "{{native_decimals}}"
+  },
+  "x-toolbox-primary-contract": "AgentVending",
+  "x-toolbox-test-only": true
+}

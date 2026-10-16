@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eastsea.xyz/schemas/eastsea-template-1.json",
+  "title": "EastSea template project (eastsea.json, eastsea-template/1)",
+  "description": "A template project's eastsea.json is an eastsea-app/1 manifest (placeholders unfilled, as in examples/) extended with the x-eastsea-template field: what to deploy, the web folder and the addresses it reads, and an agent-readable interface. The publish plan strips x-eastsea-template from the registered manifest. Text is written by the template author and is untrusted.",
+  "allOf": [
+    { "$ref": "eastsea-app-1.json" },
+    {
+      "type": "object",
+      "required": ["x-eastsea-template"],
+      "properties": {
+        "x-eastsea-template": { "$ref": "#/$defs/template" }
+      }
+    }
+  ],
+  "$defs": {
+    "template": {
+      "type": "object",
+      "required": ["format", "slug", "summary", "web", "compiler", "contracts", "steps", "placeholders", "interface", "check_call", "web_sha256"],
+      "additionalProperties": false,
+      "properties": {
+        "format": { "const": "eastsea-template/1" },
+        "slug": {
+          "description": "AppRegistry slug (same rule as root name labels).",
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{1,30}[a-z0-9]$"
+        },
+        "summary": {
+          "description": "One neutral line for template listings. No ranking, yield or price wording.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "pattern": "^[^\\u0000-\\u001F\\u007F\\u200B-\\u200F\\u202A-\\u202E\\u2066-\\u2069\\uFEFF]*$"
+        },
+        "web": { "description": "The bundle folder.", "const": "web" },
+        "compiler": {
+          "type": "object",
+          "required": ["solc", "evm_version", "optimizer_runs"],
+          "additionalProperties": false,
+          "properties": {
+            "solc": { "type": "string", "pattern": "^0\\.8\\.[0-9]{1,2}$" },
+            "evm_version": { "enum": ["paris", "shanghai", "cancun"] },
+            "optimizer_runs": { "type": "integer", "minimum": 1, "maximum": 1000000 }
+          }
+        },
+        "contracts": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "required": ["id", "contract", "source", "constructor"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "$ref": "#/$defs/id" },
+              "contract": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$" },
+              "source": { "type": "string", "pattern": "^contracts/[A-Za-z0-9_]{1,64}\\.sol$" },
+              "manifest_label": {
+                "description": "The manifest contracts[].label this deployment fills.",
+                "type": "string", "minLength": 1, "maxLength": 32
+              },
+              "constructor": {
+                "type": "array",
+                "maxItems": 16,
+                "items": {
+                  "type": "object",
+                  "required": ["name", "type", "label", "description", "value"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$" },
+                    "type": { "$ref": "#/$defs/abiType" },
+                    "label": { "$ref": "#/$defs/label" },
+                    "description": { "$ref": "#/$defs/line" },
+                    "value": { "$ref": "#/$defs/abiValue" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "steps": {
+          "description": "Transactions in order. A call may target a later deployment's expected address.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "oneOf": [
+              {
+                "type": "object", "required": ["deploy"], "additionalProperties": false,
+                "properties": { "deploy": { "$ref": "#/$defs/id" } }
+              },
+              {
+                "type": "object", "required": ["call", "function", "args"], "additionalProperties": false,
+                "properties": {
+                  "call": { "$ref": "#/$defs/id" },
+                  "function": { "$ref": "#/$defs/signature" },
+                  "args": { "type": "array", "items": { "$ref": "#/$defs/abiValue" } },
+                  "value_wei": { "$ref": "#/$defs/wei" }
+                }
+              }
+            ]
+          }
+        },
+        "placeholders": {
+          "description": "Every placeholder used by web/manifest.json, constructor values and call args.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/placeholder" }
+        },
+        "interface": {
+          "description": "Every public function of every deployed contract, for agents.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["contract", "function", "mutability", "description", "moves_funds", "example"],
+            "additionalProperties": false,
+            "properties": {
+              "contract": { "$ref": "#/$defs/id" },
+              "function": { "$ref": "#/$defs/signature" },
+              "mutability": { "enum": ["pure", "view", "nonpayable", "payable"] },
+              "description": { "$ref": "#/$defs/line" },
+              "moves_funds": { "type": "boolean" },
+              "example": {
+                "type": "object",
+                "required": ["args"],
+                "additionalProperties": false,
+                "properties": {
+                  "args": { "type": "array", "items": { "$ref": "#/$defs/abiValue" } },
+                  "value_wei": { "$ref": "#/$defs/wei" }
+                }
+              }
+            }
+          }
+        },
+        "check_call": {
+          "description": "A zero-argument read `app check` performs after a local deploy.",
+          "type": "object",
+          "required": ["contract", "function"],
+          "additionalProperties": false,
+          "properties": {
+            "contract": { "$ref": "#/$defs/id" },
+            "function": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*\\(\\)$" }
+          }
+        },
+        "web_sha256": {
+          "description": "eastsea-bundle/1 index sha256 of web/ with placeholders unresolved.",
+          "type": "string",
+          "pattern": "^0x[0-9a-f]{64}$"
+        }
+      }
+    },
+    "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]{0,31}$" },
+    "label": { "type": "string", "minLength": 1, "maxLength": 40, "pattern": "^[^\\u0000-\\u001F\\u007F]+$" },
+    "line": { "type": "string", "minLength": 1, "maxLength": 200, "pattern": "^[^\\u0000-\\u001F\\u007F\\u200B-\\u200F\\u202A-\\u202E\\u2066-\\u2069\\uFEFF]+$" },
+    "signature": {
+      "type": "string",
+      "maxLength": 256,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*\\([A-Za-z0-9_,\\[\\]()]*\\)$"
+    },
+    "abiType": { "type": "string", "maxLength": 256, "pattern": "^[A-Za-z0-9_,\\[\\]()]+$" },
+    "abiValue": {
+      "description": "A scalar as a string (decimal integers, 0x hex, true/false, text, or a whole {{placeholder}}); arrays and tuples as JSON arrays.",
+      "oneOf": [
+        { "type": "string", "maxLength": 1024 },
+        { "type": "array", "maxItems": 64, "items": { "$ref": "#/$defs/abiValue" } }
+      ]
+    },
+    "wei": { "type": "string", "pattern": "^(0|[1-9][0-9]{0,77})$" },
+    "placeholder": {
+      "type": "string",
+      "pattern": "^\\{\\{(publisher|app_id|chain_id|native_symbol|native_decimals|system:names|address:[A-Za-z][A-Za-z0-9_]{0,31})\\}\\}$"
+    }
+  }
+}
