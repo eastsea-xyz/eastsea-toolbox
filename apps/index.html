@@ -2,17 +2,55 @@
 <html lang="ko">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EastSea Toolbox — 앱 카탈로그</title>
+<style id="eastsea-style" data-style="editorial">
+/* eastsea-style editorial: 따뜻한 에디토리얼. Paper tones, serif display, mono eyebrows, navy ink, pill buttons. System fonts only. */
+:root{
+  color-scheme:light dark;
+  --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  --font-display:"New York",ui-serif,"Iowan Old Style",Charter,"Times New Roman",Georgia,"Apple SD Gothic Neo","Noto Sans KR",serif;
+  --font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --fs-xs:12px;--fs-sm:13.5px;--fs-base:16px;--fs-lg:18px;--fs-h1:56px;--fs-h1-mobile:38px;
+  --lh-body:1.6;--lh-display:1.04;
+  --display-weight:500;--display-tracking:-0.03em;
+  --h2-font:var(--font-display);--h2-size:22px;--h2-weight:500;--h2-transform:none;--h2-tracking:-0.01em;
+  --eyebrow-font:var(--font-mono);--eyebrow-size:11.5px;--eyebrow-transform:uppercase;--eyebrow-tracking:.12em;--eyebrow-weight:400;
+  --step-display:none;--step-radius:999px;
+  --radius-card:4px;--radius-control:8px;--radius-button:999px;
+  --border-w:1px;
+  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:18px;--space-5:28px;--space-6:48px;
+  --card-pad:28px;--page-max:1120px;--rail-w:380px;--gap:24px;--header-pad:72px;
+  --btn-weight:500;--btn-pad:11px 22px;--btn-transform:none;--btn-tracking:0;
+  --motion-fast:180ms;--motion-ease:cubic-bezier(.3,.6,.2,1);--press-shift:0px;
+  --c-bg:#f3eee4;--c-surface:#faf7f1;--c-surface-2:#f1ebdf;--c-text:#10233a;--c-text-2:#4c5a6a;--c-text-3:#5e6873;
+  --c-border:#e2d9c8;--c-border-strong:#cfc3ad;--c-accent:#10233a;--c-accent-hover:#1d3756;--c-on-accent:#faf7f1;--c-primary-border:var(--c-accent);
+  --c-accent-soft:#ebe2d0;--c-ok:#256b4a;--c-warn:#8a5a00;--c-err:#a8322a;--c-focus:#c98a12;
+  --c-notice-bg:#10233a;--c-notice-text:#f3eee4;--c-notice-dot:#e8b04b;
+  --shadow-card:none;--shadow-button:none;--shadow-button-press:none;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --c-bg:#0f1a26;--c-surface:#14222f;--c-surface-2:#1a2a3a;--c-text:#f1ead9;--c-text-2:#b7bec6;--c-text-3:#98a3ae;
+  --c-border:#243548;--c-border-strong:#33485e;--c-accent:#efc36a;--c-accent-hover:#f5d38f;--c-on-accent:#10233a;--c-primary-border:var(--c-accent);
+  --c-accent-soft:#2a2e2a;--c-ok:#7fd1a6;--c-warn:#efc36a;--c-err:#ff958a;--c-focus:#efc36a;
+  --c-notice-bg:#1a2a3a;--c-notice-text:#f1ead9;--c-notice-dot:#efc36a;
+}}
+:root[data-theme="dark"]{
+  --c-bg:#0f1a26;--c-surface:#14222f;--c-surface-2:#1a2a3a;--c-text:#f1ead9;--c-text-2:#b7bec6;--c-text-3:#98a3ae;
+  --c-border:#243548;--c-border-strong:#33485e;--c-accent:#efc36a;--c-accent-hover:#f5d38f;--c-on-accent:#10233a;--c-primary-border:var(--c-accent);
+  --c-accent-soft:#2a2e2a;--c-ok:#7fd1a6;--c-warn:#efc36a;--c-err:#ff958a;--c-focus:#efc36a;
+  --c-notice-bg:#1a2a3a;--c-notice-text:#f1ead9;--c-notice-dot:#efc36a;
+}
+</style>
 <style>
-body{background:#08131d;color:#d7e7ee;font:15px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;margin:0}
-main{max-width:860px;margin:0 auto;padding:24px 16px 64px}
-.brand{color:#4dd6c1;font-size:12px;letter-spacing:.14em;text-transform:uppercase}
-h1{font-size:26px;margin:.15em 0 .4em}
+body{background:var(--c-bg);color:var(--c-text);font:var(--fs-base)/var(--lh-body) var(--font-body);margin:0}
+main{max-width:860px;margin:0 auto;padding:var(--header-pad) var(--space-4) var(--space-6)}
+.brand{font-family:var(--eyebrow-font);font-size:var(--eyebrow-size);text-transform:var(--eyebrow-transform);letter-spacing:var(--eyebrow-tracking);color:var(--c-text-2)}
+h1{font-family:var(--font-display);font-size:var(--fs-h1-mobile);font-weight:var(--display-weight);letter-spacing:var(--display-tracking);margin:.15em 0 .4em}
 table{border-collapse:collapse;width:100%}
-td,th{border-bottom:1px solid #1b3648;padding:10px 8px;text-align:left}
-th{color:#9fc4d4;font-size:13px}
-a{color:#4dd6c1;text-decoration:none}a:hover{text-decoration:underline}
-.dim{color:#6d8aa0}.mono{font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
-p{color:#8aa7b6}
+td,th{border-bottom:var(--border-w) solid var(--c-border);padding:10px 8px;text-align:left}
+th{color:var(--c-text-2);font-size:var(--fs-sm)}
+a{color:var(--c-text);text-underline-offset:3px}
+.dim{color:var(--c-text-3)}.mono{font-family:var(--font-mono);font-size:var(--fs-xs)}
+p{color:var(--c-text-2)}
 </style></head>
 <body><main>
 <div class="brand">EastSea Toolbox</div>

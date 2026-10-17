@@ -1,0 +1,38 @@
+/* eastsea-style playful: 놀이 같은. Ink outlines, hard offset shadows, candy accent, chunky type. System fonts only. */
+:root{
+  color-scheme:light dark;
+  --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  --font-display:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo",sans-serif;
+  --font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --fs-xs:12.5px;--fs-sm:13.5px;--fs-base:16px;--fs-lg:18px;--fs-h1:52px;--fs-h1-mobile:36px;
+  --lh-body:1.55;--lh-display:1.02;
+  --display-weight:800;--display-tracking:-0.035em;
+  --h2-font:var(--font-display);--h2-size:19px;--h2-weight:800;--h2-transform:none;--h2-tracking:-0.015em;
+  --eyebrow-font:var(--font-display);--eyebrow-size:13px;--eyebrow-transform:none;--eyebrow-tracking:0;--eyebrow-weight:700;
+  --step-display:inline-flex;--step-radius:10px;
+  --radius-card:22px;--radius-control:14px;--radius-button:14px;
+  --border-w:2px;
+  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:24px;--space-6:40px;
+  --card-pad:24px;--page-max:1120px;--rail-w:370px;--gap:24px;--header-pad:56px;
+  --btn-weight:700;--btn-pad:11px 20px;--btn-transform:none;--btn-tracking:0;
+  --motion-fast:120ms;--motion-ease:cubic-bezier(.3,1.4,.5,1);--press-shift:3px;
+  --c-bg:#fbf6ea;--c-surface:#ffffff;--c-surface-2:#fff9ef;--c-text:#141414;--c-text-2:#3d3d3d;--c-text-3:#5c5c5c;
+  --c-border:#141414;--c-border-strong:#141414;--c-accent:#ff90e8;--c-accent-hover:#ff7ae2;--c-on-accent:#141414;--c-primary-border:#141414;
+  --c-accent-soft:#ffe3f8;--c-ok:#0b7a4b;--c-warn:#8f5b00;--c-err:#c4153b;--c-focus:#2b59ff;
+  --c-notice-bg:#ffc900;--c-notice-text:#141414;--c-notice-dot:#141414;
+  --shadow-card:4px 4px 0 #141414;--shadow-button:3px 3px 0 #141414;--shadow-button-press:0 0 0 #141414;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --c-bg:#18141f;--c-surface:#221c2c;--c-surface-2:#2a2336;--c-text:#fbf6ea;--c-text-2:#d8d0e3;--c-text-3:#b3a9c2;
+  --c-border:#fbf6ea;--c-border-strong:#fbf6ea;--c-accent:#ff90e8;--c-accent-hover:#ffa8ee;--c-on-accent:#141414;--c-primary-border:#fbf6ea;
+  --c-accent-soft:#3a2440;--c-ok:#5fe0a6;--c-warn:#ffd34d;--c-err:#ff7f9b;--c-focus:#8fa8ff;
+  --c-notice-bg:#ffc900;--c-notice-text:#141414;--c-notice-dot:#141414;
+  --shadow-card:4px 4px 0 #ff90e8;--shadow-button:3px 3px 0 #fbf6ea;--shadow-button-press:0 0 0 #fbf6ea;
+}}
+:root[data-theme="dark"]{
+  --c-bg:#18141f;--c-surface:#221c2c;--c-surface-2:#2a2336;--c-text:#fbf6ea;--c-text-2:#d8d0e3;--c-text-3:#b3a9c2;
+  --c-border:#fbf6ea;--c-border-strong:#fbf6ea;--c-accent:#ff90e8;--c-accent-hover:#ffa8ee;--c-on-accent:#141414;--c-primary-border:#fbf6ea;
+  --c-accent-soft:#3a2440;--c-ok:#5fe0a6;--c-warn:#ffd34d;--c-err:#ff7f9b;--c-focus:#8fa8ff;
+  --c-notice-bg:#ffc900;--c-notice-text:#141414;--c-notice-dot:#141414;
+  --shadow-card:4px 4px 0 #ff90e8;--shadow-button:3px 3px 0 #fbf6ea;--shadow-button-press:0 0 0 #fbf6ea;
+}

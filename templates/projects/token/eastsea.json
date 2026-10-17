@@ -60,6 +60,57 @@
     "slug": "token",
     "summary": "Fixed-supply ERC-20 with EIP-2612 permit and no minting.",
     "web": "web",
+    "style": "editorial",
+    "screen": {
+      "lede": "발행량이 고정된 토큰입니다. 내 잔액을 보고 다른 주소로 보냅니다.",
+      "reads": [
+        {
+          "call": "name()",
+          "label": "토큰",
+          "show": "text"
+        },
+        {
+          "call": "balanceOf(address)",
+          "args": [
+            "$account"
+          ],
+          "label": "내 잔액",
+          "show": "token"
+        },
+        {
+          "call": "totalSupply()",
+          "label": "전체 발행량",
+          "show": "token"
+        },
+        {
+          "call": "symbol()",
+          "label": "기호",
+          "show": "text"
+        }
+      ],
+      "inputs": [
+        {
+          "id": "to",
+          "label": "받는 주소",
+          "unit": "address",
+          "placeholder": "0x…"
+        },
+        {
+          "id": "amount",
+          "label": "보낼 양",
+          "unit": "token",
+          "placeholder": "10"
+        }
+      ],
+      "action": {
+        "call": "transfer(address,uint256)",
+        "args": [
+          "$to",
+          "$amount"
+        ],
+        "label": "보내기"
+      }
+    },
     "compiler": {
       "solc": "0.8.24",
       "evm_version": "paris",
@@ -394,6 +445,6 @@
       "contract": "IslandCoin",
       "function": "totalSupply()"
     },
-    "web_sha256": "0xcd4cfa946cff2c59fdaedd6275e14cc089937852c790e4a79fe6d5e525a3eefa"
+    "web_sha256": "0x15f9f119dae31eed1e4a3a3f6de2ce82b53ece91e75eb6757173d4b8a6fc47ff"
   }
 }

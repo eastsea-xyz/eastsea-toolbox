@@ -3947,6 +3947,58 @@
       "check_call": {
         "contract": "MerkleAirdrop",
         "function": "merkleRoot()"
+      },
+      "screen": {
+        "lede": "배포자가 공개한 목록에 있는 계정이 정해진 양을 한 번 받습니다.",
+        "reads": [
+          {
+            "call": "claimed(address)",
+            "args": [
+              "$account"
+            ],
+            "label": "내 상태",
+            "show": "bool",
+            "map": {
+              "true": "받음",
+              "false": "아직 받지 않음"
+            }
+          },
+          {
+            "call": "deadline()",
+            "label": "받기 마감",
+            "show": "time"
+          },
+          {
+            "call": "totalClaimed()",
+            "label": "지금까지 나간 양",
+            "show": "native"
+          }
+        ],
+        "inputs": [
+          {
+            "id": "amount",
+            "label": "받을 양",
+            "unit": "native",
+            "placeholder": "10",
+            "hint": "목록에 적힌 내 몫"
+          },
+          {
+            "id": "proof",
+            "label": "받기 증명",
+            "unit": "list",
+            "placeholder": "0x… 0x…",
+            "hint": "목록과 함께 공개된 증명값들 (공백·쉼표 구분)"
+          }
+        ],
+        "action": {
+          "call": "claim(uint256,bytes32[])",
+          "args": [
+            "$amount",
+            "$proof"
+          ],
+          "label": "받기"
+        },
+        "note": "받을 양과 증명은 배포자가 공개한 목록에서 확인하세요. 마감 후 남은 양은 배포자에게 돌아갑니다."
       }
     },
     "amm": {
@@ -3972,6 +4024,39 @@
       "check_call": {
         "contract": "AmmFactory",
         "function": "allPairsLength()"
+      },
+      "screen": {
+        "lede": "두 토큰을 맞바꿀 수 있는 풀을 만듭니다. 교환과 유동성 공급은 개발자 보기의 라우터에서 합니다.",
+        "reads": [
+          {
+            "call": "allPairsLength()",
+            "label": "만들어진 풀",
+            "show": "count"
+          }
+        ],
+        "inputs": [
+          {
+            "id": "tokenA",
+            "label": "토큰 A 주소",
+            "unit": "address",
+            "placeholder": "0x…"
+          },
+          {
+            "id": "tokenB",
+            "label": "토큰 B 주소",
+            "unit": "address",
+            "placeholder": "0x…"
+          }
+        ],
+        "action": {
+          "call": "createPair(address,address)",
+          "args": [
+            "$tokenA",
+            "$tokenB"
+          ],
+          "label": "풀 만들기"
+        },
+        "note": "교환 비율은 풀 안의 수량으로 정해지며 바뀔 수 있습니다."
       }
     },
     "crowdfund": {
@@ -3992,6 +4077,71 @@
       "check_call": {
         "contract": "AllOrNothingCrowdfund",
         "function": "goal()"
+      },
+      "screen": {
+        "lede": "마감까지 목표에 닿으면 받는 사람에게 전달되고, 닿지 못하면 각자 돌려받습니다.",
+        "reads": [
+          {
+            "id": "raised",
+            "call": "campaign()",
+            "word": 0,
+            "label": "모인 금액",
+            "show": "native"
+          },
+          {
+            "id": "goal",
+            "call": "goal()",
+            "label": "목표",
+            "show": "native"
+          },
+          {
+            "call": "deadline()",
+            "label": "마감",
+            "show": "time"
+          },
+          {
+            "call": "state()",
+            "label": "상태",
+            "show": "state",
+            "map": {
+              "0": "진행 중",
+              "1": "목표 달성",
+              "2": "목표 미달",
+              "3": "달성 · 전달 완료"
+            }
+          },
+          {
+            "call": "contributions(address)",
+            "args": [
+              "$account"
+            ],
+            "label": "내 후원",
+            "show": "native"
+          }
+        ],
+        "progress": {
+          "value": "raised",
+          "max": "goal"
+        },
+        "inputs": [
+          {
+            "id": "amount",
+            "label": "후원할 금액",
+            "unit": "native",
+            "placeholder": "1"
+          }
+        ],
+        "action": {
+          "call": "contribute()",
+          "value": "$amount",
+          "label": "후원하기"
+        },
+        "more": [
+          {
+            "call": "refund()",
+            "label": "돌려받기 (목표 미달 시)"
+          }
+        ]
       }
     },
     "dao": {
@@ -4024,6 +4174,67 @@
       "check_call": {
         "contract": "SimpleDAO",
         "function": "quorum()"
+      },
+      "screen": {
+        "lede": "투표 토큰을 가진 사람들이 제안에 찬성하고, 기준을 넘으면 정해진 실행이 이뤄집니다.",
+        "inputs": [
+          {
+            "id": "proposal",
+            "label": "제안 번호",
+            "unit": "uint",
+            "default": "1"
+          }
+        ],
+        "reads": [
+          {
+            "call": "state(uint256)",
+            "args": [
+              "$proposal"
+            ],
+            "label": "제안 상태",
+            "show": "state",
+            "map": {
+              "0": "없음",
+              "1": "투표 중",
+              "2": "대기 (타임락)",
+              "3": "실행 가능",
+              "4": "실행됨",
+              "5": "만료"
+            }
+          },
+          {
+            "call": "approvedVotes(uint256,address)",
+            "args": [
+              "$proposal",
+              "$account"
+            ],
+            "label": "내 찬성",
+            "show": "bool",
+            "map": {
+              "true": "찬성함",
+              "false": "아직 안 함"
+            }
+          },
+          {
+            "call": "quorum()",
+            "label": "통과 기준",
+            "show": "token",
+            "suffix": "표"
+          },
+          {
+            "call": "votingPeriod()",
+            "label": "투표 기간",
+            "show": "duration"
+          }
+        ],
+        "action": {
+          "call": "vote(uint256)",
+          "args": [
+            "$proposal"
+          ],
+          "label": "찬성하기"
+        },
+        "note": "찬성의 무게는 내 투표 토큰 잔액으로 정해집니다. 제안 만들기와 실행은 개발자 보기에 있습니다."
       }
     },
     "escrow": {
@@ -4041,6 +4252,46 @@
       "check_call": {
         "contract": "MilestoneEscrow",
         "function": "brakeGuardian()"
+      },
+      "screen": {
+        "lede": "금액을 먼저 맡겨 두고, 단계가 끝날 때마다 승인해서 판매자에게 넘깁니다.",
+        "reads": [
+          {
+            "call": "nextDealId()",
+            "label": "다음 거래 번호",
+            "show": "count"
+          }
+        ],
+        "inputs": [
+          {
+            "id": "seller",
+            "label": "판매자 주소",
+            "unit": "address",
+            "placeholder": "0x…"
+          },
+          {
+            "id": "steps",
+            "label": "단계 수",
+            "unit": "uint",
+            "default": "3"
+          },
+          {
+            "id": "amount",
+            "label": "맡길 금액",
+            "unit": "native",
+            "placeholder": "3"
+          }
+        ],
+        "action": {
+          "call": "createDeal(address,uint64)",
+          "args": [
+            "$seller",
+            "$steps"
+          ],
+          "value": "$amount",
+          "label": "맡기기"
+        },
+        "note": "승인하지 않은 금액은 언제든 돌려받을 수 있습니다 (개발자 보기 · 구매자 환불)."
       }
     },
     "invoice": {
@@ -4059,6 +4310,52 @@
       "check_call": {
         "contract": "InvoiceBook",
         "function": "payee()"
+      },
+      "screen": {
+        "lede": "받은 청구서 번호를 넣으면 금액과 기한을 보여 주고, 정확히 그 금액으로 결제합니다.",
+        "inputs": [
+          {
+            "id": "invoice",
+            "label": "청구서 번호",
+            "unit": "uint",
+            "default": "1"
+          }
+        ],
+        "reads": [
+          {
+            "id": "amount",
+            "call": "invoices(uint256)",
+            "args": [
+              "$invoice"
+            ],
+            "word": 0,
+            "label": "청구 금액",
+            "show": "native"
+          },
+          {
+            "call": "invoices(uint256)",
+            "args": [
+              "$invoice"
+            ],
+            "word": 1,
+            "label": "결제 기한",
+            "show": "time"
+          },
+          {
+            "call": "payee()",
+            "label": "받는 사람",
+            "show": "address"
+          }
+        ],
+        "action": {
+          "call": "settle(uint256)",
+          "args": [
+            "$invoice"
+          ],
+          "value": "$read:amount",
+          "label": "결제하기"
+        },
+        "note": "금액이 0이면 이미 결제되었거나 취소된 청구서입니다."
       }
     },
     "launchpad": {
@@ -4108,6 +4405,56 @@
       "check_call": {
         "contract": "BondingLaunchpad",
         "function": "graduationTarget()"
+      },
+      "screen": {
+        "lede": "곡선을 따라 새 토큰을 사고팔고, 기준에 닿으면 교환 풀로 옮겨집니다.",
+        "inputs": [
+          {
+            "id": "pay",
+            "label": "지불할 양 (quote 토큰)",
+            "unit": "token",
+            "placeholder": "100"
+          }
+        ],
+        "reads": [
+          {
+            "id": "out",
+            "call": "getBuyQuoteOut(uint256)",
+            "args": [
+              "$pay"
+            ],
+            "label": "받을 양 (지금 기준)",
+            "show": "token"
+          },
+          {
+            "call": "graduated()",
+            "label": "상태",
+            "show": "bool",
+            "map": {
+              "true": "풀로 이동함",
+              "false": "곡선 판매 중"
+            }
+          },
+          {
+            "call": "graduationTarget()",
+            "label": "풀 이동 기준",
+            "show": "token"
+          },
+          {
+            "call": "feeBps()",
+            "label": "수수료",
+            "show": "bps"
+          }
+        ],
+        "action": {
+          "call": "buy(uint256,uint256)",
+          "args": [
+            "$pay",
+            "$read:out"
+          ],
+          "label": "사기"
+        },
+        "note": "quote 토큰 지출 승인이 먼저 필요합니다. 받을 양이 바뀌면 거래는 실패하고 아무것도 나가지 않습니다."
       }
     },
     "lock": {
@@ -4156,6 +4503,46 @@
       "check_call": {
         "contract": "TokenTimeLock",
         "function": "token()"
+      },
+      "screen": {
+        "lede": "정해진 기간에 걸쳐 조금씩 풀리는 토큰을 받는 사람이 가져갑니다.",
+        "reads": [
+          {
+            "id": "vested",
+            "call": "vested()",
+            "label": "지금까지 풀린 양",
+            "show": "token"
+          },
+          {
+            "id": "total",
+            "call": "total()",
+            "label": "전체",
+            "show": "token"
+          },
+          {
+            "call": "claimable()",
+            "label": "지금 받을 수 있는 양",
+            "show": "token"
+          },
+          {
+            "call": "start()",
+            "label": "시작",
+            "show": "time"
+          },
+          {
+            "call": "duration()",
+            "label": "전체 기간",
+            "show": "duration"
+          }
+        ],
+        "progress": {
+          "value": "vested",
+          "max": "total"
+        },
+        "action": {
+          "call": "claim()",
+          "label": "받기"
+        }
       }
     },
     "market": {
@@ -4173,6 +4560,82 @@
       "check_call": {
         "contract": "FixedPriceMarket",
         "function": "brakeGuardian()"
+      },
+      "screen": {
+        "lede": "등록된 작품을 정해진 금액으로 삽니다. 판매자와 창작자 몫은 자동으로 나뉩니다.",
+        "inputs": [
+          {
+            "id": "listing",
+            "label": "등록 번호",
+            "unit": "uint",
+            "default": "1"
+          }
+        ],
+        "reads": [
+          {
+            "id": "amount",
+            "call": "listingOf(uint256)",
+            "args": [
+              "$listing"
+            ],
+            "word": 3,
+            "label": "금액",
+            "show": "native"
+          },
+          {
+            "call": "listingOf(uint256)",
+            "args": [
+              "$listing"
+            ],
+            "word": 4,
+            "label": "상태",
+            "show": "bool",
+            "map": {
+              "true": "판매 중",
+              "false": "판매 종료"
+            }
+          },
+          {
+            "call": "listingOf(uint256)",
+            "args": [
+              "$listing"
+            ],
+            "word": 2,
+            "label": "작품 번호",
+            "show": "count"
+          },
+          {
+            "call": "listingOf(uint256)",
+            "args": [
+              "$listing"
+            ],
+            "word": 0,
+            "label": "판매자",
+            "show": "address"
+          },
+          {
+            "call": "credits(address)",
+            "args": [
+              "$account"
+            ],
+            "label": "내 정산금",
+            "show": "native"
+          }
+        ],
+        "action": {
+          "call": "buy(uint256)",
+          "args": [
+            "$listing"
+          ],
+          "value": "$read:amount",
+          "label": "구매하기"
+        },
+        "more": [
+          {
+            "call": "withdraw()",
+            "label": "내 정산금 받기"
+          }
+        ]
       }
     },
     "multisig": {
@@ -4193,6 +4656,70 @@
       "check_call": {
         "contract": "SimpleMultisig",
         "function": "threshold()"
+      },
+      "screen": {
+        "lede": "여러 소유자가 같은 거래를 승인해야 실행되는 공동 계정입니다.",
+        "reads": [
+          {
+            "call": "threshold()",
+            "label": "필요한 승인 수",
+            "show": "count"
+          },
+          {
+            "call": "isOwner(address)",
+            "args": [
+              "$account"
+            ],
+            "label": "내 역할",
+            "show": "bool",
+            "map": {
+              "true": "소유자",
+              "false": "소유자 아님"
+            }
+          },
+          {
+            "call": "getTransactionHash(address,uint256,bytes,uint256)",
+            "args": [
+              "$to",
+              "$amount",
+              "0x",
+              "$nonce"
+            ],
+            "label": "승인할 거래",
+            "show": "hash"
+          }
+        ],
+        "inputs": [
+          {
+            "id": "to",
+            "label": "보낼 주소",
+            "unit": "address",
+            "placeholder": "0x…"
+          },
+          {
+            "id": "amount",
+            "label": "보낼 금액",
+            "unit": "native",
+            "placeholder": "1"
+          },
+          {
+            "id": "nonce",
+            "label": "거래 번호 (nonce)",
+            "unit": "uint",
+            "default": "0"
+          }
+        ],
+        "action": {
+          "call": "approve(address,uint256,bytes,uint256)",
+          "args": [
+            "$to",
+            "$amount",
+            "0x",
+            "$nonce"
+          ],
+          "label": "이 거래 승인하기"
+        },
+        "note": "승인이 기준만큼 모이면 개발자 보기에서 실행합니다."
       }
     },
     "names": {
@@ -4213,6 +4740,43 @@
       "check_call": {
         "contract": "NameGatedDrop",
         "function": "dropAmount()"
+      },
+      "screen": {
+        "lede": "대표 .sea 이름이 있는 계정이 정해진 양을 한 번 받습니다.",
+        "reads": [
+          {
+            "call": "dropAmount()",
+            "label": "받을 양",
+            "show": "native"
+          },
+          {
+            "call": "claimed(address)",
+            "args": [
+              "$account"
+            ],
+            "label": "내 상태",
+            "show": "bool",
+            "map": {
+              "true": "받음",
+              "false": "아직 받지 않음"
+            }
+          },
+          {
+            "call": "claimCount()",
+            "label": "받은 계정",
+            "show": "count"
+          },
+          {
+            "call": "deadline()",
+            "label": "받기 마감",
+            "show": "time"
+          }
+        ],
+        "action": {
+          "call": "claim()",
+          "label": "받기"
+        },
+        "note": "대표 이름은 지갑의 이름 설정에서 정합니다."
       }
     },
     "nft": {
@@ -4242,6 +4806,79 @@
       "check_call": {
         "contract": "OnchainNFT",
         "function": "maxSupply()"
+      },
+      "screen": {
+        "lede": "창작자가 만든 에디션을 한 장씩 발행해 가져갑니다.",
+        "inputs": [
+          {
+            "id": "edition",
+            "label": "에디션 번호",
+            "unit": "uint",
+            "default": "1"
+          }
+        ],
+        "reads": [
+          {
+            "call": "editionOf(uint256)",
+            "args": [
+              "$edition"
+            ],
+            "word": 1,
+            "label": "에디션",
+            "show": "text"
+          },
+          {
+            "id": "minted",
+            "call": "editionOf(uint256)",
+            "args": [
+              "$edition"
+            ],
+            "word": 3,
+            "label": "발행됨",
+            "show": "count"
+          },
+          {
+            "id": "cap",
+            "call": "editionOf(uint256)",
+            "args": [
+              "$edition"
+            ],
+            "word": 2,
+            "label": "최대 수량",
+            "show": "count"
+          },
+          {
+            "id": "cost",
+            "call": "editionOf(uint256)",
+            "args": [
+              "$edition"
+            ],
+            "word": 5,
+            "label": "발행 금액",
+            "show": "native"
+          },
+          {
+            "call": "balanceOf(address,uint256)",
+            "args": [
+              "$account",
+              "$edition"
+            ],
+            "label": "내 보유",
+            "show": "count"
+          }
+        ],
+        "progress": {
+          "value": "minted",
+          "max": "cap"
+        },
+        "action": {
+          "call": "mint(uint256)",
+          "args": [
+            "$edition"
+          ],
+          "value": "$read:cost",
+          "label": "발행하기"
+        }
       }
     },
     "raffle": {
@@ -4263,6 +4900,47 @@
       "check_call": {
         "contract": "CommitRevealRaffle",
         "function": "ticketPrice()"
+      },
+      "screen": {
+        "lede": "참가비를 내고 한 장씩 참가합니다. 마감 뒤 미리 약속한 값으로 한 계정을 뽑습니다.",
+        "reads": [
+          {
+            "id": "fee",
+            "call": "ticketPrice()",
+            "label": "참가비",
+            "show": "native"
+          },
+          {
+            "call": "playerCount()",
+            "label": "참가 수",
+            "show": "count"
+          },
+          {
+            "call": "enterDeadline()",
+            "label": "참가 마감",
+            "show": "time"
+          },
+          {
+            "call": "drawn()",
+            "label": "추첨",
+            "show": "bool",
+            "map": {
+              "true": "끝남",
+              "false": "아직"
+            }
+          },
+          {
+            "call": "winner()",
+            "label": "뽑힌 계정",
+            "show": "address"
+          }
+        ],
+        "action": {
+          "call": "enter()",
+          "value": "$read:fee",
+          "label": "참가하기"
+        },
+        "note": "참가비는 돌려받지 못합니다. 잃어도 괜찮은 테스트 코인만 쓰세요."
       }
     },
     "rewards": {
@@ -4292,6 +4970,42 @@
       "check_call": {
         "contract": "RewardDistributor",
         "function": "rewardRate()"
+      },
+      "screen": {
+        "lede": "토큰을 맡겨 둔 기간과 양에 따라 후원자가 넣은 보상이 나뉩니다.",
+        "reads": [
+          {
+            "call": "userStaked(address)",
+            "args": [
+              "$account"
+            ],
+            "label": "내가 맡긴 양",
+            "show": "token"
+          },
+          {
+            "call": "earned(address)",
+            "args": [
+              "$account"
+            ],
+            "label": "쌓인 보상",
+            "show": "token"
+          },
+          {
+            "call": "totalStaked()",
+            "label": "전체 맡긴 양",
+            "show": "token"
+          },
+          {
+            "call": "finishAt()",
+            "label": "보상 분배 끝",
+            "show": "time"
+          }
+        ],
+        "action": {
+          "call": "claim()",
+          "label": "보상 받기"
+        },
+        "note": "맡기기와 찾기는 토큰 지출 승인이 필요해 개발자 보기에 있습니다. 보상은 후원자가 넣은 만큼만 있습니다."
       }
     },
     "subscription": {
@@ -4311,6 +5025,56 @@
       "check_call": {
         "contract": "SubscriptionManager",
         "function": "ratePerSecond()"
+      },
+      "screen": {
+        "lede": "낸 만큼 초 단위로 이용 기간이 늘어나고, 취소하면 남은 기간만큼 돌려받습니다.",
+        "reads": [
+          {
+            "call": "isSubscribed(address)",
+            "args": [
+              "$account"
+            ],
+            "label": "내 구독",
+            "show": "bool",
+            "map": {
+              "true": "이용 중",
+              "false": "이용 안 함"
+            }
+          },
+          {
+            "call": "subscribers(address)",
+            "args": [
+              "$account"
+            ],
+            "word": 0,
+            "label": "이용 끝",
+            "show": "time"
+          },
+          {
+            "call": "ratePerSecond()",
+            "label": "하루 요금",
+            "show": "per-day"
+          }
+        ],
+        "inputs": [
+          {
+            "id": "amount",
+            "label": "낼 금액",
+            "unit": "native",
+            "placeholder": "1"
+          }
+        ],
+        "action": {
+          "call": "subscribe()",
+          "value": "$amount",
+          "label": "구독하기"
+        },
+        "more": [
+          {
+            "call": "cancel()",
+            "label": "구독 취소 (남은 기간 환불)"
+          }
+        ]
       }
     },
     "token": {
@@ -4331,6 +5095,56 @@
       "check_call": {
         "contract": "IslandCoin",
         "function": "totalSupply()"
+      },
+      "screen": {
+        "lede": "발행량이 고정된 토큰입니다. 내 잔액을 보고 다른 주소로 보냅니다.",
+        "reads": [
+          {
+            "call": "name()",
+            "label": "토큰",
+            "show": "text"
+          },
+          {
+            "call": "balanceOf(address)",
+            "args": [
+              "$account"
+            ],
+            "label": "내 잔액",
+            "show": "token"
+          },
+          {
+            "call": "totalSupply()",
+            "label": "전체 발행량",
+            "show": "token"
+          },
+          {
+            "call": "symbol()",
+            "label": "기호",
+            "show": "text"
+          }
+        ],
+        "inputs": [
+          {
+            "id": "to",
+            "label": "받는 주소",
+            "unit": "address",
+            "placeholder": "0x…"
+          },
+          {
+            "id": "amount",
+            "label": "보낼 양",
+            "unit": "token",
+            "placeholder": "10"
+          }
+        ],
+        "action": {
+          "call": "transfer(address,uint256)",
+          "args": [
+            "$to",
+            "$amount"
+          ],
+          "label": "보내기"
+        }
       }
     },
     "vending": {
@@ -4351,6 +5165,45 @@
       "check_call": {
         "contract": "AgentVending",
         "function": "fulfilWindow()"
+      },
+      "screen": {
+        "lede": "에이전트에게 일을 맡기고 미리 냅니다. 기한 안에 결과가 오면 전달되고, 아니면 돌려받습니다.",
+        "reads": [
+          {
+            "id": "fee",
+            "call": "price()",
+            "label": "주문 금액",
+            "show": "native"
+          },
+          {
+            "call": "fulfilWindow()",
+            "label": "처리 기한",
+            "show": "duration"
+          },
+          {
+            "call": "orderCount()",
+            "label": "주문 수",
+            "show": "count"
+          }
+        ],
+        "inputs": [
+          {
+            "id": "spec",
+            "label": "주문서 해시",
+            "unit": "bytes32",
+            "placeholder": "0x…",
+            "hint": "에이전트와 합의한 주문서의 keccak 해시"
+          }
+        ],
+        "action": {
+          "call": "order(bytes32)",
+          "args": [
+            "$spec"
+          ],
+          "value": "$read:fee",
+          "label": "주문하기"
+        },
+        "note": "기한이 지나도 결과가 없으면 개발자 보기의 환불로 돌려받습니다."
       }
     }
   }

@@ -61,6 +61,53 @@
     "slug": "invoice",
     "summary": "Numbered invoices paid in the exact amount; each settled slot is deleted.",
     "web": "web",
+    "style": "editorial",
+    "screen": {
+      "lede": "받은 청구서 번호를 넣으면 금액과 기한을 보여 주고, 정확히 그 금액으로 결제합니다.",
+      "inputs": [
+        {
+          "id": "invoice",
+          "label": "청구서 번호",
+          "unit": "uint",
+          "default": "1"
+        }
+      ],
+      "reads": [
+        {
+          "id": "amount",
+          "call": "invoices(uint256)",
+          "args": [
+            "$invoice"
+          ],
+          "word": 0,
+          "label": "청구 금액",
+          "show": "native"
+        },
+        {
+          "call": "invoices(uint256)",
+          "args": [
+            "$invoice"
+          ],
+          "word": 1,
+          "label": "결제 기한",
+          "show": "time"
+        },
+        {
+          "call": "payee()",
+          "label": "받는 사람",
+          "show": "address"
+        }
+      ],
+      "action": {
+        "call": "settle(uint256)",
+        "args": [
+          "$invoice"
+        ],
+        "value": "$read:amount",
+        "label": "결제하기"
+      },
+      "note": "금액이 0이면 이미 결제되었거나 취소된 청구서입니다."
+    },
     "compiler": {
       "solc": "0.8.24",
       "evm_version": "paris",
@@ -361,6 +408,6 @@
       "contract": "InvoiceBook",
       "function": "payee()"
     },
-    "web_sha256": "0x859364a2de250474d6eaa1f1d54ed9065b876524fdfe23ebc1bae54cf2e07921"
+    "web_sha256": "0xd94b18233912dfb10199d4020c0389f7071a80808697f858d023e1477c6a4c67"
   }
 }

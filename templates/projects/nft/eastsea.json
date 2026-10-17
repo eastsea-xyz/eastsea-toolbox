@@ -66,6 +66,80 @@
     "slug": "nft",
     "summary": "On-chain metadata ERC-721 collection plus limited ERC-1155 editions.",
     "web": "web",
+    "style": "editorial",
+    "screen": {
+      "lede": "창작자가 만든 에디션을 한 장씩 발행해 가져갑니다.",
+      "inputs": [
+        {
+          "id": "edition",
+          "label": "에디션 번호",
+          "unit": "uint",
+          "default": "1"
+        }
+      ],
+      "reads": [
+        {
+          "call": "editionOf(uint256)",
+          "args": [
+            "$edition"
+          ],
+          "word": 1,
+          "label": "에디션",
+          "show": "text"
+        },
+        {
+          "id": "minted",
+          "call": "editionOf(uint256)",
+          "args": [
+            "$edition"
+          ],
+          "word": 3,
+          "label": "발행됨",
+          "show": "count"
+        },
+        {
+          "id": "cap",
+          "call": "editionOf(uint256)",
+          "args": [
+            "$edition"
+          ],
+          "word": 2,
+          "label": "최대 수량",
+          "show": "count"
+        },
+        {
+          "id": "cost",
+          "call": "editionOf(uint256)",
+          "args": [
+            "$edition"
+          ],
+          "word": 5,
+          "label": "발행 금액",
+          "show": "native"
+        },
+        {
+          "call": "balanceOf(address,uint256)",
+          "args": [
+            "$account",
+            "$edition"
+          ],
+          "label": "내 보유",
+          "show": "count"
+        }
+      ],
+      "progress": {
+        "value": "minted",
+        "max": "cap"
+      },
+      "action": {
+        "call": "mint(uint256)",
+        "args": [
+          "$edition"
+        ],
+        "value": "$read:cost",
+        "label": "발행하기"
+      }
+    },
     "compiler": {
       "solc": "0.8.24",
       "evm_version": "paris",
@@ -959,6 +1033,6 @@
       "contract": "OnchainNFT",
       "function": "maxSupply()"
     },
-    "web_sha256": "0x33514511f950df0dee6ad9ee1e26e5e96ccca5ef69efdb8680dcf7ead1621498"
+    "web_sha256": "0x4bd60a1d6f19c3771cab7e08684c0c6dfe8315625abb7a3873c73fbb1b05918e"
   }
 }

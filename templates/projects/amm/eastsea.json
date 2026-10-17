@@ -68,6 +68,40 @@
     "slug": "amm",
     "summary": "Two-token pool factory and router with LP tokens and a time-weighted oracle.",
     "web": "web",
+    "style": "editorial",
+    "screen": {
+      "lede": "두 토큰을 맞바꿀 수 있는 풀을 만듭니다. 교환과 유동성 공급은 개발자 보기의 라우터에서 합니다.",
+      "reads": [
+        {
+          "call": "allPairsLength()",
+          "label": "만들어진 풀",
+          "show": "count"
+        }
+      ],
+      "inputs": [
+        {
+          "id": "tokenA",
+          "label": "토큰 A 주소",
+          "unit": "address",
+          "placeholder": "0x…"
+        },
+        {
+          "id": "tokenB",
+          "label": "토큰 B 주소",
+          "unit": "address",
+          "placeholder": "0x…"
+        }
+      ],
+      "action": {
+        "call": "createPair(address,address)",
+        "args": [
+          "$tokenA",
+          "$tokenB"
+        ],
+        "label": "풀 만들기"
+      },
+      "note": "교환 비율은 풀 안의 수량으로 정해지며 바뀔 수 있습니다."
+    },
     "compiler": {
       "solc": "0.8.24",
       "evm_version": "paris",
@@ -567,6 +601,6 @@
       "contract": "AmmFactory",
       "function": "allPairsLength()"
     },
-    "web_sha256": "0xc1804a173bc18706d70882af4cbe74b6af837cf20d9b90786597b9716cff0056"
+    "web_sha256": "0x3b0863ed615557bdb83dbe8df4080e7b0dc11091f657f11afc93ab24453cd4b4"
   }
 }

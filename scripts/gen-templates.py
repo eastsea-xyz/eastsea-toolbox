@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Package every example as an eastsea-template/1 project under templates/projects/.
 
-Sources: examples/<slug>/manifest.json and docs, apps/<slug>/index.html,
-contracts/src (flattened with `forge flatten`) and templates/template-specs.json
-(deploy recipe, constructor labels, agent-readable interface text).
+Sources: examples/<slug>/manifest.json and docs, apps/<slug>/index.html
+(styled per templates/styles/styles.json), contracts/src (flattened with
+`forge flatten`) and templates/template-specs.json (deploy recipe,
+constructor labels, agent-readable interface text).
 
     python3 scripts/gen-templates.py           # (re)write templates/projects
     python3 scripts/gen-templates.py --check   # exit 1 if the tree differs from sources
@@ -25,6 +26,7 @@ import tempfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import template_lib as lib  # noqa: E402
+import template_styles  # noqa: E402
 from publish import PRIMARY, icon_png  # noqa: E402
 
 ROOT = lib.ROOT
@@ -107,7 +109,7 @@ def build(slug, spec, out: Path, workdir: Path):
     runtime = runtime_manifest(slug, manifest, label_ids)
     write_web(slug, project, runtime)
     template = {"format": lib.TEMPLATE_FORMAT, "slug": slug, "summary": recipe["summary"], "web": "web",
-                "compiler": dict(lib.COMPILER), "contracts": [], "steps": [], "placeholders": [], "interface": [],
+                "style": template_styles.style_for(slug), "screen": recipe["screen"], "compiler": dict(lib.COMPILER), "contracts": [], "steps": [], "placeholders": [], "interface": [],
                 "check_call": recipe["check_call"], "web_sha256": lib.web_sha256(project)}
     (project / "eastsea.json").write_bytes(pretty({**manifest, "x-eastsea-template": template}))
     artifacts = lib.compile_project(project, workdir / slug, gate=False)

@@ -60,6 +60,83 @@
     "slug": "market",
     "summary": "Listing book for NFTs with escrowed listings, royalty splits and pull payouts.",
     "web": "web",
+    "style": "editorial",
+    "screen": {
+      "lede": "등록된 작품을 정해진 금액으로 삽니다. 판매자와 창작자 몫은 자동으로 나뉩니다.",
+      "inputs": [
+        {
+          "id": "listing",
+          "label": "등록 번호",
+          "unit": "uint",
+          "default": "1"
+        }
+      ],
+      "reads": [
+        {
+          "id": "amount",
+          "call": "listingOf(uint256)",
+          "args": [
+            "$listing"
+          ],
+          "word": 3,
+          "label": "금액",
+          "show": "native"
+        },
+        {
+          "call": "listingOf(uint256)",
+          "args": [
+            "$listing"
+          ],
+          "word": 4,
+          "label": "상태",
+          "show": "bool",
+          "map": {
+            "true": "판매 중",
+            "false": "판매 종료"
+          }
+        },
+        {
+          "call": "listingOf(uint256)",
+          "args": [
+            "$listing"
+          ],
+          "word": 2,
+          "label": "작품 번호",
+          "show": "count"
+        },
+        {
+          "call": "listingOf(uint256)",
+          "args": [
+            "$listing"
+          ],
+          "word": 0,
+          "label": "판매자",
+          "show": "address"
+        },
+        {
+          "call": "credits(address)",
+          "args": [
+            "$account"
+          ],
+          "label": "내 정산금",
+          "show": "native"
+        }
+      ],
+      "action": {
+        "call": "buy(uint256)",
+        "args": [
+          "$listing"
+        ],
+        "value": "$read:amount",
+        "label": "구매하기"
+      },
+      "more": [
+        {
+          "call": "withdraw()",
+          "label": "내 정산금 받기"
+        }
+      ]
+    },
     "compiler": {
       "solc": "0.8.24",
       "evm_version": "paris",
@@ -348,6 +425,6 @@
       "contract": "FixedPriceMarket",
       "function": "brakeGuardian()"
     },
-    "web_sha256": "0xaf76742f76a9a05267c45926e1e8a9fa25583a276a7c510cc4c4b0e2059cda45"
+    "web_sha256": "0x8c6a382a6f6ca6813ac3b989f21c05b455160a0d3ee531055edbe88a9432afd4"
   }
 }

@@ -21,6 +21,12 @@ validate = importlib.util.module_from_spec(SPEC)
 sys.modules["validate_templates"] = validate
 SPEC.loader.exec_module(validate)
 import template_lib  # noqa: E402
+import template_screen  # noqa: E402
+import template_styles  # noqa: E402
+
+APPLY_SPEC = importlib.util.spec_from_file_location("apply_style", ROOT / "scripts/apply-style.py")
+apply_style = importlib.util.module_from_spec(APPLY_SPEC)
+APPLY_SPEC.loader.exec_module(apply_style)
 
 PROJECTS = ROOT / "templates" / "projects"
 SLUGS = sorted(p.parent.name for p in (ROOT / "examples").glob("*/manifest.json"))
@@ -117,6 +123,90 @@ class TemplateTests(unittest.TestCase):
         data["x-eastsea-template"]["interface"][0]["moves_funds"] = "maybe"
         path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
         self.refused(projects, "schema")
+
+    # ---------------------------------------------------------------- styles
+
+    def test_every_template_ships_its_registered_style(self):
+        self.assertEqual(template_styles.check_style_files(), [])
+        self.assertEqual(template_styles.names(), ["calm", "dense", "editorial", "playful"])
+        for slug in SLUGS:
+            template = json.loads((PROJECTS / slug / "eastsea.json").read_text())["x-eastsea-template"]
+            page = (PROJECTS / slug / "web" / "index.html").read_text()
+            self.assertEqual(template["style"], template_styles.style_for(slug))
+            self.assertEqual(template_styles.current(page), (template["style"], template_styles.tokens(template["style"])))
+
+    def test_component_css_uses_tokens_only(self):
+        page = (PROJECTS / "escrow" / "web" / "index.html").read_text()
+        components = page.split('<style id="eastsea-style"', 1)[1].split("</style>", 2)[1]
+        self.assertNotRegex(components, r"#[0-9a-fA-F]{3,8}\b|rgba?\(|url\(|@import|https?://fonts")
+        self.assertIn('class="notice" role="note"', page, "the test-only notice is part of every style")
+
+    def test_edited_style_block_is_refused(self):
+        projects = self.copy()
+        page = projects / "names" / "web" / "index.html"
+        page.write_text(page.read_text().replace("--c-accent:", "--c-accent:#ff0000;--x:", 1))
+        self.refused(projects, "style block differs")
+
+    def test_style_field_must_match_the_page(self):
+        projects = self.copy()
+        path = projects / "lock" / "eastsea.json"
+        data = json.loads(path.read_text())
+        data["x-eastsea-template"]["style"] = "neon"
+        path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+        self.refused(projects, "differs from the page's style block")
+
+    def test_apply_style_swaps_only_presentation(self):
+        projects = self.copy()
+        project = projects / "invoice"
+        before = (project / "web" / "index.html").read_text()
+        for name in template_styles.names():
+            apply_style.apply_style(project, name)
+            report = validate.validate(projects, compile_contracts=False)
+            shipped = name == template_styles.style_for("invoice")  # back to the shipped bytes: tree matches again
+            self.assertEqual(report.errors, [] if shipped else ["index.json: invoice.tree_sha256 differs from the template (tree_sha256/summary must be rebuilt)"])
+            after = (project / "web" / "index.html").read_text()
+            self.assertEqual(template_styles.BLOCK.sub("", after), template_styles.BLOCK.sub("", before))
+            self.assertEqual(json.loads((project / "eastsea.json").read_text())["x-eastsea-template"]["style"], name)
+        with self.assertRaises(ValueError):
+            apply_style.apply_style(project, "neon")
+
+    # ---------------------------------------------------------------- consumer screen
+
+    def edit_screen(self, slug, change):
+        projects = self.copy()
+        path = projects / slug / "eastsea.json"
+        data = json.loads(path.read_text())
+        change(data["x-eastsea-template"]["screen"])
+        path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+        return projects
+
+    def test_every_template_has_a_consumer_screen(self):
+        for slug in SLUGS:
+            screen = json.loads((PROJECTS / slug / "eastsea.json").read_text())["x-eastsea-template"]["screen"]
+            page = (PROJECTS / slug / "web" / "index.html").read_text()
+            self.assertIn('<details class="dev">', page, "the full console stays under 개발자 보기")
+            self.assertIn(screen["lede"], page)
+            self.assertTrue(screen["action"]["label"])
+
+    def test_selectors_match_keccak(self):
+        self.assertEqual(template_screen.selector("transfer(address,uint256)"), "0xa9059cbb")
+        self.assertEqual(template_screen.selector("dealInfo(uint256)"), "0xf5c94ea7")
+
+    def test_screen_call_outside_the_interface_is_refused(self):
+        projects = self.edit_screen("crowdfund", lambda s: s["action"].update(call="drain()"))
+        self.refused(projects, "is not a function of the primary contract's interface")
+
+    def test_screen_payable_value_is_required(self):
+        projects = self.edit_screen("raffle", lambda s: s["action"].pop("value"))
+        self.refused(projects, "is payable")
+
+    def test_screen_yield_wording_is_refused(self):
+        projects = self.edit_screen("rewards", lambda s: s["action"].update(label="Earn yield"))
+        self.refused(projects, "screen text uses ranking/yield/price wording")
+
+    def test_page_must_embed_the_declared_screen(self):
+        projects = self.edit_screen("lock", lambda s: s.update(lede="다른 설명"))
+        self.refused(projects, "screen differs from eastsea.json screen")
 
 
 if __name__ == "__main__":

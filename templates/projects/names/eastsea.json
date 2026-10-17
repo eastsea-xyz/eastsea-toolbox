@@ -67,6 +67,44 @@
     "slug": "names",
     "summary": "Drop whose eligibility is delegated entirely to the EastSea name service.",
     "web": "web",
+    "style": "editorial",
+    "screen": {
+      "lede": "대표 .sea 이름이 있는 계정이 정해진 양을 한 번 받습니다.",
+      "reads": [
+        {
+          "call": "dropAmount()",
+          "label": "받을 양",
+          "show": "native"
+        },
+        {
+          "call": "claimed(address)",
+          "args": [
+            "$account"
+          ],
+          "label": "내 상태",
+          "show": "bool",
+          "map": {
+            "true": "받음",
+            "false": "아직 받지 않음"
+          }
+        },
+        {
+          "call": "claimCount()",
+          "label": "받은 계정",
+          "show": "count"
+        },
+        {
+          "call": "deadline()",
+          "label": "받기 마감",
+          "show": "time"
+        }
+      ],
+      "action": {
+        "call": "claim()",
+        "label": "받기"
+      },
+      "note": "대표 이름은 지갑의 이름 설정에서 정합니다."
+    },
     "compiler": {
       "solc": "0.8.24",
       "evm_version": "paris",
@@ -329,6 +367,6 @@
       "contract": "NameGatedDrop",
       "function": "dropAmount()"
     },
-    "web_sha256": "0xae4158c5b392d5dbee0e764bcb588819cc5d7a12cf659f825a9295341dd02e4f"
+    "web_sha256": "0x2d56774ce1f196c44fd9d24010b4994c80a060b5a132c84a547ebb51329d6802"
   }
 }

@@ -61,6 +61,57 @@
     "slug": "subscription",
     "summary": "Time-based access paid per second, with partial refunds on cancel.",
     "web": "web",
+    "style": "editorial",
+    "screen": {
+      "lede": "낸 만큼 초 단위로 이용 기간이 늘어나고, 취소하면 남은 기간만큼 돌려받습니다.",
+      "reads": [
+        {
+          "call": "isSubscribed(address)",
+          "args": [
+            "$account"
+          ],
+          "label": "내 구독",
+          "show": "bool",
+          "map": {
+            "true": "이용 중",
+            "false": "이용 안 함"
+          }
+        },
+        {
+          "call": "subscribers(address)",
+          "args": [
+            "$account"
+          ],
+          "word": 0,
+          "label": "이용 끝",
+          "show": "time"
+        },
+        {
+          "call": "ratePerSecond()",
+          "label": "하루 요금",
+          "show": "per-day"
+        }
+      ],
+      "inputs": [
+        {
+          "id": "amount",
+          "label": "낼 금액",
+          "unit": "native",
+          "placeholder": "1"
+        }
+      ],
+      "action": {
+        "call": "subscribe()",
+        "value": "$amount",
+        "label": "구독하기"
+      },
+      "more": [
+        {
+          "call": "cancel()",
+          "label": "구독 취소 (남은 기간 환불)"
+        }
+      ]
+    },
     "compiler": {
       "solc": "0.8.24",
       "evm_version": "paris",
@@ -382,6 +433,6 @@
       "contract": "SubscriptionManager",
       "function": "ratePerSecond()"
     },
-    "web_sha256": "0xab570bf16a118f49974fd0e34fdac37015506b5ea31708077d1620ccd4fc278b"
+    "web_sha256": "0x4260587e091c6be8f2be40dcbd6b0ee5ccafef3e38b15b7638c8cd923e3de4a8"
   }
 }

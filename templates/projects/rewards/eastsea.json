@@ -62,6 +62,43 @@
     "slug": "rewards",
     "summary": "Sponsor-funded staking distributor with linear reward streaming.",
     "web": "web",
+    "style": "editorial",
+    "screen": {
+      "lede": "토큰을 맡겨 둔 기간과 양에 따라 후원자가 넣은 보상이 나뉩니다.",
+      "reads": [
+        {
+          "call": "userStaked(address)",
+          "args": [
+            "$account"
+          ],
+          "label": "내가 맡긴 양",
+          "show": "token"
+        },
+        {
+          "call": "earned(address)",
+          "args": [
+            "$account"
+          ],
+          "label": "쌓인 보상",
+          "show": "token"
+        },
+        {
+          "call": "totalStaked()",
+          "label": "전체 맡긴 양",
+          "show": "token"
+        },
+        {
+          "call": "finishAt()",
+          "label": "보상 분배 끝",
+          "show": "time"
+        }
+      ],
+      "action": {
+        "call": "claim()",
+        "label": "보상 받기"
+      },
+      "note": "맡기기와 찾기는 토큰 지출 승인이 필요해 개발자 보기에 있습니다. 보상은 후원자가 넣은 만큼만 있습니다."
+    },
     "compiler": {
       "solc": "0.8.24",
       "evm_version": "paris",
@@ -772,6 +809,6 @@
       "contract": "RewardDistributor",
       "function": "rewardRate()"
     },
-    "web_sha256": "0x9152fd6d36c7ca401ae4ffef406a5e3b12c7bfa652468e217d590192ae353472"
+    "web_sha256": "0xa93bae36c24ac37c3e64b132d098755112a4b62de0ca32aa513ea426f3a6b0d7"
   }
 }

@@ -14,6 +14,17 @@
     }
   ],
   "$defs": {
+    "screenWrite": {
+      "type": "object",
+      "required": ["call", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "call": { "type": "string", "maxLength": 200 },
+        "args": { "type": "array", "maxItems": 8, "items": { "type": "string", "maxLength": 200 } },
+        "value": { "type": "string", "maxLength": 40 },
+        "label": { "type": "string", "minLength": 1, "maxLength": 40 }
+      }
+    },
     "template": {
       "type": "object",
       "required": ["format", "slug", "summary", "web", "compiler", "contracts", "steps", "placeholders", "interface", "check_call", "web_sha256"],
@@ -33,6 +44,67 @@
           "pattern": "^[^\\u0000-\\u001F\\u007F\\u200B-\\u200F\\u202A-\\u202E\\u2066-\\u2069\\uFEFF]*$"
         },
         "web": { "description": "The bundle folder.", "const": "web" },
+        "style": {
+          "description": "Optional visual style of web/index.html: a name from the toolbox's templates/styles/styles.json whose token file is inlined as the page's <style id=\"eastsea-style\"> block. Presentation only; it never changes contracts, addresses or notices.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{1,23}$"
+        },
+        "screen": {
+          "description": "The plain screen for the template's main job, built only from the primary contract's interface: labelled reads, a few inputs and one primary write (plus optional secondary writes). Sources are \"$account\", \"$<input id>\", \"$read:<read id>\" or literals. Text is written by the template author and is untrusted.",
+          "type": "object",
+          "required": ["lede", "action"],
+          "additionalProperties": false,
+          "properties": {
+            "lede": { "type": "string", "minLength": 1, "maxLength": 160 },
+            "note": { "type": "string", "minLength": 1, "maxLength": 160 },
+            "reads": {
+              "type": "array",
+              "maxItems": 8,
+              "items": {
+                "type": "object",
+                "required": ["call", "label", "show"],
+                "additionalProperties": false,
+                "properties": {
+                  "id": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]{0,23}$" },
+                  "call": { "type": "string", "maxLength": 200 },
+                  "args": { "type": "array", "maxItems": 8, "items": { "type": "string", "maxLength": 200 } },
+                  "word": { "type": "integer", "minimum": 0, "maximum": 31 },
+                  "label": { "type": "string", "minLength": 1, "maxLength": 40 },
+                  "show": { "enum": ["native", "token", "count", "bps", "time", "duration", "per-day", "bool", "state", "address", "hash", "text"] },
+                  "map": { "type": "object", "maxProperties": 16, "additionalProperties": { "type": "string", "maxLength": 40 } },
+                  "decimals": { "type": "integer", "minimum": 0, "maximum": 77 },
+                  "suffix": { "type": "string", "maxLength": 12 }
+                }
+              }
+            },
+            "inputs": {
+              "type": "array",
+              "maxItems": 6,
+              "items": {
+                "type": "object",
+                "required": ["id", "label", "unit"],
+                "additionalProperties": false,
+                "properties": {
+                  "id": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]{0,23}$" },
+                  "label": { "type": "string", "minLength": 1, "maxLength": 40 },
+                  "unit": { "enum": ["native", "token", "uint", "address", "bytes32", "text", "list"] },
+                  "placeholder": { "type": "string", "maxLength": 80 },
+                  "default": { "type": "string", "maxLength": 80 },
+                  "decimals": { "type": "integer", "minimum": 0, "maximum": 77 },
+                  "hint": { "type": "string", "maxLength": 120 }
+                }
+              }
+            },
+            "action": { "$ref": "#/$defs/screenWrite" },
+            "more": { "type": "array", "maxItems": 3, "items": { "$ref": "#/$defs/screenWrite" } },
+            "progress": {
+              "type": "object",
+              "required": ["value", "max"],
+              "additionalProperties": false,
+              "properties": { "value": { "type": "string" }, "max": { "type": "string" } }
+            }
+          }
+        },
         "compiler": {
           "type": "object",
           "required": ["solc", "evm_version", "optimizer_runs"],

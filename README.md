@@ -195,6 +195,38 @@ make validate-templates   # reproducible tree + schema, compile, interface, plac
 make test-templates       # tampered copies must be refused
 ```
 
+### Screens and styles
+
+Each front-end opens on one plain screen for the template's main job (Korean
+labels, amounts in the chain's coin with decimals, short addresses, the
+test-only notice always visible); the full console (contract address, every
+function, events) stays under 개발자 보기. The screen is declared in
+`x-eastsea-template.screen` and uses only the primary contract's
+agent-readable interface: labelled reads, a few inputs, one primary write and
+optional secondary writes. The validator checks every call, argument source,
+payable value and wording, and that the page embeds exactly that screen.
+
+All pages share one HTML/CSS structure that reads only design tokens. Each
+style is one token file in `templates/styles/` (type scale, light and dark
+colors, radius, spacing, motion; system fonts only, nothing external),
+inlined into `web/index.html` as `<style id="eastsea-style" data-style="…">`
+so bundles stay self-contained. `templates/styles/styles.json` names the
+styles and the default; `x-eastsea-template.style` records it and the
+validator checks the inlined block byte for byte.
+
+| style | 느낌 |
+|---|---|
+| `editorial` | 따뜻한 에디토리얼 (default, every template ships with it) |
+| `calm` | 차분한 미니멀 |
+| `dense` | 고밀도 도구형 |
+| `playful` | 놀이 같은 |
+
+```bash
+python3 scripts/apply-style.py --list
+python3 scripts/apply-style.py path/to/my-copy calm   # swaps the block, sets style, refreshes web_sha256
+python3 scripts/render-styles.py prepare              # offline renders of every template in every style (tmp/)
+```
+
 ## 카탈로그
 
 | # | 예제 | 폴더 | 앱 이름 | 다루는 것 |

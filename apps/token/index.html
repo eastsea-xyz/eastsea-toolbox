@@ -4,76 +4,187 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Island Coin — EastSea Toolbox</title>
+<style id="eastsea-style" data-style="editorial">
+/* eastsea-style editorial: 따뜻한 에디토리얼. Paper tones, serif display, mono eyebrows, navy ink, pill buttons. System fonts only. */
+:root{
+  color-scheme:light dark;
+  --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  --font-display:"New York",ui-serif,"Iowan Old Style",Charter,"Times New Roman",Georgia,"Apple SD Gothic Neo","Noto Sans KR",serif;
+  --font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --fs-xs:12px;--fs-sm:13.5px;--fs-base:16px;--fs-lg:18px;--fs-h1:56px;--fs-h1-mobile:38px;
+  --lh-body:1.6;--lh-display:1.04;
+  --display-weight:500;--display-tracking:-0.03em;
+  --h2-font:var(--font-display);--h2-size:22px;--h2-weight:500;--h2-transform:none;--h2-tracking:-0.01em;
+  --eyebrow-font:var(--font-mono);--eyebrow-size:11.5px;--eyebrow-transform:uppercase;--eyebrow-tracking:.12em;--eyebrow-weight:400;
+  --step-display:none;--step-radius:999px;
+  --radius-card:4px;--radius-control:8px;--radius-button:999px;
+  --border-w:1px;
+  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:18px;--space-5:28px;--space-6:48px;
+  --card-pad:28px;--page-max:1120px;--rail-w:380px;--gap:24px;--header-pad:72px;
+  --btn-weight:500;--btn-pad:11px 22px;--btn-transform:none;--btn-tracking:0;
+  --motion-fast:180ms;--motion-ease:cubic-bezier(.3,.6,.2,1);--press-shift:0px;
+  --c-bg:#f3eee4;--c-surface:#faf7f1;--c-surface-2:#f1ebdf;--c-text:#10233a;--c-text-2:#4c5a6a;--c-text-3:#5e6873;
+  --c-border:#e2d9c8;--c-border-strong:#cfc3ad;--c-accent:#10233a;--c-accent-hover:#1d3756;--c-on-accent:#faf7f1;--c-primary-border:var(--c-accent);
+  --c-accent-soft:#ebe2d0;--c-ok:#256b4a;--c-warn:#8a5a00;--c-err:#a8322a;--c-focus:#c98a12;
+  --c-notice-bg:#10233a;--c-notice-text:#f3eee4;--c-notice-dot:#e8b04b;
+  --shadow-card:none;--shadow-button:none;--shadow-button-press:none;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --c-bg:#0f1a26;--c-surface:#14222f;--c-surface-2:#1a2a3a;--c-text:#f1ead9;--c-text-2:#b7bec6;--c-text-3:#98a3ae;
+  --c-border:#243548;--c-border-strong:#33485e;--c-accent:#efc36a;--c-accent-hover:#f5d38f;--c-on-accent:#10233a;--c-primary-border:var(--c-accent);
+  --c-accent-soft:#2a2e2a;--c-ok:#7fd1a6;--c-warn:#efc36a;--c-err:#ff958a;--c-focus:#efc36a;
+  --c-notice-bg:#1a2a3a;--c-notice-text:#f1ead9;--c-notice-dot:#efc36a;
+}}
+:root[data-theme="dark"]{
+  --c-bg:#0f1a26;--c-surface:#14222f;--c-surface-2:#1a2a3a;--c-text:#f1ead9;--c-text-2:#b7bec6;--c-text-3:#98a3ae;
+  --c-border:#243548;--c-border-strong:#33485e;--c-accent:#efc36a;--c-accent-hover:#f5d38f;--c-on-accent:#10233a;--c-primary-border:var(--c-accent);
+  --c-accent-soft:#2a2e2a;--c-ok:#7fd1a6;--c-warn:#efc36a;--c-err:#ff958a;--c-focus:#efc36a;
+  --c-notice-bg:#1a2a3a;--c-notice-text:#f1ead9;--c-notice-dot:#efc36a;
+}
+</style>
 <style>
-:root{color-scheme:dark}
 *{box-sizing:border-box}
-body{margin:0;background:#08131d;color:#d7e7ee;font:15px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
-main{max-width:760px;margin:0 auto;padding:0 16px 64px}
-header{max-width:760px;margin:0 auto;padding:36px 16px 8px}
-.brand{color:#4dd6c1;font-size:12px;letter-spacing:.14em;text-transform:uppercase}
-h1{margin:.15em 0 .1em;font-size:26px}
-h2{margin:0 0 12px;font-size:15px;color:#9fc4d4;font-weight:600;letter-spacing:.04em}
-.sub{margin:0 0 4px;color:#8aa7b6}
-.card{background:#0d1f2e;border:1px solid #1b3648;border-radius:12px;padding:18px;margin:16px 0}
-button{background:#123243;color:#d7f3ec;border:1px solid #2b5a70;border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer}
-button:hover{background:#174060}
-button:disabled{opacity:.45;cursor:default}
-input,textarea{width:100%;background:#081722;border:1px solid #24455a;border-radius:8px;color:#d7e7ee;padding:8px 10px;font:inherit;margin:3px 0 10px}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--c-bg);color:var(--c-text);font:var(--fs-base)/var(--lh-body) var(--font-body);-webkit-font-smoothing:antialiased}
+.notice{display:flex;gap:var(--space-2);align-items:baseline;justify-content:center;flex-wrap:wrap;margin:0;padding:var(--space-2) var(--space-4);background:var(--c-notice-bg);color:var(--c-notice-text);font-size:var(--fs-sm);text-align:center;border-bottom:var(--border-w) solid var(--c-border)}
+.notice b{font-weight:700}
+.notice-dot{width:8px;height:8px;border-radius:50%;background:var(--c-notice-dot);display:inline-block;flex:none;align-self:center}
+header{max-width:var(--page-max);margin:0 auto;padding:var(--header-pad) var(--space-4) var(--space-5)}
+.eyebrow{display:flex;flex-wrap:wrap;gap:var(--space-2) var(--space-3);align-items:center;font-family:var(--eyebrow-font);font-size:var(--eyebrow-size);text-transform:var(--eyebrow-transform);letter-spacing:var(--eyebrow-tracking);font-weight:var(--eyebrow-weight);color:var(--c-text-2)}
+.chip{display:inline-block;padding:1px var(--space-2);border:var(--border-w) solid var(--c-border-strong);border-radius:var(--radius-button);font-family:var(--font-mono);font-size:var(--fs-xs);letter-spacing:0;text-transform:none;color:var(--c-text-2);background:var(--c-surface)}
+h1{margin:var(--space-3) 0 var(--space-2);font-family:var(--font-display);font-size:var(--fs-h1);line-height:var(--lh-display);font-weight:var(--display-weight);letter-spacing:var(--display-tracking);color:var(--c-text);text-wrap:balance}
+.sub{margin:0;max-width:44em;color:var(--c-text-2);font-size:var(--fs-lg)}
+main{max-width:var(--page-max);margin:0 auto;padding:0 var(--space-4) var(--space-6)}
+.consumer{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,var(--rail-w));gap:var(--gap);align-items:start}
+.side{display:grid;gap:var(--gap);min-width:0;position:sticky;top:var(--space-4)}
+.screen{padding:calc(var(--card-pad) * 1.25)}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:var(--space-4) var(--space-5);margin:0 0 var(--space-4)}
+.stat{min-width:0;border-top:var(--border-w) solid var(--c-border);padding-top:var(--space-3)}
+.stat dt{font-size:var(--fs-sm);color:var(--c-text-2)}
+.stat-value{margin:var(--space-1) 0 0;font-family:var(--font-display);font-size:calc(var(--fs-lg) * 1.3);font-weight:var(--display-weight);letter-spacing:var(--h2-tracking);color:var(--c-text);overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.stat-value.dim{color:var(--c-text-3)}
+.stat-value.compact{font-size:var(--fs-lg);font-weight:500}
+.progress{height:8px;border-radius:var(--radius-button);background:var(--c-surface-2);border:var(--border-w) solid var(--c-border);overflow:hidden;margin:var(--space-2) 0 var(--space-1)}
+.progress span{display:block;height:100%;width:0;background:var(--c-accent);transition:width var(--motion-fast) var(--motion-ease)}
+.progress-text{margin:0 0 var(--space-3);font-size:var(--fs-sm);color:var(--c-text-2);font-variant-numeric:tabular-nums}
+.screen-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0 var(--space-4);margin-top:var(--space-4)}
+.field{display:block;font-size:var(--fs-sm);color:var(--c-text-2)}
+.field>span{margin-right:var(--space-1)}
+.field .unit{color:var(--c-text-3);font-family:var(--font-mono);font-size:var(--fs-xs)}
+.field small{display:block;margin:calc(var(--space-2) * -1) 0 var(--space-3);color:var(--c-text-3);font-size:var(--fs-xs)}
+.field input,.field textarea{font-size:var(--fs-lg)}
+button.primary{display:block;width:100%;margin-top:var(--space-3);padding:calc(var(--space-3) + 2px) var(--space-5);font-size:var(--fs-base);background:var(--c-accent);color:var(--c-on-accent);border-color:var(--c-primary-border)}
+button.primary:hover{background:var(--c-accent-hover)}
+.more{margin-top:var(--space-4);padding-top:var(--space-3);border-top:var(--border-w) solid var(--c-border)}
+button.quiet{background:transparent;box-shadow:none;border-color:var(--c-border-strong)}
+.screen-note{margin:var(--space-4) 0 0;font-size:var(--fs-sm);color:var(--c-text-2)}
+.about p{font-size:var(--fs-sm);color:var(--c-text-2)}
+.dev{margin-top:var(--space-6);border-top:var(--border-w) solid var(--c-border);padding-top:var(--space-4)}
+.dev summary{cursor:pointer;font-family:var(--h2-font);font-size:var(--h2-size);font-weight:var(--h2-weight);letter-spacing:var(--h2-tracking);text-transform:var(--h2-transform);color:var(--c-text-2);display:flex;gap:var(--space-3);align-items:baseline;flex-wrap:wrap;list-style-position:inside}
+.dev summary .tag{margin-left:0}
+.dev-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--gap);margin-top:var(--space-4);align-items:start}
+.card{background:var(--c-surface);border:var(--border-w) solid var(--c-border);border-radius:var(--radius-card);padding:var(--card-pad);box-shadow:var(--shadow-card);min-width:0}
+h2{display:flex;align-items:center;gap:var(--space-2);margin:0 0 var(--space-4);font-family:var(--h2-font);font-size:var(--h2-size);font-weight:var(--h2-weight);text-transform:var(--h2-transform);letter-spacing:var(--h2-tracking);color:var(--c-text)}
+.step{display:var(--step-display);align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:var(--step-radius);background:var(--c-accent-soft);color:var(--c-text);font:600 var(--fs-xs)/1 var(--font-mono);letter-spacing:0}
+.tag{margin-left:auto;font:400 var(--fs-xs)/1.2 var(--font-mono);letter-spacing:0;text-transform:none;color:var(--c-text-3)}
+button{appearance:none;background:var(--c-surface);color:var(--c-text);border:var(--border-w) solid var(--c-border-strong);border-radius:var(--radius-button);padding:var(--btn-pad);font:var(--btn-weight) var(--fs-sm)/1.2 var(--font-body);text-transform:var(--btn-transform);letter-spacing:var(--btn-tracking);cursor:pointer;box-shadow:var(--shadow-button);transition:background var(--motion-fast) var(--motion-ease),transform var(--motion-fast) var(--motion-ease),box-shadow var(--motion-fast) var(--motion-ease)}
+button:hover{background:var(--c-surface-2)}
+button:active{transform:translate(var(--press-shift),var(--press-shift));box-shadow:var(--shadow-button-press)}
+button:disabled{opacity:.5;cursor:default;transform:none}
+button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--c-focus);outline-offset:2px}
+.actions button[type=submit]{background:var(--c-accent);color:var(--c-on-accent);border-color:var(--c-primary-border)}
+.actions button[type=submit]:hover{background:var(--c-accent-hover)}
+input,textarea{width:100%;background:var(--c-surface-2);border:var(--border-w) solid var(--c-border);border-radius:var(--radius-control);color:var(--c-text);padding:var(--space-2) var(--space-3);font:var(--fs-base)/1.4 var(--font-body);margin:var(--space-1) 0 var(--space-3);transition:border-color var(--motion-fast) var(--motion-ease)}
+input:hover{border-color:var(--c-border-strong)}
+input::placeholder{color:var(--c-text-3)}
+#contract{font-family:var(--font-mono);font-size:var(--fs-sm)}
 textarea{min-height:56px;resize:vertical}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-.row>*{flex:1;min-width:140px}
-.hint{color:#6d8aa0;font-size:12.5px;margin:2px 0 10px}
-.ok{color:#5fe6c2}.warn{color:#ffb86b}.err{color:#ff7b72}.dim{color:#6d8aa0}
-.txhash{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;word-break:break-all}
-.wallets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-.wallets button{display:flex;align-items:center;gap:8px}
-.dot{width:8px;height:8px;border-radius:50%;background:#4dd6c1;display:inline-block}
-.log{border-left:2px solid #1b3648;padding:4px 0 4px 10px;margin:8px 0;font-size:13px}
-.log b{color:#4dd6c1}
-.mono{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;word-break:break-all}
-footer{max-width:760px;margin:0 auto;padding:0 16px 48px;color:#4d6a7d;font-size:12.5px}
-a{color:#4dd6c1}
-.actions form{border-top:1px solid #14293a;padding-top:12px;margin-top:12px}
-.actions form:first-child{border-top:0;padding-top:0}
-label{display:block;font-size:13px;color:#9fc4d4;margin-top:4px}
+p{margin:var(--space-2) 0}
+.hint{color:var(--c-text-3);font-size:var(--fs-sm);margin:var(--space-1) 0 var(--space-3)}
+.ok{color:var(--c-ok)}.warn{color:var(--c-warn)}.err{color:var(--c-err)}.dim{color:var(--c-text-3)}
+.txhash{font-family:var(--font-mono);font-size:var(--fs-xs);word-break:break-all}
+.wallets{display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-3)}
+.wallets button{display:flex;align-items:center;gap:var(--space-2)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--c-ok);display:inline-block}
+.log{border-left:2px solid var(--c-accent);padding:var(--space-1) 0 var(--space-1) var(--space-3);margin:var(--space-3) 0;font-size:var(--fs-sm)}
+.log b{color:var(--c-text)}
+.mono{font-family:var(--font-mono);font-size:var(--fs-xs);overflow-wrap:anywhere}
+footer{max-width:var(--page-max);margin:0 auto;padding:var(--space-5) var(--space-4) var(--space-6);color:var(--c-text-3);font-size:var(--fs-sm);border-top:var(--border-w) solid var(--c-border)}
+a{color:var(--c-text);text-decoration-color:var(--c-border-strong);text-underline-offset:3px}
+a:hover{text-decoration-color:currentColor}
+form{display:block}
+#views form,.actions form{border-top:var(--border-w) solid var(--c-border);padding-top:var(--space-4);margin-top:var(--space-4)}
+#views form:first-child,.actions form:first-child{border-top:0;padding-top:0;margin-top:0}
+label{display:block;font-size:var(--fs-sm);color:var(--c-text-2);margin-top:var(--space-1)}
+form>label:first-child{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--space-1) var(--space-3);margin:0 0 var(--space-3);color:var(--c-text)}
+form>label:first-child b{font-family:var(--font-display);font-size:var(--fs-lg);font-weight:var(--h2-weight);letter-spacing:var(--h2-tracking)}
 .hidden{display:none}
+@media (max-width:860px){
+  header{padding:var(--space-6) var(--space-4) var(--space-4)}
+  h1{font-size:var(--fs-h1-mobile)}
+  .sub{font-size:var(--fs-base)}
+  .consumer,.dev-grid{grid-template-columns:minmax(0,1fr)}
+  .side{display:contents}
+  .wallet-card{order:-1}
+  .about{order:1}
+  .screen{padding:min(var(--card-pad),20px)}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .card{padding:min(var(--card-pad),20px)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
+<p class="notice" role="note"><span class="notice-dot" aria-hidden="true"></span><b>테스트 전용</b> 테스트 코인만 사용하세요. 감사받지 않은 예제이며 AS IS로 제공됩니다 — 실행 결과는 사용자 책임입니다.</p>
 <header>
-  <div class="brand">EastSea Toolbox · 예제 1</div>
+  <div class="eyebrow"><span>EastSea Toolbox · 예제 1</span><span class="chip">토큰 발행</span></div>
   <h1>Island Coin</h1>
-  <p class="sub">Fixed-supply community token</p>
+  <p class="sub">발행량이 고정된 토큰입니다. 내 잔액을 보고 다른 주소로 보냅니다.</p>
 </header>
 <main>
-  <section class="card">
-    <h2>1 · 지갑 연결</h2>
-    <div class="wallets" id="wallets"><span class="dim">지갑을 찾는 중…</span></div>
-    <p id="acct" class="dim">지갑을 선택하세요 (EIP-6963 자동 감지 · 폴백 window.aether).</p>
-    <p id="chain" class="dim"></p>
-    <button id="fixchain" class="hidden">배포 체인으로 전환</button>
-  </section>
-  <section class="card">
-    <h2>2 · 컨트랙트 주소</h2>
-    <input id="contract" placeholder="0x…" autocomplete="off" spellcheck="false">
-    <p id="deployment" class="dim">manifest.json에서 배포 설정을 읽는 중…</p>
-    <p class="hint">Island Coin 배포 주소. 링크로 전달할 수 있습니다: <span class="mono">apps/token/?contract=0x…</span></p>
-  </section>
-  <section class="card" id="views-card">
-    <h2>3 · 조회 (eth_call · 무료)</h2>
-    <div id="views"></div>
-  </section>
-  <section class="card">
-    <h2 id="views-card-toggle">4 · 실행 (트랜잭션 · 상태 비용 발생)</h2>
-    <p id="signature-note" class="hint"></p>
-    <div class="actions" id="actions"></div>
-  </section>
-  <section class="card">
-    <h2>5 · 최근 이벤트</h2>
-    <button id="load-logs">최근 5,000블록 로그 불러오기</button>
-    <p class="hint">Transfer</p>
-    <div id="logs"></div>
-  </section>
+  <div class="consumer">
+    <section class="card screen" id="screen" aria-label="Island Coin"></section>
+    <aside class="side">
+      <section class="card wallet-card">
+        <h2>지갑</h2>
+        <div class="wallets" id="wallets"><span class="dim">지갑을 찾는 중…</span></div>
+        <p id="acct" class="dim">지갑을 선택하세요.</p>
+        <p id="chain" class="dim"></p>
+        <button id="fixchain" class="hidden">배포 체인으로 전환</button>
+      </section>
+      <section class="card about">
+        <h2>알아둘 것</h2>
+        <p>테스트넷 전용 예제입니다. 감사받지 않았고 AS IS로 제공됩니다. 실행한 거래는 되돌릴 수 없습니다.</p>
+        <p class="hint">서명과 수수료 확인은 연결한 지갑이 합니다. 이 페이지는 키를 다루지 않습니다.</p>
+      </section>
+    </aside>
+  </div>
+  <details class="dev">
+    <summary>개발자 보기 <span class="tag">컨트랙트 주소 · 모든 함수 · 이벤트</span></summary>
+    <div class="dev-grid">
+      <section class="card">
+        <h2><span class="step">1</span>컨트랙트 주소</h2>
+        <input id="contract" placeholder="0x…" autocomplete="off" spellcheck="false" aria-label="컨트랙트 주소">
+        <p id="deployment" class="dim">manifest.json에서 배포 설정을 읽는 중…</p>
+        <p class="hint">Island Coin 배포 주소. 링크로 전달할 수 있습니다: <span class="mono">?contract=0x…</span></p>
+      </section>
+      <section class="card" id="views-card">
+        <h2><span class="step">2</span>조회<span class="tag">eth_call · 무료</span></h2>
+        <div id="views"></div>
+      </section>
+      <section class="card">
+        <h2 id="views-card-toggle"><span class="step">3</span>실행<span class="tag">트랜잭션 · 상태 비용 발생</span></h2>
+        <p id="signature-note" class="hint"></p>
+        <div class="actions" id="actions"></div>
+      </section>
+      <section class="card">
+        <h2><span class="step">4</span>최근 이벤트</h2>
+        <button id="load-logs">최근 5,000블록 로그 불러오기</button>
+        <p class="hint">Transfer</p>
+        <div id="logs"></div>
+      </section>
+    </div>
+  </details>
 </main>
 <footer>예제 문서: <a href="../../examples/token/README.md">examples/token/</a> · 가스·상태 비용: <a href="../../examples/token/GAS.md">GAS.md</a> · 보안: <a href="../../examples/token/SECURITY.md">SECURITY.md</a><br>
 테스트 코인만 사용하세요. AS IS — 실행 결과는 사용자 책임입니다. 배포 주소·체인·코인은 manifest.json에서 읽으며, 계정 서명과 B5 수수료 확인은 연결한 지갑이 담당합니다.</footer>
@@ -168,7 +279,76 @@ const APP = {
       "topic": "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
       "label": "Transfer"
     }
-  ]
+  ],
+  "screen": {
+    "lede": "발행량이 고정된 토큰입니다. 내 잔액을 보고 다른 주소로 보냅니다.",
+    "inputs": [
+      {
+        "id": "to",
+        "label": "받는 주소",
+        "unit": "address",
+        "placeholder": "0x…"
+      },
+      {
+        "id": "amount",
+        "label": "보낼 양",
+        "unit": "token",
+        "placeholder": "10"
+      }
+    ],
+    "reads": [
+      {
+        "call": "name()",
+        "label": "토큰",
+        "show": "text",
+        "args": [],
+        "sel": "0x06fdde03",
+        "types": []
+      },
+      {
+        "call": "balanceOf(address)",
+        "args": [
+          "$account"
+        ],
+        "label": "내 잔액",
+        "show": "token",
+        "sel": "0x70a08231",
+        "types": [
+          "address"
+        ]
+      },
+      {
+        "call": "totalSupply()",
+        "label": "전체 발행량",
+        "show": "token",
+        "args": [],
+        "sel": "0x18160ddd",
+        "types": []
+      },
+      {
+        "call": "symbol()",
+        "label": "기호",
+        "show": "text",
+        "args": [],
+        "sel": "0x95d89b41",
+        "types": []
+      }
+    ],
+    "action": {
+      "call": "transfer(address,uint256)",
+      "args": [
+        "$to",
+        "$amount"
+      ],
+      "label": "보내기",
+      "sel": "0xa9059cbb",
+      "types": [
+        "address",
+        "uint"
+      ]
+    },
+    "more": []
+  }
 };
 
 'use strict';
@@ -259,8 +439,8 @@ async function connect(d) {
   provider = d.provider;
   account = null; chainOk = false;
   const selected = provider;
-  const onAccounts = (accounts) => { if (selected !== provider) return; setAccount(accounts); chainOk = false; checkChain(); };
-  const onChain = () => { if (selected !== provider) return; chainOk = false; checkChain(); };
+  const onAccounts = (accounts) => { if (selected !== provider) return; setAccount(accounts); chainOk = false; checkChain().then(() => refreshScreen()).catch(() => {}); };
+  const onChain = () => { if (selected !== provider) return; chainOk = false; checkChain().then(() => refreshScreen()).catch(() => {}); };
   const onDisconnect = (err) => {
     if (selected !== provider) return;
     detachProvider(); provider = null;
@@ -286,12 +466,14 @@ async function connect(d) {
     setAccount(accts);
     if (!account) throw new Error('지갑에서 공유한 계정이 없습니다');
     await checkChain();
+    refreshScreen().catch(() => {});
   } catch (err) { if (selected === provider) { account = null; chainOk = false; note('acct', '연결 실패: ' + errorText(err), 'err'); } }
 }
 
 function setAccount(accounts) {
   account = Array.isArray(accounts) && addressPattern.test(accounts[0]) ? accounts[0] : null;
-  note('acct', account ? '연결됨: ' + account : '공유된 계정이 없습니다. 지갑을 다시 연결하세요.', account ? 'ok mono' : 'warn');
+  note('acct', account ? '연결됨 · ' + shortAddr(account) : '공유된 계정이 없습니다. 지갑을 다시 연결하세요.', account ? 'ok' : 'warn');
+  if (account) document.getElementById('acct').setAttribute('title', account);
 }
 
 async function checkChain() {
@@ -306,7 +488,7 @@ async function checkChain() {
     if (selected !== provider) return false;
     chainOk = (id === expectedChainId);
     el.className = chainOk ? 'ok' : 'warn';
-    el.textContent = chainOk ? '체인: ' + id : '배포 체인과 다릅니다 (현재 ' + id + ', 필요 ' + expectedChainId + '). 지갑의 네트워크 설정을 변경하세요.';
+    el.textContent = chainOk ? '네트워크 확인됨 · chain ' + BigInt(id) : '배포 체인과 다릅니다 (현재 ' + id + ', 필요 ' + expectedChainId + '). 지갑의 네트워크 설정을 변경하세요.';
     const supported = selected.supportedMethods;
     const canSwitch = !selected.isAether && (!Array.isArray(supported) || supported.includes('wallet_switchEthereumChain'));
     fix.classList.toggle('hidden', chainOk || !canSwitch);
@@ -532,6 +714,153 @@ if (APP.views.length) { const c = document.getElementById('views'); APP.views.fo
 else { document.getElementById('views-card').classList.add('hidden'); }
 { const c = document.getElementById('actions'); APP.actions.forEach((a) => buildForm(c, a, true)); }
 if (APP.signatureNotice) note('signature-note', APP.signatureNotice, 'warn');
+
+// ---------------------------------------------------------------- consumer screen (x-eastsea-template.screen)
+// One plain screen for the template's main job, built from APP.screen: reads
+// shown as labelled values, a few inputs and one primary action. The full
+// console below ("개발자 보기") stays available for everything else.
+const SCREEN = APP.screen;
+const screenFields = {}, screenReads = {};
+let screenTimer = null;
+const shortAddr = (a) => (addressPattern.test(a) ? a.slice(0, 6) + '…' + a.slice(-4) : a);
+const groupDigits = (s) => s.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+function fmtUnits(v, decimals) { // at most 6 fraction digits on the screen; "약" marks a shortened value
+  const scale = 10n ** BigInt(decimals), neg = v < 0n, a = neg ? -v : v;
+  let f = decimals ? (a % scale).toString().padStart(decimals, '0').replace(/0+$/, '') : '';
+  const cut = f.length > 6; if (cut) f = f.slice(0, 6).replace(/0+$/, '');
+  return (cut ? '약 ' : '') + (neg ? '-' : '') + groupDigits((a / scale).toString()) + (f ? '.' + f : '');
+}
+function toUnits(s, decimals, what) {
+  s = String(s).trim().replace(/,/g, '');
+  if (!/^\d*(\.\d*)?$/.test(s) || s === '' || s === '.') throw new Error(what + ': 숫자를 입력하세요 (예: 1.5)');
+  const [i, f = ''] = s.split('.');
+  if (f.length > decimals) throw new Error(what + ': 소수점 이하 ' + decimals + '자리까지만 입력하세요');
+  return BigInt(i || '0') * 10n ** BigInt(decimals) + BigInt(f.padEnd(decimals, '0') || '0');
+}
+const wordAt = (h, w) => BigInt('0x' + (h.slice(w * 64, w * 64 + 64) || '0'));
+function duration(sec) {
+  const d = sec / 86400n, h = (sec % 86400n) / 3600n, m = (sec % 3600n) / 60n;
+  return [d ? d + '일' : '', h ? h + '시간' : '', !d && m ? m + '분' : ''].filter(Boolean).join(' ') || sec + '초';
+}
+function showValue(spec, h) {
+  const w = spec.word || 0, v = wordAt(h, w);
+  switch (spec.show) {
+    case 'native': return fmtUnits(v, nativeCurrency.decimals) + ' ' + nativeCurrency.symbol;
+    case 'per-day': return fmtUnits(v * 86400n, nativeCurrency.decimals) + ' ' + nativeCurrency.symbol;
+    case 'token': return fmtUnits(v, spec.decimals ?? 18) + (spec.suffix ? ' ' + spec.suffix : '');
+    case 'count': return groupDigits(v.toString());
+    case 'bps': return (Number(v) / 100) + '%';
+    case 'time': { if (v === 0n) return '—'; const d = new Date(Number(v) * 1000);
+      return d.toLocaleString('ko-KR', { year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
+    case 'duration': return duration(v);
+    case 'bool': return spec.map[String(v !== 0n)];
+    case 'state': return spec.map[v.toString()] ?? v.toString();
+    case 'address': return v === 0n ? '없음' : shortAddr('0x' + h.slice(w * 64 + 24, w * 64 + 64));
+    case 'hash': return '0x' + h.slice(w * 64, w * 64 + 8) + '…' + h.slice(w * 64 + 58, w * 64 + 64);
+    case 'text': { const off = Number(v) * 2, len = Number(wordAt(h.slice(off), 0)); return hexToUtf8(h.slice(off + 64, off + 64 + len * 2)) || '—'; }
+  }
+  return v.toString();
+}
+function screenSource(src, purpose) {
+  if (typeof src !== 'string' || !src.startsWith('$')) return String(src);
+  if (src === '$account') { if (!account) throw new Error('먼저 지갑을 연결하세요'); return account; }
+  if (src.startsWith('$read:')) { const v = screenReads[src.slice(6)]; if (v == null) throw new Error('값을 아직 읽지 못했습니다. 잠시 후 다시 시도하세요'); return v.toString(); }
+  const field = SCREEN.inputs.find((i) => '$' + i.id === src);
+  const raw = String(screenFields[field.id].value || '').trim();
+  if (!raw) throw new Error(field.label + ': 값을 입력하세요');
+  if (field.unit === 'native') { if (!nativeCurrency) throw new Error('배포 설정을 먼저 읽어야 합니다'); return toUnits(raw, nativeCurrency.decimals, field.label).toString(); }
+  if (field.unit === 'token') return toUnits(raw, field.decimals ?? 18, field.label).toString();
+  return raw;
+}
+const screenData = (c) => encodeCall(c.sel, c.types.map((t) => ({ n: c.label, t })), c.args.map((a) => screenSource(a)));
+async function refreshScreen() {
+  let ready = false;
+  try { await manifestReady; ready = !manifestError && provider && chainOk && isDeployedAddress(addrInput.value.trim()); } catch (e) { ready = false; }
+  for (const r of SCREEN.reads) {
+    try {
+      if (!ready) throw new Error('not connected');
+      // Reads go straight to the connected provider (chain already checked above), so a
+      // refresh never re-enters checkChain while a connect or a send is checking it.
+      const tx = { to: contractAddr(), data: screenData(r) }; if (account) tx.from = account;
+      const h = strip(await provider.request({ method: 'eth_call', params: [tx, 'latest'] }));
+      if (r.id) screenReads[r.id] = wordAt(h, r.word || 0);
+      r.node.textContent = showValue(r, h); r.node.className = ['time', 'text', 'address', 'hash'].includes(r.show) ? 'stat-value compact' : 'stat-value';
+    } catch (err) { if (r.id) screenReads[r.id] = null; r.node.textContent = '—'; r.node.className = 'stat-value dim'; }
+  }
+  if (SCREEN.progress) {
+    const v = screenReads[SCREEN.progress.value], max = screenReads[SCREEN.progress.max];
+    const pct = v != null && max ? Math.min(100, Number((v * 1000n) / max) / 10) : 0;
+    SCREEN.progressBar.setAttribute('style', 'width:' + pct + '%');
+    SCREEN.progressText.textContent = v != null && max ? pct + '%' : '';
+  }
+  note('screen-hint', ready ? '' : '지갑을 연결하면 현재 값이 보입니다.', 'hint');
+}
+function scheduleScreen() { if (screenTimer) clearTimeout(screenTimer); screenTimer = setTimeout(() => { refreshScreen().catch(() => {}); }, 350); }
+async function runScreenAction(spec, button, out) {
+  if (button.disabled) return;
+  button.disabled = true; out.className = 'dim'; out.textContent = '…';
+  try {
+    await manifestReady;
+    if (manifestError) throw manifestError;
+    if (!provider) throw new Error('먼저 지갑을 연결하세요');
+    if (JSON.stringify(spec).includes('$read:')) await refreshScreen();
+    const data = screenData(spec);
+    const value = spec.value ? BigInt(screenSource(spec.value)).toString(16) : null;
+    const hash = await sendTx(contractAddr(), data, value);
+    out.className = 'ok'; out.textContent = '보냈습니다. 지갑에서 처리 결과를 확인하세요 · ' + hash.slice(0, 10) + '…';
+    setTimeout(() => { refreshScreen().catch(() => {}); }, 4000);
+  } catch (err) { out.className = 'err'; out.textContent = errorText(err); }
+  finally { button.disabled = false; }
+}
+function buildScreen() {
+  const host = document.getElementById('screen');
+  const stats = document.createElement('dl'); stats.className = 'stats';
+  SCREEN.reads.forEach((r) => {
+    const box = document.createElement('div'); box.className = 'stat';
+    const dt = document.createElement('dt'); dt.textContent = r.label; box.appendChild(dt);
+    r.node = document.createElement('dd'); r.node.className = 'stat-value dim'; r.node.textContent = '—'; box.appendChild(r.node);
+    stats.appendChild(box);
+  });
+  if (SCREEN.reads.length) host.appendChild(stats);
+  if (SCREEN.progress) {
+    const track = document.createElement('div'); track.className = 'progress'; track.setAttribute('role', 'presentation');
+    SCREEN.progressBar = document.createElement('span'); track.appendChild(SCREEN.progressBar);
+    host.appendChild(track);
+    SCREEN.progressText = document.createElement('p'); SCREEN.progressText.className = 'progress-text'; host.appendChild(SCREEN.progressText);
+  }
+  const hint = document.createElement('p'); hint.id = 'screen-hint'; hint.className = 'hint'; host.appendChild(hint);
+  const form = document.createElement('div'); form.className = 'screen-fields';
+  SCREEN.inputs.forEach((f) => {
+    const lab = document.createElement('label'); lab.className = 'field';
+    const name = document.createElement('span'); name.textContent = f.label; lab.appendChild(name);
+    if (f.unit === 'native') { const unit = document.createElement('span'); unit.className = 'unit'; unit.setAttribute('data-native-unit', ''); lab.appendChild(unit); }
+    const inp = document.createElement(f.unit === 'list' ? 'textarea' : 'input');
+    inp.placeholder = f.placeholder || ''; inp.value = f.default || ''; inp.autocomplete = 'off'; inp.spellcheck = false;
+    if (f.unit === 'native' || f.unit === 'token') inp.inputMode = 'decimal';
+    if (f.unit === 'uint') inp.inputMode = 'numeric';
+    inp.oninput = scheduleScreen;
+    lab.appendChild(inp);
+    if (f.hint) { const h = document.createElement('small'); h.textContent = f.hint; lab.appendChild(h); }
+    screenFields[f.id] = inp; form.appendChild(lab);
+  });
+  if (SCREEN.inputs.length) host.appendChild(form);
+  const go = document.createElement('button'); go.type = 'button'; go.className = 'primary'; go.textContent = SCREEN.action.label; host.appendChild(go);
+  const out = document.createElement('p'); out.className = 'dim'; out.setAttribute('aria-live', 'polite'); host.appendChild(out);
+  go.onclick = () => runScreenAction(SCREEN.action, go, out);
+  if (SCREEN.more.length) {
+    const more = document.createElement('div'); more.className = 'more';
+    SCREEN.more.forEach((m) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'quiet'; b.textContent = m.label;
+      const o = document.createElement('p'); o.className = 'dim';
+      b.onclick = () => runScreenAction(m, b, o);
+      more.appendChild(b); more.appendChild(o);
+    });
+    host.appendChild(more);
+  }
+  if (SCREEN.note) { const n = document.createElement('p'); n.className = 'screen-note'; n.textContent = SCREEN.note; host.appendChild(n); }
+  refreshScreen().catch(() => {});
+}
+buildScreen();
 
 // ---------------------------------------------------------------- events
 document.getElementById('load-logs').onclick = async () => {

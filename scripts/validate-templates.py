@@ -8,7 +8,9 @@ eastsea-app-1.json); deploy steps and placeholders are consistent; the web
 folder reads contract addresses only through declared placeholders in
 web/manifest.json; web_sha256 matches; the resolved bundle hash is
 reproducible; the contracts compile and the interface covers exactly their
-public functions; the listing summary is neutral; index.json tree hashes match.
+public functions; the listing summary is neutral; index.json tree hashes match;
+web/index.html carries exactly one published style block, unmodified, that
+matches the optional "style" field.
 Exit 0 only when every template passes. No network, wallet or deployment.
 """
 
@@ -24,6 +26,8 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import template_lib as lib  # noqa: E402
+import template_screen  # noqa: E402
+import template_styles  # noqa: E402
 
 ROOT = lib.ROOT
 SCHEMAS = ROOT / "templates" / "publish" / "schema"
@@ -143,6 +147,8 @@ def check_web(project: Path, manifest: dict, ids, used, fail):
     for c in runtime.get("contracts", []):
         if not lib.PLACEHOLDER.fullmatch(str(c.get("address"))):
             fail(f"web/manifest.json contract {c.get('label')!r} address is not a placeholder")
+    check_style(web, t, fail)
+    check_screen(web, manifest, runtime, fail)
     if lib.web_sha256(project) != t["web_sha256"]:
         fail("web_sha256 does not match web/ (rebuild the template)")
     try:
@@ -155,6 +161,52 @@ def check_web(project: Path, manifest: dict, ids, used, fail):
             fail("placeholders remain after resolution")
     except (ValueError, KeyError) as error:
         fail(f"bundle does not resolve: {error}")
+
+
+def check_screen(web: Path, manifest: dict, runtime: dict, fail):
+    """The consumer screen uses only the primary contract's interface, and the page embeds exactly it."""
+    t = manifest["x-eastsea-template"]
+    screen = t.get("screen")
+    if screen is None:
+        fail("x-eastsea-template.screen missing (the plain screen for the template's main job)")
+        return
+    primary = runtime.get("x-toolbox-primary-contract")
+    ids = [c["id"] for c in t["contracts"] if c.get("manifest_label") == primary]
+    if len(ids) != 1:
+        fail(f"web/manifest.json primary contract {primary!r} has no single deployment")
+        return
+    interface = {row["function"]: row for row in t["interface"] if row["contract"] == ids[0]}
+    for error in template_screen.validate(screen, interface):
+        fail(error)
+    for text in template_screen.labels(screen):
+        if lib.BANNED_WORDS.search(text):
+            fail(f"screen text uses ranking/yield/price wording: {text!r}")
+    page = (web / "index.html").read_text(encoding="utf-8")
+    marker = "const APP = "
+    try:
+        app, _ = json.JSONDecoder().raw_decode(page, page.index(marker) + len(marker))
+    except ValueError:
+        fail("web/index.html has no readable APP object")
+        return
+    if app.get("screen") != template_screen.compile_screen(screen):
+        fail("web/index.html screen differs from eastsea.json screen (regenerate the page)")
+
+
+def check_style(web: Path, t: dict, fail):
+    """The page's token block is one published style, byte for byte."""
+    found = template_styles.current((web / "index.html").read_text(encoding="utf-8"))
+    if found is None:
+        fail("web/index.html needs exactly one <style id=\"eastsea-style\"> block")
+        return
+    name, text = found
+    known = template_styles.names()
+    if name not in known:
+        fail(f"web/index.html style {name!r} is not a published style ({', '.join(known)})")
+        return
+    if "style" in t and t["style"] != name:
+        fail(f"eastsea.json style {t['style']!r} differs from the page's style block {name!r}")
+    if text != template_styles.tokens(name):
+        fail(f"web/index.html style block differs from templates/styles/{name}.css (apply it with scripts/apply-style.py)")
 
 
 def check_compiled(project: Path, t: dict, workdir: Path, fail):
@@ -204,6 +256,7 @@ def check_compiled(project: Path, t: dict, workdir: Path, fail):
 
 def validate(projects: Path, compile_contracts=True) -> Report:
     report = Report()
+    report.errors += [f"styles: {e}" for e in template_styles.check_style_files()]
     validator = schema_validator()
     workroot = ROOT / "tmp" / "template-build" / "validate"
     if compile_contracts:

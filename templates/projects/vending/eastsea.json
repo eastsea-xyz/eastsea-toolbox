@@ -61,6 +61,46 @@
     "slug": "vending",
     "summary": "Prepaid orders for agent work: settled on delivery before a deadline, else refunded.",
     "web": "web",
+    "style": "editorial",
+    "screen": {
+      "lede": "에이전트에게 일을 맡기고 미리 냅니다. 기한 안에 결과가 오면 전달되고, 아니면 돌려받습니다.",
+      "reads": [
+        {
+          "id": "fee",
+          "call": "price()",
+          "label": "주문 금액",
+          "show": "native"
+        },
+        {
+          "call": "fulfilWindow()",
+          "label": "처리 기한",
+          "show": "duration"
+        },
+        {
+          "call": "orderCount()",
+          "label": "주문 수",
+          "show": "count"
+        }
+      ],
+      "inputs": [
+        {
+          "id": "spec",
+          "label": "주문서 해시",
+          "unit": "bytes32",
+          "placeholder": "0x…",
+          "hint": "에이전트와 합의한 주문서의 keccak 해시"
+        }
+      ],
+      "action": {
+        "call": "order(bytes32)",
+        "args": [
+          "$spec"
+        ],
+        "value": "$read:fee",
+        "label": "주문하기"
+      },
+      "note": "기한이 지나도 결과가 없으면 개발자 보기의 환불로 돌려받습니다."
+    },
     "compiler": {
       "solc": "0.8.24",
       "evm_version": "paris",
@@ -372,6 +412,6 @@
       "contract": "AgentVending",
       "function": "fulfilWindow()"
     },
-    "web_sha256": "0xeb832bbe3738956b1889706286c6beaed54d8572ccfde373c6c04ab351b78978"
+    "web_sha256": "0xebf49f3a56ef83b648a772cc7b3ea3e6aa84413de5cdb6fcff3ed66ca9eb8800"
   }
 }

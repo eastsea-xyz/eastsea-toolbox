@@ -61,6 +61,47 @@
     "slug": "escrow",
     "summary": "Milestone escrow: the buyer deposits, approves releases and can refund the balance.",
     "web": "web",
+    "style": "editorial",
+    "screen": {
+      "lede": "금액을 먼저 맡겨 두고, 단계가 끝날 때마다 승인해서 판매자에게 넘깁니다.",
+      "reads": [
+        {
+          "call": "nextDealId()",
+          "label": "다음 거래 번호",
+          "show": "count"
+        }
+      ],
+      "inputs": [
+        {
+          "id": "seller",
+          "label": "판매자 주소",
+          "unit": "address",
+          "placeholder": "0x…"
+        },
+        {
+          "id": "steps",
+          "label": "단계 수",
+          "unit": "uint",
+          "default": "3"
+        },
+        {
+          "id": "amount",
+          "label": "맡길 금액",
+          "unit": "native",
+          "placeholder": "3"
+        }
+      ],
+      "action": {
+        "call": "createDeal(address,uint64)",
+        "args": [
+          "$seller",
+          "$steps"
+        ],
+        "value": "$amount",
+        "label": "맡기기"
+      },
+      "note": "승인하지 않은 금액은 언제든 돌려받을 수 있습니다 (개발자 보기 · 구매자 환불)."
+    },
     "compiler": {
       "solc": "0.8.24",
       "evm_version": "paris",
@@ -359,6 +400,6 @@
       "contract": "MilestoneEscrow",
       "function": "brakeGuardian()"
     },
-    "web_sha256": "0xb9d3840ce1ba03dbabfdd0b3abce8b6c4820e712e4706f6f7b160f76037280d6"
+    "web_sha256": "0xd2ff5a411b7e1b8547a5ca44e735f6a28038750b38cc378b222675e084cbeb42"
   }
 }

@@ -61,6 +61,48 @@
     "slug": "raffle",
     "summary": "Commit-reveal draw: host seed commit, entries, then a reveal with a fallback.",
     "web": "web",
+    "style": "editorial",
+    "screen": {
+      "lede": "참가비를 내고 한 장씩 참가합니다. 마감 뒤 미리 약속한 값으로 한 계정을 뽑습니다.",
+      "reads": [
+        {
+          "id": "fee",
+          "call": "ticketPrice()",
+          "label": "참가비",
+          "show": "native"
+        },
+        {
+          "call": "playerCount()",
+          "label": "참가 수",
+          "show": "count"
+        },
+        {
+          "call": "enterDeadline()",
+          "label": "참가 마감",
+          "show": "time"
+        },
+        {
+          "call": "drawn()",
+          "label": "추첨",
+          "show": "bool",
+          "map": {
+            "true": "끝남",
+            "false": "아직"
+          }
+        },
+        {
+          "call": "winner()",
+          "label": "뽑힌 계정",
+          "show": "address"
+        }
+      ],
+      "action": {
+        "call": "enter()",
+        "value": "$read:fee",
+        "label": "참가하기"
+      },
+      "note": "참가비는 돌려받지 못합니다. 잃어도 괜찮은 테스트 코인만 쓰세요."
+    },
     "compiler": {
       "solc": "0.8.24",
       "evm_version": "paris",
@@ -404,6 +446,6 @@
       "contract": "CommitRevealRaffle",
       "function": "ticketPrice()"
     },
-    "web_sha256": "0x658573dab888229424e2b4b531ddd63563011f3a46f42f4dbc143e719fa71ea6"
+    "web_sha256": "0x5f8281baff54091be42ff7ac25728f169f3785ac4f1c6d813c50e6e0cdd49c1d"
   }
 }

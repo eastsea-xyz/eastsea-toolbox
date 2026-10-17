@@ -60,6 +60,71 @@
     "slug": "multisig",
     "summary": "K-of-N shared account approved by owner signatures or direct approvals.",
     "web": "web",
+    "style": "editorial",
+    "screen": {
+      "lede": "여러 소유자가 같은 거래를 승인해야 실행되는 공동 계정입니다.",
+      "reads": [
+        {
+          "call": "threshold()",
+          "label": "필요한 승인 수",
+          "show": "count"
+        },
+        {
+          "call": "isOwner(address)",
+          "args": [
+            "$account"
+          ],
+          "label": "내 역할",
+          "show": "bool",
+          "map": {
+            "true": "소유자",
+            "false": "소유자 아님"
+          }
+        },
+        {
+          "call": "getTransactionHash(address,uint256,bytes,uint256)",
+          "args": [
+            "$to",
+            "$amount",
+            "0x",
+            "$nonce"
+          ],
+          "label": "승인할 거래",
+          "show": "hash"
+        }
+      ],
+      "inputs": [
+        {
+          "id": "to",
+          "label": "보낼 주소",
+          "unit": "address",
+          "placeholder": "0x…"
+        },
+        {
+          "id": "amount",
+          "label": "보낼 금액",
+          "unit": "native",
+          "placeholder": "1"
+        },
+        {
+          "id": "nonce",
+          "label": "거래 번호 (nonce)",
+          "unit": "uint",
+          "default": "0"
+        }
+      ],
+      "action": {
+        "call": "approve(address,uint256,bytes,uint256)",
+        "args": [
+          "$to",
+          "$amount",
+          "0x",
+          "$nonce"
+        ],
+        "label": "이 거래 승인하기"
+      },
+      "note": "승인이 기준만큼 모이면 개발자 보기에서 실행합니다."
+    },
     "compiler": {
       "solc": "0.8.24",
       "evm_version": "paris",
@@ -429,6 +494,6 @@
       "contract": "SimpleMultisig",
       "function": "threshold()"
     },
-    "web_sha256": "0xf493d268eb67dabf637c2c22074f6044ecfd71136c5aa2ae76d7ad87c26e63f0"
+    "web_sha256": "0xd1f64f544ab393d506c2e39957b0243feb22a13b04fca491200aa55e132b37e3"
   }
 }

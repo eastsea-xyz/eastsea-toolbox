@@ -61,6 +61,68 @@
     "slug": "dao",
     "summary": "Token-weighted proposals with a voting period, timelock and grace period.",
     "web": "web",
+    "style": "editorial",
+    "screen": {
+      "lede": "투표 토큰을 가진 사람들이 제안에 찬성하고, 기준을 넘으면 정해진 실행이 이뤄집니다.",
+      "inputs": [
+        {
+          "id": "proposal",
+          "label": "제안 번호",
+          "unit": "uint",
+          "default": "1"
+        }
+      ],
+      "reads": [
+        {
+          "call": "state(uint256)",
+          "args": [
+            "$proposal"
+          ],
+          "label": "제안 상태",
+          "show": "state",
+          "map": {
+            "0": "없음",
+            "1": "투표 중",
+            "2": "대기 (타임락)",
+            "3": "실행 가능",
+            "4": "실행됨",
+            "5": "만료"
+          }
+        },
+        {
+          "call": "approvedVotes(uint256,address)",
+          "args": [
+            "$proposal",
+            "$account"
+          ],
+          "label": "내 찬성",
+          "show": "bool",
+          "map": {
+            "true": "찬성함",
+            "false": "아직 안 함"
+          }
+        },
+        {
+          "call": "quorum()",
+          "label": "통과 기준",
+          "show": "token",
+          "suffix": "표"
+        },
+        {
+          "call": "votingPeriod()",
+          "label": "투표 기간",
+          "show": "duration"
+        }
+      ],
+      "action": {
+        "call": "vote(uint256)",
+        "args": [
+          "$proposal"
+        ],
+        "label": "찬성하기"
+      },
+      "note": "찬성의 무게는 내 투표 토큰 잔액으로 정해집니다. 제안 만들기와 실행은 개발자 보기에 있습니다."
+    },
     "compiler": {
       "solc": "0.8.24",
       "evm_version": "paris",
@@ -809,6 +871,6 @@
       "contract": "SimpleDAO",
       "function": "quorum()"
     },
-    "web_sha256": "0x030ca6cd1da220428a1eb85c87d235a808f138d8f9acf2c6f101493ed6fb5f24"
+    "web_sha256": "0xba97371421d372c9861a273b8293dec1bb17bde0a25ffe4338f040b6c8dbccd4"
   }
 }

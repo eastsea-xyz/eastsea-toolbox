@@ -61,6 +61,59 @@
     "slug": "airdrop",
     "summary": "Merkle-root allocation list with proof claims and a closing sweep.",
     "web": "web",
+    "style": "editorial",
+    "screen": {
+      "lede": "배포자가 공개한 목록에 있는 계정이 정해진 양을 한 번 받습니다.",
+      "reads": [
+        {
+          "call": "claimed(address)",
+          "args": [
+            "$account"
+          ],
+          "label": "내 상태",
+          "show": "bool",
+          "map": {
+            "true": "받음",
+            "false": "아직 받지 않음"
+          }
+        },
+        {
+          "call": "deadline()",
+          "label": "받기 마감",
+          "show": "time"
+        },
+        {
+          "call": "totalClaimed()",
+          "label": "지금까지 나간 양",
+          "show": "native"
+        }
+      ],
+      "inputs": [
+        {
+          "id": "amount",
+          "label": "받을 양",
+          "unit": "native",
+          "placeholder": "10",
+          "hint": "목록에 적힌 내 몫"
+        },
+        {
+          "id": "proof",
+          "label": "받기 증명",
+          "unit": "list",
+          "placeholder": "0x… 0x…",
+          "hint": "목록과 함께 공개된 증명값들 (공백·쉼표 구분)"
+        }
+      ],
+      "action": {
+        "call": "claim(uint256,bytes32[])",
+        "args": [
+          "$amount",
+          "$proof"
+        ],
+        "label": "받기"
+      },
+      "note": "받을 양과 증명은 배포자가 공개한 목록에서 확인하세요. 마감 후 남은 양은 배포자에게 돌아갑니다."
+    },
     "compiler": {
       "solc": "0.8.24",
       "evm_version": "paris",
@@ -310,6 +363,6 @@
       "contract": "MerkleAirdrop",
       "function": "merkleRoot()"
     },
-    "web_sha256": "0xc7b44fa4a6a9e583897b062d7b7a32cb8a350d5d1a43f723c90a2aab9c175eee"
+    "web_sha256": "0x82fe2148dea22ceb45a7d51fe370ff386196e2c42d90aa34f00464cb527489fc"
   }
 }

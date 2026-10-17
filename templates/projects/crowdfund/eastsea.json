@@ -61,6 +61,72 @@
     "slug": "crowdfund",
     "summary": "All-or-nothing fundraiser: paid out on success, self-claimed refunds otherwise.",
     "web": "web",
+    "style": "editorial",
+    "screen": {
+      "lede": "마감까지 목표에 닿으면 받는 사람에게 전달되고, 닿지 못하면 각자 돌려받습니다.",
+      "reads": [
+        {
+          "id": "raised",
+          "call": "campaign()",
+          "word": 0,
+          "label": "모인 금액",
+          "show": "native"
+        },
+        {
+          "id": "goal",
+          "call": "goal()",
+          "label": "목표",
+          "show": "native"
+        },
+        {
+          "call": "deadline()",
+          "label": "마감",
+          "show": "time"
+        },
+        {
+          "call": "state()",
+          "label": "상태",
+          "show": "state",
+          "map": {
+            "0": "진행 중",
+            "1": "목표 달성",
+            "2": "목표 미달",
+            "3": "달성 · 전달 완료"
+          }
+        },
+        {
+          "call": "contributions(address)",
+          "args": [
+            "$account"
+          ],
+          "label": "내 후원",
+          "show": "native"
+        }
+      ],
+      "progress": {
+        "value": "raised",
+        "max": "goal"
+      },
+      "inputs": [
+        {
+          "id": "amount",
+          "label": "후원할 금액",
+          "unit": "native",
+          "placeholder": "1"
+        }
+      ],
+      "action": {
+        "call": "contribute()",
+        "value": "$amount",
+        "label": "후원하기"
+      },
+      "more": [
+        {
+          "call": "refund()",
+          "label": "돌려받기 (목표 미달 시)"
+        }
+      ]
+    },
     "compiler": {
       "solc": "0.8.24",
       "evm_version": "paris",
@@ -375,6 +441,6 @@
       "contract": "AllOrNothingCrowdfund",
       "function": "goal()"
     },
-    "web_sha256": "0xd56c89463f5be548dbe4483836d8f61a0ac6e37b093378264af0577358ce68dd"
+    "web_sha256": "0xb8ba74c0b368caf854eaecb94615a92fe9c59bc7e211301e1d8585007292fb7d"
   }
 }

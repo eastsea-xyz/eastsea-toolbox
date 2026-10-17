@@ -1,0 +1,23 @@
+{
+  "format": "eastsea-template-styles/1",
+  "default": "editorial",
+  "styles": {
+    "calm": {
+      "name": "차분한 미니멀",
+      "file": "calm.css"
+    },
+    "dense": {
+      "name": "고밀도 도구형",
+      "file": "dense.css"
+    },
+    "editorial": {
+      "name": "따뜻한 에디토리얼",
+      "file": "editorial.css"
+    },
+    "playful": {
+      "name": "놀이 같은",
+      "file": "playful.css"
+    }
+  },
+  "templates": {}
+}
