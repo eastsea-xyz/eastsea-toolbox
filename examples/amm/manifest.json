@@ -5,13 +5,15 @@
   "version": "1.0.0",
   "name": "Harbor Swap",
   "subtitle": "Constant-product AMM",
-  "description": "Example 4 — Uniswap-V2-style AMM: factory, pairs, LP tokens, TWAP, router swaps up to 4 hops. Fee-on-transfer safe by balance-delta accounting.",
+  "description": "Create a shared pool that swaps between two coins, or trade through one.",
   "long_description": "Three-layer constant-product AMM. The factory holds the brake (new pairs, deposits and swaps stop under brake 1; removals stay open). Pairs enforce the k invariant themselves with fee-adjusted balance checks, measure every inflow by actual balance delta so fee-on-transfer tokens never strand funds, and maintain cumulative TWAP prices. The router is stateless: optimal-ratio liquidity provisioning, deadline-enforced swaps, and an observed-input variant for fee-on-transfer paths. Swap traffic costs ~32 state units per trade - no new slots.",
+  "x-developer-notes": "Example 4 — Uniswap-V2-style AMM: factory, pairs, LP tokens, TWAP, router swaps up to 4 hops. Fee-on-transfer safe by balance-delta accounting.",
+  "x-developer-notes-ko": "예제 4 — 팩토리·페어·LP·TWAP·라우터 스왑. 잔액 차이 정산으로 fee-on-transfer 안전.",
   "localized": {
     "ko": {
       "name": "하버 스왑",
       "subtitle": "상수곱 AMM",
-      "description": "예제 4 — 팩토리·페어·LP·TWAP·라우터 스왑. 잔액 차이 정산으로 fee-on-transfer 안전."
+      "description": "두 동전을 맞바꾸는 공용 풀을 만들거나 이용해요."
     }
   },
   "locales": ["en", "ko"],
@@ -47,6 +49,7 @@
   "noindex": false,
   "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
   "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example-num": 4,
   "x-toolbox-example": "examples/amm",
   "x-toolbox-tests": "contracts/test/amm/",
   "x-toolbox-legal": "defi-trading is a restricted category in the app registry - review docs/legal-notes.md before publishing"

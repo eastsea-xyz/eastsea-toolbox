@@ -6,13 +6,15 @@
   "version": "1.0.0",
   "name": "Sea Chest",
   "subtitle": "Milestone escrow",
-  "description": "Example 9 — buyer escrows native coin, approves milestones to release seller funds, refunds the rest anytime. Approvals are irreversible; exits cost 5 state units.",
+  "description": "Hold pay for step-by-step work, release it as steps finish, and refund the rest anytime.",
   "long_description": "Two-sided escrow for milestone work. The buyer deposits once at deal creation; each approveMilestone moves the specified amount into the seller's withdrawable balance. Unapproved remainder is refundable by the buyer at any moment — even under the emergency brake, since refunds and withdrawals are exits. Milestone amounts are specified at approval time instead of a stored array: the chain proves how much was released, the off-chain agreement holds the schedule. Irreversible approvals are what make the accounting race-free.",
+  "x-developer-notes": "Example 9 — buyer escrows native coin, approves milestones to release seller funds, refunds the rest anytime. Approvals are irreversible; exits cost 5 state units.",
+  "x-developer-notes-ko": "예제 9 — 구매자가 예치하고 마일스톤 승인으로 판매자에게 인출권을 넘긴다. 미승인 잔여는 언제든 회수 가능하다.",
   "localized": {
     "ko": {
       "name": "시 체스트",
       "subtitle": "마일스톤 에스크로",
-      "description": "예제 9 — 구매자가 예치하고 마일스톤 승인으로 판매자에게 인출권을 넘긴다. 미승인 잔여는 언제든 회수 가능하다."
+      "description": "일 값을 미리 맡겨 두고 단계를 마칠 때마다 넘겨요. 남은 돈은 언제든 돌려받아요."
     }
   },
   "locales": [
@@ -54,6 +56,7 @@
   "noindex": false,
   "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
   "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example-num": 9,
   "x-toolbox-example": "examples/escrow",
   "x-toolbox-tests": "contracts/test/escrow/",
   "x-eastsea-template": {

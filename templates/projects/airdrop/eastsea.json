@@ -6,13 +6,15 @@
   "version": "1.0.0",
   "name": "Pearl Drop",
   "subtitle": "Merkle airdrop",
-  "description": "Example 13 — a 32-byte Merkle root commits the whole recipient list; claimants prove membership and are paid once before the deadline.",
+  "description": "People on a prepared list each claim their share once before the deadline.",
   "long_description": "Distribution without a distribution list on chain. The deployer commits an arbitrary-size recipient list as a single Merkle root at deploy time; each recipient later proves membership with a logarithmic-size proof and is paid their exact committed amount, once. Leaves bind address and amount together, so a stolen proof is useless to anyone else. The claim window closes at an immutable deadline, after which a permissionless sweep returns the entire unclaimed remainder to the fixed distributor — a typo'd root or an abandoned drop can never strand funds. State cost per claim is one slot paid by the claimant, not the deployer: the deployer's entire commitment is 32 bytes.",
+  "x-developer-notes": "Example 13 — a 32-byte Merkle root commits the whole recipient list; claimants prove membership and are paid once before the deadline.",
+  "x-developer-notes-ko": "예제 13 — 32바이트 머클 루트가 명단 전체를 커밋하고, 수령인이 증명으로 마감 전 1회 청구한다.",
   "localized": {
     "ko": {
       "name": "펄 드롭",
       "subtitle": "머클 에어드랍",
-      "description": "예제 13 — 32바이트 머클 루트가 명단 전체를 커밋하고, 수령인이 증명으로 마감 전 1회 청구한다."
+      "description": "미리 정한 명단의 사람들이 마감 전에 몫을 한 번씩 찾아가요."
     }
   },
   "locales": [
@@ -54,6 +56,7 @@
   "noindex": false,
   "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
   "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example-num": 13,
   "x-toolbox-example": "examples/airdrop",
   "x-toolbox-tests": "contracts/test/airdrop/",
   "x-eastsea-template": {

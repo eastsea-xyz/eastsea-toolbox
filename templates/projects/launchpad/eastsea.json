@@ -6,13 +6,15 @@
   "version": "1.0.0",
   "name": "Tidepool Launchpad",
   "subtitle": "Bonding-curve token launchpad",
-  "description": "Example 5 — bonding-curve launchpad with anti-sniping taxes, per-buyer caps, and graduation into the example-4 AMM. LP is permanently locked at graduation.",
+  "description": "Buy and sell a new coin from day one; once trading builds up it moves to a shared pool.",
   "long_description": "Launch a new token against an ERC-20 quote on a virtual-reserve constant-product curve. Buys in the first snipeWindow pay a linearly decaying tax to a fixed treasury, and per-buyer caps bound early concentration. When the curve raises graduationTarget, anyone can graduate: all curve assets move into an AMM pair and the LP tokens are locked forever at 0x..dEaD. Curve trades are stateless on the launchpad side (~26 state units each). No yield promises, no referral rewards.",
+  "x-developer-notes": "Example 5 — bonding-curve launchpad with anti-sniping taxes, per-buyer caps, and graduation into the example-4 AMM. LP is permanently locked at graduation.",
+  "x-developer-notes-ko": "예제 5 — 안티스나이핑 세금·개인 한도·AMM 졸업을 갖춘 본딩 커브 런치패드. 졸업 시 LP 영구 잠금.",
   "localized": {
     "ko": {
       "name": "타이드풀 런치패드",
       "subtitle": "본딩 커브 토큰 런치패드",
-      "description": "예제 5 — 안티스나이핑 세금·개인 한도·AMM 졸업을 갖춘 본딩 커브 런치패드. 졸업 시 LP 영구 잠금."
+      "description": "새 동전을 첫날부터 사고팔아요. 거래가 쌓이면 공용 풀로 옮겨 가요."
     }
   },
   "locales": [
@@ -55,6 +57,7 @@
   "noindex": false,
   "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
   "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example-num": 5,
   "x-toolbox-example": "examples/launchpad",
   "x-toolbox-tests": "contracts/test/launchpad/",
   "x-eastsea-template": {

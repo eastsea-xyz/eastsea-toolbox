@@ -6,13 +6,15 @@
   "version": "1.0.0",
   "name": "Driftwood Staking",
   "subtitle": "Staking rewards pool",
-  "description": "Example 6 — linear staking rewards from a sponsor-funded pool. Fixes the Synthetix full-unstake reward-loss trap; skipped emission is recovered, never lost.",
+  "description": "Deposit coins and receive rewards paid out over a set period; take them back anytime.",
   "long_description": "Stake an ERC-20 and earn a separate reward token in proportion to your share and time. Sponsors fund the pool with fundRewards(amount, duration); emission is linear and existing underwriter balances are always preserved (no rate dilution). Every state-changing entry is nonReentrant with checks-effects-interactions; stake inflow is measured by actual delivery (fee-on-transfer safe). Unstake and claim remain open under the emergency brake, so funds never get trapped.",
+  "x-developer-notes": "Example 6 — linear staking rewards from a sponsor-funded pool. Fixes the Synthetix full-unstake reward-loss trap; skipped emission is recovered, never lost.",
+  "x-developer-notes-ko": "예제 6 — 후원자가 정한 기간 동안 선형 방출되는 스테이킹 보상 분배기. userOwed 이월으로 전액 인출 시 보상 소실 함정을 제거하고, 잔액 기반 회계로 스테이커 부재 구간의 방출도 소실 없이 회수한다.",
   "localized": {
     "ko": {
       "name": "드리프트우드 스테이킹",
       "subtitle": "시간 비례 스테이킹 보상",
-      "description": "예제 6 — 후원자가 정한 기간 동안 선형 방출되는 스테이킹 보상 분배기. userOwed 이월으로 전액 인출 시 보상 소실 함정을 제거하고, 잔액 기반 회계로 스테이커 부재 구간의 방출도 소실 없이 회수한다."
+      "description": "동전을 맡겨 두면 정해진 기간에 걸쳐 보상이 차례로 풀려요. 언제든 꺼낼 수 있어요."
     }
   },
   "locales": [
@@ -55,6 +57,7 @@
   "noindex": false,
   "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
   "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example-num": 6,
   "x-toolbox-example": "examples/rewards",
   "x-toolbox-tests": "contracts/test/rewards/",
   "x-eastsea-template": {

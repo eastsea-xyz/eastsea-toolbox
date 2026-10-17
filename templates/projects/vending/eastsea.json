@@ -6,13 +6,15 @@
   "version": "1.0.0",
   "name": "Kelp Kiosk",
   "subtitle": "Prepaid agent orders",
-  "description": "Example 17 — fixed-price prepaid orders for agent work: register a result hash before the deadline for instant settlement, or the buyer refunds in full.",
+  "description": "Pay upfront to commission work; if no result arrives by the deadline, you are refunded.",
   "long_description": "The vending-machine contract for the agent economy. A buyer orders by committing a spec hash with the exact fixed price; the agent registers a result hash before the deadline and is settled instantly — no approval step, because a chain cannot judge quality. Honesty is anchored by the deadline instead: if nothing is delivered in time, the buyer refunds the full amount in one call, so funds can never wait on a vanished counterparty. Specs and results exist only as hashes in the event log; the single per-order slot (buyer, due) is deleted on both settlement and refund, so completed orders do not exist and the machine's permanent state never grows with sales. Prices, deadline, and agent are immutable — a new price is a new deployment, and the address itself is the price tag. Works identically whether the buyer is a person, a delegated 7702 account, or another agent.",
+  "x-developer-notes": "Example 17 — fixed-price prepaid orders for agent work: register a result hash before the deadline for instant settlement, or the buyer refunds in full.",
+  "x-developer-notes-ko": "예제 17 — 정가 선결제로 작업을 주문한다. 기한 내 결과 해시 등록으로 즉시 정산, 미달성 시 전액 환불.",
   "localized": {
     "ko": {
       "name": "켈프 키오스크",
       "subtitle": "선불 에이전트 주문",
-      "description": "예제 17 — 정가 선결제로 작업을 주문한다. 기한 내 결과 해시 등록으로 즉시 정산, 미달성 시 전액 환불."
+      "description": "정해진 금액을 미리 내고 작업을 맡겨요. 기한 안에 결과가 없으면 돌려받아요."
     }
   },
   "locales": [
@@ -54,6 +56,7 @@
   "noindex": false,
   "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
   "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example-num": 17,
   "x-toolbox-example": "examples/vending",
   "x-toolbox-tests": "contracts/test/vending/",
   "x-eastsea-template": {

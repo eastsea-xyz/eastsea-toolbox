@@ -13,7 +13,6 @@ runtime, no bundled libraries. Run from the repo root: python3 scripts/gen-apps.
 
 import json
 import pathlib
-import re
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -955,12 +954,20 @@ APPS = {
     },
 }
 
+def example_num(manifest, slug):
+    """The example's number. Descriptions are plain user-facing text now, so the
+    number lives in its own x- field instead of an "Example N" prefix."""
+    num = manifest.get("x-toolbox-example-num")
+    if isinstance(num, bool) or not isinstance(num, int) or num < 1:
+        raise SystemExit(f"{slug}: examples/{slug}/manifest.json needs a positive integer x-toolbox-example-num")
+    return num
+
+
 def main():
     for slug, meta in APPS.items():
         manifest_path = ROOT / "examples" / slug / "manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        m = re.search(r"Example (\d+)", manifest.get("description", ""))
-        num = m.group(1) if m else "?"
+        num = str(example_num(manifest, slug))
         name = manifest.get("name", slug)
         sub = manifest.get("subtitle", "")
 
@@ -993,9 +1000,9 @@ def main():
 
     # apps index (catalog page)
     rows = []
-    for slug in sorted(APPS, key=lambda s: int(re.search(r"Example (\d+)", json.loads((ROOT / "examples" / slug / "manifest.json").read_text())["description"]).group(1))):
+    for slug in sorted(APPS, key=lambda s: example_num(json.loads((ROOT / "examples" / slug / "manifest.json").read_text(encoding="utf-8")), s)):
         manifest = json.loads((ROOT / "examples" / slug / "manifest.json").read_text(encoding="utf-8"))
-        num = re.search(r"Example (\d+)", manifest["description"]).group(1)
+        num = str(example_num(manifest, slug))
         rows.append(f'<tr><td class="dim">{num}</td><td><a href="./{slug}/">{manifest["name"]}</a></td><td>{manifest.get("subtitle","")}</td><td class="mono dim">{slug}</td></tr>')
     index = """<!doctype html>
 <html lang="ko">

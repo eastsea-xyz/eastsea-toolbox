@@ -5,13 +5,15 @@
   "version": "1.0.0",
   "name": "Harbor Market",
   "subtitle": "Fixed-price NFT marketplace",
-  "description": "Example 3 — escrow listings, EIP-2981 royalty split, pull payments. The F-01 reentrancy playbook.",
+  "description": "List a collectible at a set amount or buy one; a share of each sale goes to its creator.",
   "long_description": "Sellers escrow an NFT with a fixed price. Buyers pay the exact amount and receive the NFT immediately; proceeds are never pushed - they accrue as credits for the seller and the royalty receiver, who each withdraw on their own. Settlement is finalized before the NFT transfer, every entry point is reentrancy-guarded, and cancel/withdraw stay open even under a full brake. Royalty is honored via EIP-2981 when the collection supports it (code-length checked first) and clamped at 100%.",
+  "x-developer-notes": "Example 3 — escrow listings, EIP-2981 royalty split, pull payments. The F-01 reentrancy playbook.",
+  "x-developer-notes-ko": "예제 3 — 에스크로 리스팅, EIP-2981 로열티 분할, pull payments.",
   "localized": {
     "ko": {
       "name": "하버 마켓",
       "subtitle": "고정가 NFT 마켓플레이스",
-      "description": "예제 3 — 에스크로 리스팅, EIP-2981 로열티 분할, pull payments."
+      "description": "소장품을 정한 금액에 팔거나 살 수 있어요. 팔릴 때마다 창작자 몫이 나가요."
     }
   },
   "locales": [
@@ -53,6 +55,7 @@
   "noindex": false,
   "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
   "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example-num": 3,
   "x-toolbox-example": "examples/market",
   "x-toolbox-tests": "contracts/test/market/FixedPriceMarket.t.sol",
   "x-eastsea-template": {

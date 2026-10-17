@@ -6,13 +6,15 @@
   "version": "1.0.0",
   "name": "Lighthouse Fund",
   "subtitle": "All-or-nothing crowdfund",
-  "description": "Example 12 — fixed goal and deadline: permissionless one-shot payout on success, self-claim refunds that erase contributor state on failure.",
+  "description": "Collect pledges toward a goal by a deadline; if it falls short, everyone is refunded.",
   "long_description": "A single-purpose crowdfunding contract with no middle outcome. Contributors send native funds until the goal scalar is reached or the deadline passes. If the goal is met — even before the deadline — anyone may trigger the single payout to the fixed beneficiary; overfunding in the final contribution is accepted in full as a donation. If the deadline passes below the goal, every contributor self-claims an exact refund, and each refund deletes that contributor's slot: a failed campaign converges to zero permanent state, while a successful one keeps contributor slots as proof-of-origin treasury accounting. Goal, deadline, and beneficiary are immutable at deploy time — no key can change the rules of a running campaign.",
+  "x-developer-notes": "Example 12 — fixed goal and deadline: permissionless one-shot payout on success, self-claim refunds that erase contributor state on failure.",
+  "x-developer-notes-ko": "예제 12 — 고정 목표·마감: 성공 시 1회 인도, 실패 시 전액 환불과 기여 슬롯 소거.",
   "localized": {
     "ko": {
       "name": "라이트하우스 펀드",
       "subtitle": "올오어낫싱 크라우드펀드",
-      "description": "예제 12 — 고정 목표·마감: 성공 시 1회 인도, 실패 시 전액 환불과 기여 슬롯 소거."
+      "description": "목표액과 마감일을 정해 후원받아요. 목표를 못 채우면 전액 돌려받아요."
     }
   },
   "locales": [
@@ -54,6 +56,7 @@
   "noindex": false,
   "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
   "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example-num": 12,
   "x-toolbox-example": "examples/crowdfund",
   "x-toolbox-tests": "contracts/test/crowdfund/",
   "x-eastsea-template": {

@@ -6,13 +6,15 @@
   "version": "1.0.0",
   "name": "Harbor Lock",
   "subtitle": "Token cliff vesting",
-  "description": "Example 7 — two token lock patterns: a batch time-lock anyone can fund, and a self-contained grant that escrows everything at deploy. Constant-time claims, 11u releases.",
+  "description": "Lock coins until set dates and receive them back bit by bit as time passes.",
   "long_description": "Lock ERC-20 tokens behind a cliff with linear release. Two trust structures in one folder: TokenTimeLock is a batch contract where anyone locks tokens for a beneficiary (no operator key, emergency brake on new locks only), and LinearVesting is a self-contained single grant that escrows its full amount in the constructor and needs no admin at all. Claim gas can be sponsored by anyone while the beneficiary always receives the funds. Storage is packed to two slots per lock; releases cost 11 state units.",
+  "x-developer-notes": "Example 7 — two token lock patterns: a batch time-lock anyone can fund, and a self-contained grant that escrows everything at deploy. Constant-time claims, 11u releases.",
+  "x-developer-notes-ko": "예제 7 — 누구나 예치하는 배치형 타임락과 배포 시 전액을 예치하는 자립형 베스팅. 잔액 유도 회계의 초과 지급 함정을 PoC로 제거했다.",
   "localized": {
     "ko": {
       "name": "하버 락",
       "subtitle": "클리프 토큰 잠금",
-      "description": "예제 7 — 누구나 예치하는 배치형 타임락과 배포 시 전액을 예치하는 자립형 베스팅. 잔액 유도 회계의 초과 지급 함정을 PoC로 제거했다."
+      "description": "동전을 정해진 때까지 잠가 두고, 시간이 지나며 조금씩 받아 가요."
     }
   },
   "locales": [
@@ -60,6 +62,7 @@
   "noindex": false,
   "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
   "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example-num": 7,
   "x-toolbox-example": "examples/lock",
   "x-toolbox-tests": "contracts/test/lock/",
   "x-eastsea-template": {

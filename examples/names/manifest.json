@@ -6,13 +6,15 @@
   "version": "1.0.0",
   "name": "Reef Drop",
   "subtitle": "Name-gated drop",
-  "description": "Example 15 — a fixed-amount drop whose eligibility is fully delegated to the .aeth name service: only accounts with an honest primary name can claim.",
+  "description": "A giveaway that only people holding a registered name can claim.",
   "long_description": "A giveaway with no on-chain list. The deployer commits to nothing but a fixed amount, a deadline, and the system name service; eligibility is simply reverseOf(claimant) returning a live primary name. The name service's honesty condition does the real work — expired names, names whose address record moved, and stale reverse claims all answer the empty string, so the drop never needs its own expiry or identity logic. Names are never stored in contract state: eligibility is a view call at claim time and the claimed name rides in the event log only, leaving one bit of permanent state per claimant. Anyone may fund the pool; after the immutable deadline a permissionless sweep returns the entire remainder to the fixed distributor, so nothing can be stranded.",
+  "x-developer-notes": "Example 15 — a fixed-amount drop whose eligibility is fully delegated to the .aeth name service: only accounts with an honest primary name can claim.",
+  "x-developer-notes-ko": "예제 15 — 자격 판정을 .aeth 이름 서비스에 위임한 고정액 드롭. 정직한 primary name을 가진 계정만 청구한다.",
   "localized": {
     "ko": {
       "name": "리프 드롭",
       "subtitle": "이름 자격 드롭",
-      "description": "예제 15 — 자격 판정을 .aeth 이름 서비스에 위임한 고정액 드롭. 정직한 primary name을 가진 계정만 청구한다."
+      "description": "등록된 이름을 가진 사람만 받을 수 있는 나눔이에요."
     }
   },
   "locales": ["en", "ko"],
@@ -48,6 +50,7 @@
   "noindex": false,
   "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
   "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example-num": 15,
   "x-toolbox-example": "examples/names",
   "x-toolbox-tests": "contracts/test/names/"
 }

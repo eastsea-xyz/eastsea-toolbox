@@ -6,13 +6,15 @@
   "version": "1.0.0",
   "name": "Coral Senate",
   "subtitle": "Token-weighted DAO",
-  "description": "Example 11 — hash-committed proposals, EIP-712 EOA/ERC-1271 weighted votes or direct account votes, and quorum-checked execution behind a timelock window.",
+  "description": "Raise proposals and vote; a passed one is carried out after a waiting period.",
   "long_description": "Minimal governance for a token-weighted community. Proposals commit only the keccak256 hash of the action to execute; execution re-derives and matches the hash. OpenZeppelin SignatureChecker verifies EOA signatures or calls a code-bearing voter's ERC-1271 isValidSignature, including EastSea v2 P-256 accounts. EIP-712 v2 binds the current chainId, DAO address, proposalId nonce, action hash, voting end and execution expiry. A relayer submits sorted unique voter addresses paired with signatures. A wallet without off-chain message signing calls vote before voting ends and supplies an empty signature at execution; direct and signed votes can be mixed without double counting. Weight remains balanceOf at execution time. A timelock delays execution, and expired or executed proposals cannot execute. Proposals cost two state slots; off-chain votes add no state, while direct votes add one slot per voter and proposal. Executions reuse the proposal's existing packed slot.",
+  "x-developer-notes": "Example 11 — hash-committed proposals, EIP-712 EOA/ERC-1271 weighted votes or direct account votes, and quorum-checked execution behind a timelock window.",
+  "x-developer-notes-ko": "예제 11 — 해시 커밋 제안, EIP-712 EOA/ERC-1271 가중 서명 또는 계정 직접 vote, 타임락 뒤 쿼럼 실행. 서명 투표는 상태 0, 직접 투표는 유권자·제안당 1슬롯이다.",
   "localized": {
     "ko": {
       "name": "코랄 센에이트",
       "subtitle": "토큰 가중 DAO",
-      "description": "예제 11 — 해시 커밋 제안, EIP-712 EOA/ERC-1271 가중 서명 또는 계정 직접 vote, 타임락 뒤 쿼럼 실행. 서명 투표는 상태 0, 직접 투표는 유권자·제안당 1슬롯이다."
+      "description": "안건을 올리고 투표로 정해요. 통과한 안건은 유예 기간 뒤에 실행돼요."
     }
   },
   "locales": [
@@ -54,6 +56,7 @@
   "noindex": false,
   "source_repo": "https://github.com/eastsea-xyz/eastsea-toolbox",
   "support": "https://github.com/eastsea-xyz/eastsea-toolbox/issues",
+  "x-toolbox-example-num": 11,
   "x-toolbox-example": "examples/dao",
   "x-toolbox-tests": "contracts/test/dao/",
   "x-eastsea-template": {
