@@ -87,7 +87,7 @@ class DeterministicValues:
         if key == "native_symbol":
             return "SEA"
         if key == "chain_id":
-            return "0x1e64"
+            return "0x4574"  # current public testnet 17780
         if key == "app_id":
             return "0x" + keccak_hex("eastsea-template-test:app")
         return "0x" + keccak_hex("eastsea-template-test:" + key)[:40]
